@@ -1,0 +1,1 @@
+"Uniform validation logic language." 
