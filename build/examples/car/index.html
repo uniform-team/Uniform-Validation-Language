@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<script src="/bower_components/jquery/dist/jquery.js"></script>
+		<script src="/uniform.js"></script>
+		<script>uniform.options.href("car.ufm");</script>
+	</head>
+	<body>
+		<h2>Car form</h2>
+		<div data-type="ufm-form" id="rootForm">
+			<input id="hasCar" type="checkbox" />I have a car
+
+			<div data-type="ufm-form" id="carForm">
+				<table>
+					<tr>
+						<td>Make</td>
+						<td><input type="text" /></td>
+					</tr>
+					<tr>
+						<td>Model</td>
+						<td><input type="text" /></td>
+					</tr>
+					<tr>
+						<td>Year</td>
+						<td><input type="text" /></td>
+					</tr>
+				</table>
+			</div>
+		</div>
+	</body>
+</html>
