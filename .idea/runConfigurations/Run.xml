@@ -1,0 +1,12 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Run" type="js.build_tools.grunt" factoryName="Grunt.js">
+    <gruntfile value="$PROJECT_DIR$/gruntfile.js" />
+    <tasks>
+      <task value="dev" />
+    </tasks>
+    <envs />
+    <force value="false" />
+    <verbose value="false" />
+    <method />
+  </configuration>
+</component>
