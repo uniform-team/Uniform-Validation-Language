@@ -9,15 +9,30 @@
 *.swo
 *.swp
 *.tgz
-*.xml
 .DS_Store
-.idea
 .project
 .strong-pm
 coverage
+
+# User-specific IDEA files:
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/dictionaries
+
+# Sensitive or high-churn IDEA files:
+.idea/dataSources.ids
+.idea/dataSources.xml
+.idea/sqlDataSources.xml
+.idea/dynamic.xml
+.idea/uiDesigner.xml
+
+# Ignore node modules
 node_modules
 npm-debug.log
+
+# Ignore bower components
 build/bower_components
+
+# Ignore built files
 build/uniform.js
 build/uniform.min.js
-build/uniform.min.js.map
