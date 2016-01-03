@@ -31,7 +31,7 @@ node_modules
 npm-debug.log
 
 # Ignore bower components
-build/bower_components
+build/lib
 
 # Ignore built files
 build/uniform.js
