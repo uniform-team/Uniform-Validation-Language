@@ -5,7 +5,7 @@ describe("The \"options\" module", function () {
 
 	describe("exposes the \"href\" member", function () {
 		it("as a function", function () {
-			expect(uniform.options.href).toEqual(jasmine.any());
+			expect(uniform.options.href).toEqual(jasmine.any(Function));
 		});
 	});
 });
