@@ -1,5 +1,12 @@
+var lexer = require("./lexer.js");
+
 module.exports = {
-	parse: function (script) {
-		console.log(script);
-	}
+    parse: function (inputString) {
+        lexer.loadString(inputString);
+        var currentToken = lexer.getNextToken();
+        while (currentToken !== lexer.TOKEN.ENDOFFILE) {
+            console.log(currentToken + "\n");
+            currentToken = lexer.getNextToken();
+        }
+    }
 };
