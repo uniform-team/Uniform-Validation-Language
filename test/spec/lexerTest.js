@@ -1,3 +1,5 @@
+var thisToken;
+
 describe("The \"lexer\" module", function () {
     it("is exposed globally as an object", function () {
         expect(uniform.lexer).toEqual(jasmine.any(Object));
@@ -6,114 +8,133 @@ describe("The \"lexer\" module", function () {
     describe("should tokenize valid tokens such as", function () {
         it("strings formatted between double quotes", function () {
             lexer.loadString("\"Hello World\"");
-            expect(lexer.getNextToken()).toBe(lexer.TOKEN.STRING);
+            thisToken = lexer.getNextToken();
+            expect(thisToken.type).toBe(lexer.TOKEN.STRING);
+            expect(thisToken.value).toBe("\"Hello World\"");
+        });
+        it("selectors that are wrapped in $(\"\")", function () {
+            lexer.loadString("$(\".class #id value\")");
+            thisToken = lexer.getNextToken();
+            expect(thisToken.type).toBe(lexer.TOKEN.SELECTOR);
+            expect(thisToken.value).toBe("$(\".class #id value\")");
         });
         describe("operators such as", function () {
             it("is", function () {
                 lexer.loadString("is");
-                expect(lexer.getNextToken()).toBe(lexer.TOKEN.OPERATOR.IS);
+                thisToken = lexer.getNextToken();
+                expect(thisToken.type).toBe(lexer.TOKEN.OPERATOR_TYPE);
             });
             it("and", function () {
                 lexer.loadString("and");
-                expect(lexer.getNextToken()).toBe(lexer.TOKEN.OPERATOR.AND);
+                thisToken = lexer.getNextToken();
+                expect(thisToken.type).toBe(lexer.TOKEN.OPERATOR_TYPE);
             });
             it("or", function () {
                 lexer.loadString("or");
-                expect(lexer.getNextToken()).toBe(lexer.TOKEN.OPERATOR.OR);
+                thisToken = lexer.getNextToken();
+                expect(thisToken.type).toBe(lexer.TOKEN.OPERATOR_TYPE);
             });
             it("not", function () {
                 lexer.loadString("not");
-                expect(lexer.getNextToken()).toBe(lexer.TOKEN.OPERATOR.NOT);
+                thisToken = lexer.getNextToken();
+                expect(thisToken.type).toBe(lexer.TOKEN.OPERATOR_TYPE);
             });
             it("matches", function () {
                 lexer.loadString("matches");
-                expect(lexer.getNextToken()).toBe(lexer.TOKEN.OPERATOR.MATCHES);
+                thisToken = lexer.getNextToken();
+                expect(thisToken.type).toBe(lexer.TOKEN.OPERATOR_TYPE);
             });
             it("equals", function () {
                 lexer.loadString("equals");
-                expect(lexer.getNextToken()).toBe(lexer.TOKEN.OPERATOR.EQUALS);
+                thisToken = lexer.getNextToken();
+                expect(thisToken.type).toBe(lexer.TOKEN.OPERATOR_TYPE);
             });
             it(":", function () {
                 lexer.loadString(":");
-                expect(lexer.getNextToken()).toBe(lexer.TOKEN.OPERATOR.COLON);
+                thisToken = lexer.getNextToken();
+                expect(thisToken.type).toBe(lexer.TOKEN.OPERATOR_TYPE);
             });
             it("{", function () {
                 lexer.loadString("{");
-                expect(lexer.getNextToken()).toBe(lexer.TOKEN.OPERATOR.LBRACE);
+                thisToken = lexer.getNextToken();
+                expect(thisToken.type).toBe(lexer.TOKEN.OPERATOR_TYPE);
             });
             it("}", function () {
                 lexer.loadString("}");
-                expect(lexer.getNextToken()).toBe(lexer.TOKEN.OPERATOR.RBRACE);
+                thisToken = lexer.getNextToken();
+                expect(thisToken.type).toBe(lexer.TOKEN.OPERATOR_TYPE);
             });
             it("(", function () {
                 lexer.loadString("(");
-                expect(lexer.getNextToken()).toBe(lexer.TOKEN.OPERATOR.LPAREN);
+                thisToken = lexer.getNextToken();
+                expect(thisToken.type).toBe(lexer.TOKEN.OPERATOR_TYPE);
             });
             it(")", function () {
                 lexer.loadString(")");
-                expect(lexer.getNextToken()).toBe(lexer.TOKEN.OPERATOR.RPAREN);
+                thisToken = lexer.getNextToken();
+                expect(thisToken.type).toBe(lexer.TOKEN.OPERATOR_TYPE);
             });
             it(";", function () {
                 lexer.loadString(";");
-                expect(lexer.getNextToken()).toBe(lexer.TOKEN.OPERATOR.SEMICOLON);
+                thisToken = lexer.getNextToken();
+                expect(thisToken.type).toBe(lexer.TOKEN.OPERATOR_TYPE);
             });
             it("<", function () {
                 lexer.loadString("<");
-                expect(lexer.getNextToken()).toBe(lexer.TOKEN.OPERATOR.LT);
+                thisToken = lexer.getNextToken();
+                expect(thisToken.type).toBe(lexer.TOKEN.OPERATOR_TYPE);
             });
             it(">", function () {
                 lexer.loadString(">");
-                expect(lexer.getNextToken()).toBe(lexer.TOKEN.OPERATOR.GT);
+                thisToken = lexer.getNextToken();
+                expect(thisToken.type).toBe(lexer.TOKEN.OPERATOR_TYPE);
             });
             it("<=", function () {
                 lexer.loadString("<=");
-                expect(lexer.getNextToken()).toBe(lexer.TOKEN.OPERATOR.LTE);
+                thisToken = lexer.getNextToken();
+                expect(thisToken.type).toBe(lexer.TOKEN.OPERATOR_TYPE);
             });
             it(">=", function () {
                 lexer.loadString(">=");
-                expect(lexer.getNextToken()).toBe(lexer.TOKEN.OPERATOR.GTE);
+                thisToken = lexer.getNextToken();
+                expect(thisToken.type).toBe(lexer.TOKEN.OPERATOR_TYPE);
             });
         });
 
-    });
-    describe("variables", function () {
-        it("such as an \"@ sign followed by alphanumerics", function () {
+        it("variables such as an \"@ sign followed by alphanumerics", function () {
             lexer.loadString("@testVariable");
-            expect(lexer.getNextToken()).toBe(lexer.TOKEN.VARIABLE);
+            thisToken = lexer.getNextToken();
+            expect(thisToken.type).toBe(lexer.TOKEN.VARIABLE);
+            expect(thisToken.value).toBe("@testVariable");
         });
-    });
-    describe("numbers", function () {
-        it("such as one or more numerals between 0-9", function () {
+        it("numbers such as one or more numerals between 0-9", function () {
             lexer.loadString("1234567890");
-            expect(lexer.getNextToken()).toBe(lexer.TOKEN.NUMBER);
+            thisToken = lexer.getNextToken();
+            expect(thisToken.type).toBe(lexer.TOKEN.NUMBER);
+            expect(thisToken.value).toBe("1234567890");
         });
-    });
-    describe("End of file token", function () {
-        it("such as a string that contains the letter \"EOF\"", function () {
-            lexer.loadString("EOF");
-            expect(lexer.getNextToken()).toBe(lexer.TOKEN.ENDOFFILE);
-        });
-    });
-    describe("Tags such as", function () {
         describe("Tags such as", function () {
             it("valid", function () {
                 lexer.loadString("valid");
-                expect(lexer.getNextToken()).toBe(lexer.TOKEN.TAG.VALID);
+                thisToken = lexer.getNextToken();
+                expect(thisToken.type).toBe(lexer.TOKEN.TAG_TYPE);
             });
             it("enabled", function () {
                 lexer.loadString("enabled");
-                expect(lexer.getNextToken()).toBe(lexer.TOKEN.TAG.ENABLED);
+                thisToken = lexer.getNextToken();
+                expect(thisToken.type).toBe(lexer.TOKEN.TAG_TYPE);
             });
             it("visible", function () {
                 lexer.loadString("visible");
-                expect(lexer.getNextToken()).toBe(lexer.TOKEN.TAG.VISIBLE);
+                thisToken = lexer.getNextToken();
+                expect(thisToken.type).toBe(lexer.TOKEN.TAG_TYPE);
             });
             it("optional", function () {
                 lexer.loadString("optional");
-                expect(lexer.getNextToken()).toBe(lexer.TOKEN.TAG.OPTIONAL);
+                thisToken = lexer.getNextToken();
+                expect(thisToken.type).toBe(lexer.TOKEN.TAG_TYPE);
             });
 
         });
     });
-
 });

@@ -4,8 +4,10 @@ module.exports = {
     parse: function (inputString) {
         lexer.loadString(inputString);
         var currentToken = lexer.getNextToken();
-        while (currentToken !== lexer.TOKEN.ENDOFFILE) {
-            console.log(currentToken + "\n");
+        while (currentToken.type !== lexer.TOKEN.ENDOFFILE) {
+            console.log("Token Type: " + currentToken.type + " Token Value: " + currentToken.value + "\n");
+            if (currentToken === "}")
+                break;
             currentToken = lexer.getNextToken();
         }
     }

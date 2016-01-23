@@ -1,7 +1,12 @@
-"#rootForm" {
-	valid: not "#hasCar" or "#carForm";
+$("#rootForm") {
+	valid:
+	       not $("#hasCar") is valid or
+	       $("#carForm") is valid;
 }
 
-"#carForm" {
-	valid: "#make" and "#model" and "#year" matches @integer;
+$("#carForm") {
+	valid:
+	    $("#make") and
+	    $("#model") and
+	    $("#year") matches @integer;
 }
