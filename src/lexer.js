@@ -1,6 +1,15 @@
 //Constants for lexical tokens
 var TOKEN = {
-    OPERATOR_TYPE: "operator",
+    TYPE: {
+        OPERATOR: "operator",
+        VARIABLE: "variable",
+        NUMBER: "number",
+        STRING: "string",
+        ENDOFFILE: "EOF",
+        SELECTOR: "selector",
+        TAG: "tag",
+    },
+    ENDOFFILE: "EOF",
     OPERATOR: {
         IS: "is",
         AND: "and",
@@ -19,13 +28,6 @@ var TOKEN = {
         LTE: "<=",
         GTE: ">="
     },
-    VARIABLE: "variable",
-    NUMBER: "number",
-    STRING: "string",
-    ENDOFFILE: "EOF",
-    SELECTOR: "selector",
-
-    TAG_TYPE: "tag",
     TAG: {
         VALID: "valid",
         ENABLED: "enabled",
@@ -33,6 +35,16 @@ var TOKEN = {
         OPTIONAL: "optional"
     }
 };
+
+//Generates new token object
+function Token(value, type, line, col) {
+    if (value === undefined) throw new Error("Undefined Token");
+    if (type === undefined) throw new Error("Undefined Type");
+    this.value = value;
+    this.type = type;
+    this.line = line;
+    this.col = col;
+}
 
 //Regular expressions
 var isWhitespace = /\s|\t/;
@@ -58,9 +70,9 @@ module.exports = {
     getNextToken: function () {
 
         var lexbuffer = "";         //contains a single character to be analyzed
-        var nextTokenBuffer = "";   //buffer that appends the lexbuffer until a token is built
+        var tokenBuffer = "";   //buffer that appends the lexbuffer until a token is built
 
-        //Description: Appends lexbuffer to nextTokenBuffer, and loads the next char into lexbuffer
+        //Description: Appends lexbuffer to tokenBuffer, and loads the next char into lexbuffer
         function nextChar() {
             if (lexbuffer === "\n") {
                 lineNumber++;
@@ -68,20 +80,16 @@ module.exports = {
             }
             else
                 lineIndex++;
-            nextTokenBuffer += lexbuffer;
+            tokenBuffer += lexbuffer;
             stringIndex++;
             lexbuffer = inputString.charAt(stringIndex);
         }
 
         //When the end of the uniform file is reached, exit
         if (stringIndex >= inputString.length) {
-            return {
-                value: "EOF",
-                type: TOKEN.ENDOFFILE,
-                line: lineNumber,
-                col: lineIndex
-            }
+            return new Token(TOKEN.ENDOFFILE, TOKEN.TYPE.ENDOFFILE, lineNumber, lineIndex);
         }
+
 
         //set lexbuffer equal to the stringIndex
         lexbuffer = inputString.charAt(stringIndex);
@@ -114,20 +122,15 @@ module.exports = {
                             }
                         }
                     }
-                    return {
-                        value: nextTokenBuffer,
-                        type: TOKEN.SELECTOR,
-                        line: lineNumber,
-                        col: lineIndex
-                    };
+                    return new Token(tokenBuffer, TOKEN.TYPE.SELECTOR, lineNumber, lineIndex);
                 }
                 else {
-                    console.log("ERROR: Invalid token--Expected token of type: SELECTOR \n Recieved " + nextTokenBuffer + " on line " + lineNumber + "\n");
+                    console.log("ERROR: Invalid token--Expected token of type: SELECTOR \n Recieved " + tokenBuffer + " on line " + lineNumber + "\n");
                     return "ERROR";
                 }
             }
             else {
-                console.log("ERROR: Invalid token--Expected token of type: SELECTOR \n Recieved " + nextTokenBuffer + " on line " + lineNumber + "\n");
+                console.log("ERROR: Invalid token--Expected token of type: SELECTOR \n Recieved " + tokenBuffer + " on line " + lineNumber + "\n");
                 return "ERROR";
             }
         }
@@ -138,80 +141,29 @@ module.exports = {
                 nextChar();
             } while (isAlpha.test(lexbuffer));
 
-            switch(nextTokenBuffer) {
-                case "is":
-                    return {
-                        value: nextTokenBuffer,
-                        type: TOKEN.OPERATOR_TYPE,
-                        line: lineNumber,
-                        col: lineIndex
-                    };
-                case "and":
-                    return {
-                        value: nextTokenBuffer,
-                        type: TOKEN.OPERATOR_TYPE,
-                        line: lineNumber,
-                        col: lineIndex
-                    };
-                case "or":
-                    return {
-                        value: nextTokenBuffer,
-                        type: TOKEN.OPERATOR_TYPE,
-                        line: lineNumber,
-                        col: lineIndex
-                    };
-                case "not":
-                    return {
-                        value: nextTokenBuffer,
-                        type: TOKEN.OPERATOR_TYPE,
-                        line: lineNumber,
-                        col: lineIndex
-                    };
-                case "matches":
-                    return {
-                        value: nextTokenBuffer,
-                        type: TOKEN.OPERATOR_TYPE,
-                        line: lineNumber,
-                        col: lineIndex
-                    };
-                case "equals":
-                    return {
-                        value: nextTokenBuffer,
-                        type: TOKEN.OPERATOR_TYPE,
-                        line: lineNumber,
-                        col: lineIndex
-                    };
-                case "valid":
-                    return {
-                        value: nextTokenBuffer,
-                        type: TOKEN.TAG_TYPE,
-                        line: lineNumber,
-                        col: lineIndex
-                    };
-                case "enabled":
-                    return {
-                        value: nextTokenBuffer,
-                        type: TOKEN.TAG_TYPE,
-                        line: lineNumber,
-                        col: lineIndex
-                    };
-                case "visible":
-                    return {
-                        value: nextTokenBuffer,
-                        type: TOKEN.TAG_TYPE,
-                        line: lineNumber,
-                        col: lineIndex
-                    };
-                case "optional":
-                    return {
-                        value: nextTokenBuffer,
-                        type: TOKEN.TAG_TYPE,
-                        line: lineNumber,
-                        col: lineIndex
-                    };
+            switch(tokenBuffer) {
+                case TOKEN.OPERATOR.IS:
+                    return new Token(TOKEN.OPERATOR.IS, TOKEN.TYPE.OPERATOR, lineNumber, lineIndex);
+                case TOKEN.OPERATOR.AND:
+                    return new Token(TOKEN.OPERATOR.AND, TOKEN.TYPE.OPERATOR, lineNumber, lineIndex);
+                case TOKEN.OPERATOR.OR:
+                    return new Token(TOKEN.OPERATOR.OR, TOKEN.TYPE.OPERATOR, lineNumber, lineIndex);
+                case TOKEN.OPERATOR.NOT:
+                    return new Token(TOKEN.OPERATOR.NOT, TOKEN.TYPE.OPERATOR, lineNumber, lineIndex);
+                case TOKEN.OPERATOR.MATCHES:
+                    return new Token(TOKEN.OPERATOR.MATCHES, TOKEN.TYPE.OPERATOR, lineNumber, lineIndex);
+                case TOKEN.OPERATOR.EQUALS:
+                    return new Token(TOKEN.OPERATOR.EQUALS, TOKEN.TYPE.OPERATOR, lineNumber, lineIndex);
+                case TOKEN.TAG.VALID:
+                    return new Token(TOKEN.TAG.VALID, TOKEN.TYPE.TAG, lineNumber, lineIndex);
+                case TOKEN.TAG.ENABLED:
+                    return new Token(TOKEN.TAG.ENABLED, TOKEN.TYPE.TAG, lineNumber, lineIndex);
+                case TOKEN.TAG.VISIBLE:
+                    return new Token(TOKEN.TAG.VISIBLE, TOKEN.TYPE.TAG, lineNumber, lineIndex);
+                case TOKEN.TAG.OPTIONAL:
+                    return new Token(TOKEN.TAG.OPTIONAL, TOKEN.TYPE.TAG, lineNumber, lineIndex);
                 default:
-                    console.log("ERROR: Invalid token--Expected token of type: OPERATOR or TAG \n Recieved " + nextTokenBuffer + " on line " + lineNumber + "\n");
-                    return "ERROR";
+                    throw new Error("ERROR: Invalid token--Expected token of type: OPERATOR or TAG \n Recieved " + tokenBuffer + " on line " + lineNumber + "\n");
             }
         }
 
@@ -220,12 +172,7 @@ module.exports = {
             do {
                 nextChar();
             } while (isDigit.test(lexbuffer));
-            return {
-                value: nextTokenBuffer,
-                type: TOKEN.NUMBER,
-                line: lineNumber,
-                col: lineIndex
-            };
+            return new Token(tokenBuffer, TOKEN.TYPE.NUMBER, lineNumber, lineIndex);
         }
 
         //Check for variable
@@ -233,12 +180,7 @@ module.exports = {
             do {
                 nextChar();
             } while (isAlpha.test(lexbuffer) || isDigit.test(lexbuffer));
-                return {
-                value: nextTokenBuffer,
-                type: TOKEN.VARIABLE,
-                line: lineNumber,
-                col: lineIndex
-            };
+            return new Token(tokenBuffer, TOKEN.TYPE.VARIABLE, lineNumber, lineIndex);
         }
 
         //Check for string
@@ -247,12 +189,7 @@ module.exports = {
                 nextChar();
             } while (lexbuffer !== '\"');
             nextChar();
-            return {
-                value: nextTokenBuffer,
-                type: TOKEN.STRING,
-                line: lineNumber,
-                col: lineIndex
-            };
+            return new Token(tokenBuffer, TOKEN.TYPE.STRING, lineNumber, lineIndex);
         }
 
 
@@ -260,86 +197,37 @@ module.exports = {
         switch (lexbuffer) {
             case TOKEN.OPERATOR.COLON:
                 nextChar();
-                return {
-                    value: nextTokenBuffer,
-                    type: TOKEN.OPERATOR_TYPE,
-                    line: lineNumber,
-                    col: lineIndex
-                };
+                return new Token(TOKEN.OPERATOR.COLON, TOKEN.TYPE.OPERATOR, lineNumber, lineIndex);
             case TOKEN.OPERATOR.LBRACE:
                 nextChar();
-                return {
-                    value: nextTokenBuffer,
-                    type: TOKEN.OPERATOR_TYPE,
-                    line: lineNumber,
-                    col: lineIndex
-                };
+                return new Token(TOKEN.OPERATOR.LBRACE, TOKEN.TYPE.OPERATOR, lineNumber, lineIndex);
             case TOKEN.OPERATOR.RBRACE:
                 nextChar();
-                return {
-                    value: nextTokenBuffer,
-                    type: TOKEN.OPERATOR_TYPE,
-                    line: lineNumber,
-                    col: lineIndex
-                };
+                return new Token(TOKEN.OPERATOR.RBRACE, TOKEN.TYPE.OPERATOR, lineNumber, lineIndex);
             case TOKEN.OPERATOR.LPAREN:
                 nextChar();
-                return {
-                    value: nextTokenBuffer,
-                    type: TOKEN.OPERATOR_TYPE,
-                    line: lineNumber,
-                    col: lineIndex
-                };
+                return new Token(TOKEN.OPERATOR.LPAREN, TOKEN.TYPE.OPERATOR, lineNumber, lineIndex);
             case TOKEN.OPERATOR.RPAREN:
                 nextChar();
-                return {
-                    value: nextTokenBuffer,
-                    type: TOKEN.OPERATOR_TYPE,
-                    line: lineNumber,
-                    col: lineIndex
-                };
+                return new Token(TOKEN.OPERATOR.RPAREN, TOKEN.TYPE.OPERATOR, lineNumber, lineIndex);
             case TOKEN.OPERATOR.SEMICOLON:
                 nextChar();
-                return {
-                    value: nextTokenBuffer,
-                    type: TOKEN.OPERATOR_TYPE,
-                    line: lineNumber,
-                    col: lineIndex
-                };
+                return new Token(TOKEN.OPERATOR.SEMICOLON, TOKEN.TYPE.OPERATOR, lineNumber, lineIndex);
             case TOKEN.OPERATOR.LT:
                 nextChar();
                 if (lexbuffer === "=")
-                    return {
-                        value: nextTokenBuffer,
-                        type: TOKEN.OPERATOR_TYPE,
-                        line: lineNumber,
-                        col: lineIndex
-                    };
-                else return {
-                    value: nextTokenBuffer,
-                    type: TOKEN.OPERATOR_TYPE,
-                    line: lineNumber,
-                    col: lineIndex
-                };
+                    return new Token(TOKEN.OPERATOR.LTE, TOKEN.TYPE.OPERATOR, lineNumber, lineIndex);
+                else
+                    return new Token(TOKEN.OPERATOR.LT, TOKEN.TYPE.OPERATOR, lineNumber, lineIndex);
             case TOKEN.OPERATOR.GT:
                 nextChar();
                 if (lexbuffer === "=")
-                    return {
-                        value: nextTokenBuffer,
-                        type: TOKEN.OPERATOR_TYPE,
-                        line: lineNumber,
-                        col: lineIndex
-                    };
-                else return {
-                    value: nextTokenBuffer,
-                    type: TOKEN.OPERATOR_TYPE,
-                    line: lineNumber,
-                    col: lineIndex
-                };
+                    return new Token(TOKEN.OPERATOR.GTE, TOKEN.TYPE.OPERATOR, lineNumber, lineIndex);
+                else
+                    return new Token(TOKEN.OPERATOR.GT, TOKEN.TYPE.OPERATOR, lineNumber, lineIndex);
             default:
                 break;
         }
-        console.log("Unknown token on line " + lineNumber + "\n");
-        return "invalid";
+        throw new Error("Unknown token on line " + lineNumber + "\n");
     }
 };
