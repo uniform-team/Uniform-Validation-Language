@@ -36,81 +36,128 @@ describe("The \"lexer\" module", function () {
                 lexer.loadString("is");
                 thisToken = lexer.getNextToken();
                 expect(thisToken.type).toBe(lexer.TOKEN.TYPE.OPERATOR);
+                expect(thisToken.value).toBe(lexer.TOKEN.OPERATOR.IS);
             });
             it("and", function () {
                 lexer.loadString("and");
                 thisToken = lexer.getNextToken();
                 expect(thisToken.type).toBe(lexer.TOKEN.TYPE.OPERATOR);
+                expect(thisToken.value).toBe(lexer.TOKEN.OPERATOR.AND);
             });
             it("or", function () {
                 lexer.loadString("or");
                 thisToken = lexer.getNextToken();
                 expect(thisToken.type).toBe(lexer.TOKEN.TYPE.OPERATOR);
+                expect(thisToken.value).toBe(lexer.TOKEN.OPERATOR.OR);
             });
             it("not", function () {
                 lexer.loadString("not");
                 thisToken = lexer.getNextToken();
                 expect(thisToken.type).toBe(lexer.TOKEN.TYPE.OPERATOR);
+                expect(thisToken.value).toBe(lexer.TOKEN.OPERATOR.NOT);
             });
             it("matches", function () {
                 lexer.loadString("matches");
                 thisToken = lexer.getNextToken();
                 expect(thisToken.type).toBe(lexer.TOKEN.TYPE.OPERATOR);
+                expect(thisToken.value).toBe(lexer.TOKEN.OPERATOR.MATCHES);
             });
             it("equals", function () {
                 lexer.loadString("equals");
                 thisToken = lexer.getNextToken();
                 expect(thisToken.type).toBe(lexer.TOKEN.TYPE.OPERATOR);
+                expect(thisToken.value).toBe(lexer.TOKEN.OPERATOR.EQUALS);
             });
+            it("+", function () {
+                lexer.loadString("+");
+                thisToken = lexer.getNextToken();
+                expect(thisToken.type).toBe(lexer.TOKEN.TYPE.OPERATOR);
+                expect(thisToken.value).toBe(lexer.TOKEN.OPERATOR.ADD);
+            });
+            it("-", function () {
+                lexer.loadString("-");
+                thisToken = lexer.getNextToken();
+                expect(thisToken.type).toBe(lexer.TOKEN.TYPE.OPERATOR);
+                expect(thisToken.value).toBe(lexer.TOKEN.OPERATOR.SUB);
+            });
+            it("*", function () {
+                lexer.loadString("*");
+                thisToken = lexer.getNextToken();
+                expect(thisToken.type).toBe(lexer.TOKEN.TYPE.OPERATOR);
+                expect(thisToken.value).toBe(lexer.TOKEN.OPERATOR.MUL);
+            });
+            it("/", function () {
+                lexer.loadString("/");
+                thisToken = lexer.getNextToken();
+                expect(thisToken.type).toBe(lexer.TOKEN.TYPE.OPERATOR);
+                expect(thisToken.value).toBe(lexer.TOKEN.OPERATOR.DIV);
+            });
+            it("%", function () {
+                lexer.loadString("%");
+                thisToken = lexer.getNextToken();
+                expect(thisToken.type).toBe(lexer.TOKEN.TYPE.OPERATOR);
+                expect(thisToken.value).toBe(lexer.TOKEN.OPERATOR.MOD);
+            });
+
             it(":", function () {
                 lexer.loadString(":");
                 thisToken = lexer.getNextToken();
                 expect(thisToken.type).toBe(lexer.TOKEN.TYPE.OPERATOR);
+                expect(thisToken.value).toBe(lexer.TOKEN.OPERATOR.COLON);
             });
             it("{", function () {
                 lexer.loadString("{");
                 thisToken = lexer.getNextToken();
                 expect(thisToken.type).toBe(lexer.TOKEN.TYPE.OPERATOR);
+                expect(thisToken.value).toBe(lexer.TOKEN.OPERATOR.LBRACE);
             });
             it("}", function () {
                 lexer.loadString("}");
                 thisToken = lexer.getNextToken();
                 expect(thisToken.type).toBe(lexer.TOKEN.TYPE.OPERATOR);
+                expect(thisToken.value).toBe(lexer.TOKEN.OPERATOR.RBRACE);
             });
             it("(", function () {
                 lexer.loadString("(");
                 thisToken = lexer.getNextToken();
                 expect(thisToken.type).toBe(lexer.TOKEN.TYPE.OPERATOR);
+                expect(thisToken.value).toBe(lexer.TOKEN.OPERATOR.LPAREN);
             });
             it(")", function () {
                 lexer.loadString(")");
                 thisToken = lexer.getNextToken();
                 expect(thisToken.type).toBe(lexer.TOKEN.TYPE.OPERATOR);
+                expect(thisToken.value).toBe(lexer.TOKEN.OPERATOR.RPAREN);
             });
             it(";", function () {
                 lexer.loadString(";");
                 thisToken = lexer.getNextToken();
                 expect(thisToken.type).toBe(lexer.TOKEN.TYPE.OPERATOR);
+                expect(thisToken.value).toBe(lexer.TOKEN.OPERATOR.SEMICOLON);
             });
             it("<", function () {
                 lexer.loadString("<");
                 thisToken = lexer.getNextToken();
                 expect(thisToken.type).toBe(lexer.TOKEN.TYPE.OPERATOR);
+                expect(thisToken.value).toBe(lexer.TOKEN.OPERATOR.LT);
             });
             it(">", function () {
                 lexer.loadString(">");
                 thisToken = lexer.getNextToken();
                 expect(thisToken.type).toBe(lexer.TOKEN.TYPE.OPERATOR);
+                expect(thisToken.value).toBe(lexer.TOKEN.OPERATOR.GT);
             });
             it("<=", function () {
                 lexer.loadString("<=");
                 thisToken = lexer.getNextToken();
                 expect(thisToken.type).toBe(lexer.TOKEN.TYPE.OPERATOR);
+                expect(thisToken.value).toBe(lexer.TOKEN.OPERATOR.LTE);
             });
             it(">=", function () {
                 lexer.loadString(">=");
                 thisToken = lexer.getNextToken();
                 expect(thisToken.type).toBe(lexer.TOKEN.TYPE.OPERATOR);
+                expect(thisToken.value).toBe(lexer.TOKEN.OPERATOR.GTE);
             });
         });
 

@@ -8,9 +8,14 @@ var TOKEN = {
         ENDOFFILE: "EOF",
         SELECTOR: "selector",
         TAG: "tag",
+        STATE: "state"
     },
-    ENDOFFILE: "EOF",
     OPERATOR: {
+        ADD: "+",
+        SUB: "-",
+        MUL: "*",
+        DIV: "/",
+        MOD: "%",
         IS: "is",
         AND: "and",
         OR: "or",
@@ -33,7 +38,12 @@ var TOKEN = {
         ENABLED: "enabled",
         VISIBLE: "visible",
         OPTIONAL: "optional"
-    }
+    },
+    STATE: {
+        CHECKED: "checked",
+        VALID: "valid"
+    },
+    ENDOFFILE: "EOF",
 };
 
 //Generates new token object
@@ -154,6 +164,7 @@ module.exports = {
                     return new Token(TOKEN.OPERATOR.MATCHES, TOKEN.TYPE.OPERATOR, lineNumber, lineIndex);
                 case TOKEN.OPERATOR.EQUALS:
                     return new Token(TOKEN.OPERATOR.EQUALS, TOKEN.TYPE.OPERATOR, lineNumber, lineIndex);
+
                 case TOKEN.TAG.VALID:
                     return new Token(TOKEN.TAG.VALID, TOKEN.TYPE.TAG, lineNumber, lineIndex);
                 case TOKEN.TAG.ENABLED:
@@ -162,6 +173,13 @@ module.exports = {
                     return new Token(TOKEN.TAG.VISIBLE, TOKEN.TYPE.TAG, lineNumber, lineIndex);
                 case TOKEN.TAG.OPTIONAL:
                     return new Token(TOKEN.TAG.OPTIONAL, TOKEN.TYPE.TAG, lineNumber, lineIndex);
+
+                case TOKEN.STATE.VALID:
+                    return new Token(TOKEN.STATE.VALID, TOKEN.TYPE.STATE, lineNumber, lineIndex);
+                case TOKEN.STATE.CHECKED:
+                    return new Token(TOKEN.STATE.CHECKED, TOKEN.TYPE.STATE, lineNumber, lineIndex);
+
+
                 default:
                     throw new Error("ERROR: Invalid token--Expected token of type: OPERATOR or TAG \n Recieved " + tokenBuffer + " on line " + lineNumber + "\n");
             }
@@ -195,6 +213,22 @@ module.exports = {
 
         //check for non-alpha operators
         switch (lexbuffer) {
+            case TOKEN.OPERATOR.ADD:
+                nextChar();
+                return new Token(TOKEN.OPERATOR.ADD, TOKEN.TYPE.OPERATOR, lineNumber, lineIndex);
+            case TOKEN.OPERATOR.SUB:
+                nextChar();
+                return new Token(TOKEN.OPERATOR.SUB, TOKEN.TYPE.OPERATOR, lineNumber, lineIndex);
+            case TOKEN.OPERATOR.MUL:
+                nextChar();
+                return new Token(TOKEN.OPERATOR.MUL, TOKEN.TYPE.OPERATOR, lineNumber, lineIndex);
+            case TOKEN.OPERATOR.DIV:
+                nextChar();
+                return new Token(TOKEN.OPERATOR.DIV, TOKEN.TYPE.OPERATOR, lineNumber, lineIndex);
+            case TOKEN.OPERATOR.MOD:
+                nextChar();
+                return new Token(TOKEN.OPERATOR.MOD, TOKEN.TYPE.OPERATOR, lineNumber, lineIndex);
+
             case TOKEN.OPERATOR.COLON:
                 nextChar();
                 return new Token(TOKEN.OPERATOR.COLON, TOKEN.TYPE.OPERATOR, lineNumber, lineIndex);
