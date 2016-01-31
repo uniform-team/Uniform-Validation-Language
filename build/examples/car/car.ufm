@@ -6,7 +6,7 @@ $("#rootForm") {
 
 $("#carForm") {
 	valid:
-	    $("#make") and
-	    $("#model") and
+	    $("#make") is valid and
+	    $("#model") is valid and
 	    $("#year") matches @integer;
 }

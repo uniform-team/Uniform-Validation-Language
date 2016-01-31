@@ -1,14 +1,12 @@
 //Constants for lexical tokens
 var TOKEN = {
     TYPE: {
-        OPERATOR: "operator",
         VARIABLE: "variable",
         NUMBER: "number",
         STRING: "string",
         ENDOFFILE: "EOF",
         SELECTOR: "selector",
-        TAG: "tag",
-        STATE: "state"
+        KEYWORD: "keyword"
     },
     OPERATOR: {
         ADD: "+",
@@ -40,8 +38,12 @@ var TOKEN = {
         OPTIONAL: "optional"
     },
     STATE: {
-        CHECKED: "checked",
-        VALID: "valid"
+        VALID: "valid",
+        STRING: "string",
+        NUMBER: "number",
+        ENABLED: "enabled",
+        VISIBLE: "visible",
+        OPTIONAL: "optional"
     },
     ENDOFFILE: "EOF",
 };
@@ -153,31 +155,31 @@ module.exports = {
 
             switch(tokenBuffer) {
                 case TOKEN.OPERATOR.IS:
-                    return new Token(TOKEN.OPERATOR.IS, TOKEN.TYPE.OPERATOR, lineNumber, lineIndex);
+                    return new Token(TOKEN.OPERATOR.IS, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
                 case TOKEN.OPERATOR.AND:
-                    return new Token(TOKEN.OPERATOR.AND, TOKEN.TYPE.OPERATOR, lineNumber, lineIndex);
+                    return new Token(TOKEN.OPERATOR.AND, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
                 case TOKEN.OPERATOR.OR:
-                    return new Token(TOKEN.OPERATOR.OR, TOKEN.TYPE.OPERATOR, lineNumber, lineIndex);
+                    return new Token(TOKEN.OPERATOR.OR, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
                 case TOKEN.OPERATOR.NOT:
-                    return new Token(TOKEN.OPERATOR.NOT, TOKEN.TYPE.OPERATOR, lineNumber, lineIndex);
+                    return new Token(TOKEN.OPERATOR.NOT, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
                 case TOKEN.OPERATOR.MATCHES:
-                    return new Token(TOKEN.OPERATOR.MATCHES, TOKEN.TYPE.OPERATOR, lineNumber, lineIndex);
+                    return new Token(TOKEN.OPERATOR.MATCHES, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
                 case TOKEN.OPERATOR.EQUALS:
-                    return new Token(TOKEN.OPERATOR.EQUALS, TOKEN.TYPE.OPERATOR, lineNumber, lineIndex);
+                    return new Token(TOKEN.OPERATOR.EQUALS, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
 
                 case TOKEN.TAG.VALID:
-                    return new Token(TOKEN.TAG.VALID, TOKEN.TYPE.TAG, lineNumber, lineIndex);
+                    return new Token(TOKEN.TAG.VALID, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
                 case TOKEN.TAG.ENABLED:
-                    return new Token(TOKEN.TAG.ENABLED, TOKEN.TYPE.TAG, lineNumber, lineIndex);
+                    return new Token(TOKEN.TAG.ENABLED, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
                 case TOKEN.TAG.VISIBLE:
-                    return new Token(TOKEN.TAG.VISIBLE, TOKEN.TYPE.TAG, lineNumber, lineIndex);
+                    return new Token(TOKEN.TAG.VISIBLE, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
                 case TOKEN.TAG.OPTIONAL:
-                    return new Token(TOKEN.TAG.OPTIONAL, TOKEN.TYPE.TAG, lineNumber, lineIndex);
+                    return new Token(TOKEN.TAG.OPTIONAL, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
 
-                case TOKEN.STATE.VALID:
-                    return new Token(TOKEN.STATE.VALID, TOKEN.TYPE.STATE, lineNumber, lineIndex);
-                case TOKEN.STATE.CHECKED:
-                    return new Token(TOKEN.STATE.CHECKED, TOKEN.TYPE.STATE, lineNumber, lineIndex);
+                case TOKEN.STATE.STRING:
+                    return new Token(TOKEN.STATE.STRING, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
+                case TOKEN.STATE.NUMBER:
+                    return new Token(TOKEN.STATE.NUMBER, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
 
 
                 default:
@@ -215,50 +217,50 @@ module.exports = {
         switch (lexbuffer) {
             case TOKEN.OPERATOR.ADD:
                 nextChar();
-                return new Token(TOKEN.OPERATOR.ADD, TOKEN.TYPE.OPERATOR, lineNumber, lineIndex);
+                return new Token(TOKEN.OPERATOR.ADD, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
             case TOKEN.OPERATOR.SUB:
                 nextChar();
-                return new Token(TOKEN.OPERATOR.SUB, TOKEN.TYPE.OPERATOR, lineNumber, lineIndex);
+                return new Token(TOKEN.OPERATOR.SUB, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
             case TOKEN.OPERATOR.MUL:
                 nextChar();
-                return new Token(TOKEN.OPERATOR.MUL, TOKEN.TYPE.OPERATOR, lineNumber, lineIndex);
+                return new Token(TOKEN.OPERATOR.MUL, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
             case TOKEN.OPERATOR.DIV:
                 nextChar();
-                return new Token(TOKEN.OPERATOR.DIV, TOKEN.TYPE.OPERATOR, lineNumber, lineIndex);
+                return new Token(TOKEN.OPERATOR.DIV, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
             case TOKEN.OPERATOR.MOD:
                 nextChar();
-                return new Token(TOKEN.OPERATOR.MOD, TOKEN.TYPE.OPERATOR, lineNumber, lineIndex);
+                return new Token(TOKEN.OPERATOR.MOD, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
 
             case TOKEN.OPERATOR.COLON:
                 nextChar();
-                return new Token(TOKEN.OPERATOR.COLON, TOKEN.TYPE.OPERATOR, lineNumber, lineIndex);
+                return new Token(TOKEN.OPERATOR.COLON, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
             case TOKEN.OPERATOR.LBRACE:
                 nextChar();
-                return new Token(TOKEN.OPERATOR.LBRACE, TOKEN.TYPE.OPERATOR, lineNumber, lineIndex);
+                return new Token(TOKEN.OPERATOR.LBRACE, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
             case TOKEN.OPERATOR.RBRACE:
                 nextChar();
-                return new Token(TOKEN.OPERATOR.RBRACE, TOKEN.TYPE.OPERATOR, lineNumber, lineIndex);
+                return new Token(TOKEN.OPERATOR.RBRACE, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
             case TOKEN.OPERATOR.LPAREN:
                 nextChar();
-                return new Token(TOKEN.OPERATOR.LPAREN, TOKEN.TYPE.OPERATOR, lineNumber, lineIndex);
+                return new Token(TOKEN.OPERATOR.LPAREN, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
             case TOKEN.OPERATOR.RPAREN:
                 nextChar();
-                return new Token(TOKEN.OPERATOR.RPAREN, TOKEN.TYPE.OPERATOR, lineNumber, lineIndex);
+                return new Token(TOKEN.OPERATOR.RPAREN, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
             case TOKEN.OPERATOR.SEMICOLON:
                 nextChar();
-                return new Token(TOKEN.OPERATOR.SEMICOLON, TOKEN.TYPE.OPERATOR, lineNumber, lineIndex);
+                return new Token(TOKEN.OPERATOR.SEMICOLON, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
             case TOKEN.OPERATOR.LT:
                 nextChar();
                 if (lexbuffer === "=")
-                    return new Token(TOKEN.OPERATOR.LTE, TOKEN.TYPE.OPERATOR, lineNumber, lineIndex);
+                    return new Token(TOKEN.OPERATOR.LTE, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
                 else
-                    return new Token(TOKEN.OPERATOR.LT, TOKEN.TYPE.OPERATOR, lineNumber, lineIndex);
+                    return new Token(TOKEN.OPERATOR.LT, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
             case TOKEN.OPERATOR.GT:
                 nextChar();
                 if (lexbuffer === "=")
-                    return new Token(TOKEN.OPERATOR.GTE, TOKEN.TYPE.OPERATOR, lineNumber, lineIndex);
+                    return new Token(TOKEN.OPERATOR.GTE, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
                 else
-                    return new Token(TOKEN.OPERATOR.GT, TOKEN.TYPE.OPERATOR, lineNumber, lineIndex);
+                    return new Token(TOKEN.OPERATOR.GT, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
             default:
                 break;
         }
