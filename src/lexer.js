@@ -6,7 +6,8 @@ var TOKEN = {
         STRING: "string",
         ENDOFFILE: "EOF",
         SELECTOR: "selector",
-        KEYWORD: "keyword"
+        KEYWORD: "keyword",
+        REGEX: "regex"
     },
     OPERATOR: {
         ADD: "+",
@@ -29,7 +30,8 @@ var TOKEN = {
         LT: "<",
         GT: ">",
         LTE: "<=",
-        GTE: ">="
+        GTE: ">=",
+        REGEX: "/"
     },
     TAG: {
         VALID: "valid",
@@ -45,7 +47,8 @@ var TOKEN = {
         VISIBLE: "visible",
         OPTIONAL: "optional"
     },
-    ENDOFFILE: "EOF",
+    REGEX: "regex",
+    ENDOFFILE: "EOF"
 };
 
 //Generates new token object
@@ -97,17 +100,7 @@ module.exports = {
             lexbuffer = inputString.charAt(stringIndex);
         }
 
-        //When the end of the uniform file is reached, exit
-        if (stringIndex >= inputString.length) {
-            return new Token(TOKEN.ENDOFFILE, TOKEN.TYPE.ENDOFFILE, lineNumber, lineIndex);
-        }
-
-
-        //set lexbuffer equal to the stringIndex
-        lexbuffer = inputString.charAt(stringIndex);
-
-        //ignore whitespace, move string index until non-whitespace character is found
-        while (isWhitespace.test(lexbuffer)) {
+        function readNextChar() {
             if (lexbuffer === "\n") {
                 lineNumber++;
                 lineIndex = 0;
@@ -118,36 +111,111 @@ module.exports = {
             lexbuffer = inputString.charAt(stringIndex);
         }
 
+        function ignoreWhiteSpace() {
+            while (isWhitespace.test(lexbuffer)) {
+                readNextChar();
+            }
+        }
+
+        //When the end of the uniform file is reached, exit
+        if (stringIndex >= inputString.length) {
+            return new Token(TOKEN.ENDOFFILE, TOKEN.TYPE.ENDOFFILE, lineNumber, lineIndex);
+        }
+
+
+        //set lexbuffer equal to the stringIndex
+        lexbuffer = inputString.charAt(stringIndex);
+
+        //ignore whitespace, move string index until non-whitespace character is found
+        ignoreWhiteSpace();
+        //check for regex and comment
+
+        if (lexbuffer === "/") {
+            readNextChar();
+            //single line comment
+            if (lexbuffer === "/") {
+                readNextChar();
+                while (lexbuffer !== "\n") {
+                    readNextChar();
+                }
+                readNextChar();
+                tokenBuffer = "";
+                ignoreWhiteSpace();
+            }
+            //multi line comment
+            else if (lexbuffer === "*") {
+                readNextChar();
+                while (1) {
+                    if (lexbuffer === "*") {
+                        nextChar();
+                        if (lexbuffer === "/") {
+                            readNextChar();
+                            //end comment
+                            tokenBuffer = "";
+                            ignoreWhiteSpace();                            break;
+                        }
+                    }
+                    else
+                        readNextChar();
+                }
+            }
+            else if (lexbuffer === "\"") {
+                //regex
+                readNextChar();
+                tokenBuffer = "";
+                while (1) {
+                    if (lexbuffer === "\"") {
+                        readNextChar();
+                        if (lexbuffer === "/") {
+                            readNextChar();
+                            return new Token(tokenBuffer, TOKEN.TYPE.REGEX, lineNumber, lineIndex);
+                        }
+                        else tokenBuffer += "\"";
+                    }
+                    else
+                        nextChar();
+                }
+            }
+            else
+                return new Token(TOKEN.OPERATOR.DIV, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
+        }
+
         //check for dom element
         if (lexbuffer === "$") {
-            nextChar();
+            readNextChar();
             if (lexbuffer === "(") {
-                nextChar();
+                readNextChar();
                 if (lexbuffer === "\"") {
+                    readNextChar();
                     while (true) {
-                        nextChar();
                         if (lexbuffer === "\"") {
-                            nextChar();
+                            readNextChar();
                             if (lexbuffer === ")") {
-                                nextChar();
+                                readNextChar();
                                 break;
                             }
+                            else {
+                                tokenBuffer += "\"";
+                            }
+                        }
+                        else {
+                            nextChar();
                         }
                     }
                     return new Token(tokenBuffer, TOKEN.TYPE.SELECTOR, lineNumber, lineIndex);
                 }
                 else {
-                    console.log("ERROR: Invalid token--Expected token of type: SELECTOR \n Recieved " + tokenBuffer + " on line " + lineNumber + "\n");
+                    throw new Error("ERROR: Invalid token--Expected token of type: SELECTOR \n Recieved " + tokenBuffer + " on line " + lineNumber + "\n");
                     return "ERROR";
                 }
             }
             else {
-                console.log("ERROR: Invalid token--Expected token of type: SELECTOR \n Recieved " + tokenBuffer + " on line " + lineNumber + "\n");
+                throw new Error("ERROR: Invalid token--Expected token of type: SELECTOR \n Recieved " + tokenBuffer + " on line " + lineNumber + "\n");
                 return "ERROR";
             }
         }
 
-        //check for operators and tags
+            //check for operators and tags
         if (isAlpha.test(lexbuffer)) {
             do {
                 nextChar();
@@ -264,6 +332,6 @@ module.exports = {
             default:
                 break;
         }
-        throw new Error("Unknown token on line " + lineNumber + "\n");
+        throw new Error("Unknown token: --" + tokenBuffer+ "-- on line " + lineNumber + "\n");
     }
 };

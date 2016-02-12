@@ -10,8 +10,28 @@ describe("The \"lexer\" module", function () {
         expect(function () {
             lexer.getNextToken();
         }).toThrow();
-    })
+    });
+
     describe("should tokenize valid tokens such as", function () {
+        describe("should recognize comments and ignore them properly including", function() {
+            it("single line comments //", function() {
+                lexer.loadString("//this is a comment \n \"this is not a comment\"");
+                thisToken = lexer.getNextToken();
+                expect(thisToken.type).toBe(lexer.TOKEN.TYPE.STRING);
+            });
+            it("multi line comments /* */", function() {
+                lexer.loadString("/* multi line comment \n still going */ \"this is a string\"");
+                thisToken = lexer.getNextToken();
+                expect(thisToken.type).toBe(lexer.TOKEN.TYPE.STRING);
+            });
+        });
+
+        it("should recognize regular expressions", function () {
+            lexer.loadString("/\"<([A-Z][A-Z0-9]*)\b[^>]*>(.*?)</\1>\"/");
+            thisToken = lexer.getNextToken();
+            expect(thisToken.type).toBe(lexer.TOKEN.TYPE.REGEX);
+        });
+
         it("strings formatted between double quotes", function () {
             lexer.loadString("\"Hello World\"");
             thisToken = lexer.getNextToken();
@@ -29,7 +49,7 @@ describe("The \"lexer\" module", function () {
             lexer.loadString("$(\".class #id value\")");
             thisToken = lexer.getNextToken();
             expect(thisToken.type).toBe(lexer.TOKEN.TYPE.SELECTOR);
-            expect(thisToken.value).toBe("$(\".class #id value\")");
+            expect(thisToken.value).toBe(".class #id value");
         });
         describe("operators such as", function () {
             it("is", function () {
