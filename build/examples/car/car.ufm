@@ -1,3 +1,5 @@
+@integer: /"someregex"/;
+
 $("#rootForm") {
 	valid:
 	       not $("#hasCar") is valid or
