@@ -24,10 +24,16 @@ describe("The \"lexer\" module", function () {
                 thisToken = lexer.getNextToken();
                 expect(thisToken.type).toBe(lexer.TOKEN.TYPE.STRING);
             });
+            it("tricky multi line comments /*** **/", function() {
+                lexer.loadString("/** multi line comment \n still going ***/ \"this is a string\"");
+                thisToken = lexer.getNextToken();
+                expect(thisToken.type).toBe(lexer.TOKEN.TYPE.STRING);
+            });
+
         });
 
         it("should recognize regular expressions", function () {
-            lexer.loadString("/\"<([A-Z][A-Z0-9]*)\b[^>]*>(.*?)</\1>\"/");
+            lexer.loadString("/\"<\"([A-Z][A-Z0-9]*)\b[^>]*>(.*?)</\1>\"/");
             thisToken = lexer.getNextToken();
             expect(thisToken.type).toBe(lexer.TOKEN.TYPE.REGEX);
         });
@@ -181,11 +187,11 @@ describe("The \"lexer\" module", function () {
             });
         });
 
-        it("variables such as an \"@ sign followed by alphanumerics", function () {
-            lexer.loadString("@testVariable");
+        it("variables such as an \"@ sign followed by alphanumerics or _", function () {
+            lexer.loadString("@testVariable123__test123");
             thisToken = lexer.getNextToken();
             expect(thisToken.type).toBe(lexer.TOKEN.TYPE.VARIABLE);
-            expect(thisToken.value).toBe("@testVariable");
+            expect(thisToken.value).toBe("testVariable123__test123");
         });
         it("numbers such as one or more numerals between 0-9", function () {
             lexer.loadString("1234567890");
