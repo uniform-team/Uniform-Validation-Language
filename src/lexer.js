@@ -66,8 +66,8 @@ var isWhitespace = /\s|\t/;
 var isAlpha = /[a-zA-Z]/;
 var isDigit = /[0-9]/;
 
-var lineNumber = 0;     //keeps track of current line number for error messages
-var lineIndex = 0;      //keeps track of the current index of the line for error messages
+var lineNumber = 1;     //keeps track of current line number for error messages
+var lineIndex = 1;      //keeps track of the current index of the line for error messages
 var stringIndex = 0;    //the index of the string, lexbuffer contains the character at this index
 var inputString = "";   //the entire uniform file to be lexed
 
@@ -87,33 +87,38 @@ module.exports = {
         var lexbuffer = "";         //contains a single character to be analyzed
         var tokenBuffer = "";   //buffer that appends the lexbuffer until a token is built
 
-        //Description: Appends lexbuffer to tokenBuffer, and loads the next char into lexbuffer
-        function nextChar() {
+        //When called, will reset the line and index numbers if a new line is encountered or increments the line index otherwise
+        function resetLine() {
             if (lexbuffer === "\n") {
                 lineNumber++;
-                lineIndex = 0;
+                lineIndex = 1;
             }
             else
                 lineIndex++;
-            tokenBuffer += lexbuffer;
+        }
+
+        //increments string index and updates lexbuffer to the next character
+        function nextChar() {
             stringIndex++;
             lexbuffer = inputString.charAt(stringIndex);
         }
 
-        function readNextChar() {
-            if (lexbuffer === "\n") {
-                lineNumber++;
-                lineIndex = 0;
-            }
-            else
-                lineIndex++;
-            stringIndex++;
-            lexbuffer = inputString.charAt(stringIndex);
+        //Description: Appends lexbuffer to tokenBuffer, and loads the next char into lexbuffer
+        function readChar() {
+            resetLine();
+            tokenBuffer += lexbuffer;
+            nextChar();
+        }
+
+        //loads the next char into lexbuffer without appending
+        function skipChar() {
+            resetLine();
+            nextChar();
         }
 
         function ignoreWhiteSpace() {
             while (isWhitespace.test(lexbuffer)) {
-                readNextChar();
+                skipChar();
             }
         }
 
@@ -130,50 +135,53 @@ module.exports = {
         ignoreWhiteSpace();
         //check for regex and comment
 
+
+        //if a / is encountered, it may be a single line comment, multi line comment, division operation, or a regex
         if (lexbuffer === "/") {
-            readNextChar();
+            skipChar();
             //single line comment
             if (lexbuffer === "/") {
-                readNextChar();
+                skipChar();
                 while (lexbuffer !== "\n") {
-                    readNextChar();
+                    skipChar();
                 }
-                readNextChar();
+                skipChar();
                 tokenBuffer = "";
                 ignoreWhiteSpace();
             }
             //multi line comment
             else if (lexbuffer === "*") {
-                readNextChar();
+                skipChar();
                 while (1) {
                     if (lexbuffer === "*") {
-                        nextChar();
+                        readChar();
                         if (lexbuffer === "/") {
-                            readNextChar();
+                            skipChar();
                             //end comment
                             tokenBuffer = "";
-                            ignoreWhiteSpace();                            break;
+                            ignoreWhiteSpace();
+                            break;
                         }
                     }
                     else
-                        readNextChar();
+                        skipChar();
                 }
             }
             else if (lexbuffer === "\"") {
                 //regex
-                readNextChar();
+                skipChar();
                 tokenBuffer = "";
                 while (1) {
                     if (lexbuffer === "\"") {
-                        readNextChar();
+                        skipChar();
                         if (lexbuffer === "/") {
-                            readNextChar();
+                            skipChar();
                             return new Token(tokenBuffer, TOKEN.TYPE.REGEX, lineNumber, lineIndex);
                         }
                         else tokenBuffer += "\"";
                     }
                     else
-                        nextChar();
+                        readChar();
                 }
             }
             else
@@ -182,16 +190,16 @@ module.exports = {
 
         //check for dom element
         if (lexbuffer === "$") {
-            readNextChar();
+            skipChar();
             if (lexbuffer === "(") {
-                readNextChar();
+                skipChar();
                 if (lexbuffer === "\"") {
-                    readNextChar();
+                    skipChar();
                     while (true) {
                         if (lexbuffer === "\"") {
-                            readNextChar();
+                            skipChar();
                             if (lexbuffer === ")") {
-                                readNextChar();
+                                skipChar();
                                 break;
                             }
                             else {
@@ -199,7 +207,7 @@ module.exports = {
                             }
                         }
                         else {
-                            nextChar();
+                            readChar();
                         }
                     }
                     return new Token(tokenBuffer, TOKEN.TYPE.SELECTOR, lineNumber, lineIndex);
@@ -218,7 +226,7 @@ module.exports = {
             //check for operators and tags
         if (isAlpha.test(lexbuffer)) {
             do {
-                nextChar();
+                readChar();
             } while (isAlpha.test(lexbuffer));
 
             switch(tokenBuffer) {
@@ -258,25 +266,25 @@ module.exports = {
         //Check for number
         else if (isDigit.test(lexbuffer)) {
             do {
-                nextChar();
+                readChar();
             } while (isDigit.test(lexbuffer));
             return new Token(tokenBuffer, TOKEN.TYPE.NUMBER, lineNumber, lineIndex);
         }
 
         //Check for variable
         else if (lexbuffer === "@") {
-            do {
-                nextChar();
-            } while (isAlpha.test(lexbuffer) || isDigit.test(lexbuffer));
+            skipChar();
+             while (isAlpha.test(lexbuffer) || isDigit.test(lexbuffer) || lexbuffer === "_")
+                readChar();
             return new Token(tokenBuffer, TOKEN.TYPE.VARIABLE, lineNumber, lineIndex);
         }
 
         //Check for string
         else if (lexbuffer === "\"") {
             do {
-                nextChar();
+                readChar();
             } while (lexbuffer !== '\"');
-            nextChar();
+            readChar();
             return new Token(tokenBuffer, TOKEN.TYPE.STRING, lineNumber, lineIndex);
         }
 
@@ -284,47 +292,47 @@ module.exports = {
         //check for non-alpha operators
         switch (lexbuffer) {
             case TOKEN.OPERATOR.ADD:
-                nextChar();
+                readChar();
                 return new Token(TOKEN.OPERATOR.ADD, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
             case TOKEN.OPERATOR.SUB:
-                nextChar();
+                readChar();
                 return new Token(TOKEN.OPERATOR.SUB, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
             case TOKEN.OPERATOR.MUL:
-                nextChar();
+                readChar();
                 return new Token(TOKEN.OPERATOR.MUL, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
             case TOKEN.OPERATOR.DIV:
-                nextChar();
+                readChar();
                 return new Token(TOKEN.OPERATOR.DIV, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
             case TOKEN.OPERATOR.MOD:
-                nextChar();
+                readChar();
                 return new Token(TOKEN.OPERATOR.MOD, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
 
             case TOKEN.OPERATOR.COLON:
-                nextChar();
+                readChar();
                 return new Token(TOKEN.OPERATOR.COLON, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
             case TOKEN.OPERATOR.LBRACE:
-                nextChar();
+                readChar();
                 return new Token(TOKEN.OPERATOR.LBRACE, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
             case TOKEN.OPERATOR.RBRACE:
-                nextChar();
+                readChar();
                 return new Token(TOKEN.OPERATOR.RBRACE, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
             case TOKEN.OPERATOR.LPAREN:
-                nextChar();
+                readChar();
                 return new Token(TOKEN.OPERATOR.LPAREN, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
             case TOKEN.OPERATOR.RPAREN:
-                nextChar();
+                readChar();
                 return new Token(TOKEN.OPERATOR.RPAREN, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
             case TOKEN.OPERATOR.SEMICOLON:
-                nextChar();
+                readChar();
                 return new Token(TOKEN.OPERATOR.SEMICOLON, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
             case TOKEN.OPERATOR.LT:
-                nextChar();
+                readChar();
                 if (lexbuffer === "=")
                     return new Token(TOKEN.OPERATOR.LTE, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
                 else
                     return new Token(TOKEN.OPERATOR.LT, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
             case TOKEN.OPERATOR.GT:
-                nextChar();
+                readChar();
                 if (lexbuffer === "=")
                     return new Token(TOKEN.OPERATOR.GTE, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
                 else
