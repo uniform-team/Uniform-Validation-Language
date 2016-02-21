@@ -1,4 +1,3 @@
-// expression should return the whole expression for next week
 
 var lexer = require("./lexer.js");
 var scope = require("./scope.js");
@@ -44,7 +43,7 @@ function variableDeclaration() {
     var variable = matchType(lexer.TOKEN.TYPE.VARIABLE);
     matchValue(lexer.TOKEN.OPERATOR.COLON);
     tokenString = "";
-    expression();
+    expressionAndOr();
     if (scope.thisScope().find(variable) !== null)
         console.warn("Line " + currentToken.line + ": Redeclared variable in same scope " + variable);
 
@@ -78,7 +77,7 @@ function statement() {
     else {
         var tagName = tag();
         matchValue(lexer.TOKEN.OPERATOR.COLON);
-        expression();
+        expressionAndOr();
         if (scope.thisScope().find(tagName) !== null)
             console.warn("Line " + currentToken.line + ": Redeclared tag in same scope " + tagName);
         scope.insert(new scope.Symbol(tagName, "", scope.KIND.TAG));
@@ -95,30 +94,25 @@ function tag() {
     }
 }
 
-function expression() {
-    expression1();
-}
-
-
-function expression1() {
-    expression2();
+function expressionAndOr() {
+    expressionNot();
     while (currentToken.value === lexer.TOKEN.OPERATOR.AND ||
     currentToken.value === lexer.TOKEN.OPERATOR.OR) {
         matchType(lexer.TOKEN.TYPE.KEYWORD);
-        expression2();
+        expressionNot();
     }
 }
 
-function expression2() {
+function expressionNot() {
     if (currentToken.value === lexer.TOKEN.OPERATOR.NOT) {
         matchValue(lexer.TOKEN.OPERATOR.NOT);
-        expression2();
+        expressionNot();
     }
     else
-        expression3();
+        expressionOp();
 }
 
-function isExpression3Operator(token) {
+function isExpressionOp(token) {
     return (token.value === lexer.TOKEN.OPERATOR.EQUALS ||
     token.value === lexer.TOKEN.OPERATOR.MATCHES ||
     token.value === lexer.TOKEN.OPERATOR.IS ||
@@ -128,69 +122,76 @@ function isExpression3Operator(token) {
     token.value === lexer.TOKEN.OPERATOR.GTE);
 }
 
-function expression3() {
-    expression4();
-    while (isExpression3Operator(currentToken)) {
+function expressionOp() {
+    expressionAddSub();
+    while (isExpressionOp(currentToken)) {
         matchType(lexer.TOKEN.TYPE.KEYWORD);
-        expression4();
+        expressionAddSub();
     }
 }
 
-function expression4() {
-    expression5();
+function expressionAddSub() {
+    expressionMulDivMod();
     while (currentToken.value === lexer.TOKEN.OPERATOR.ADD ||
     currentToken.value === lexer.TOKEN.OPERATOR.SUB) {
         matchType(lexer.TOKEN.TYPE.KEYWORD);
-        expression5();
+        expressionMulDivMod();
     }
 }
 
-function expression5() {
-    expression6();
+function expressionMulDivMod() {
+    expressionNeg();
     while (currentToken.value === lexer.TOKEN.OPERATOR.MUL ||
     currentToken.value === lexer.TOKEN.OPERATOR.DIV ||
     currentToken.value === lexer.TOKEN.OPERATOR.MOD) {
         matchType(lexer.TOKEN.TYPE.KEYWORD);
-        expression6();
+        expressionNeg();
     }
 }
 
-function expression6() {
+function expressionNeg() {
     while (currentToken.value === lexer.TOKEN.OPERATOR.SUB) {
         matchValue(lexer.TOKEN.OPERATOR.SUB);
     }
-    expression7();
+    expressionParen();
 }
 
-function expression7() {
+function expressionParen() {
     if (currentToken.value === lexer.TOKEN.OPERATOR.LPAREN) {
         matchValue(lexer.TOKEN.OPERATOR.LPAREN);
-        expression1();
+        var AndOrValue = expressionAndOr();
         matchValue(lexer.TOKEN.OPERATOR.RPAREN);
+        return AndOrValue;
     }
-    else operand();
+    else {
+        return operand();
 }
 
 function operand() {
+    var operandValue;
     if (currentToken.type === lexer.TOKEN.TYPE.NUMBER)
-        matchType(lexer.TOKEN.TYPE.NUMBER);
+        returnFunctionTypeValue = matchType(lexer.TOKEN.TYPE.NUMBER);
     else if (currentToken.type === lexer.TOKEN.TYPE.STRING)
-        matchType(lexer.TOKEN.TYPE.STRING);
+        operandValue = matchType(lexer.TOKEN.TYPE.STRING);
     else if (currentToken.type === lexer.TOKEN.TYPE.VARIABLE) {
         if (scope.isDefined(currentToken.value))
             throw new Error("Line " + currentToken.line + ": variable undefined " + currentToken.value);
-        matchType(lexer.TOKEN.TYPE.VARIABLE);
+        operandValue = matchType(lexer.TOKEN.TYPE.VARIABLE);
     }
     else if (currentToken.type === lexer.TOKEN.TYPE.SELECTOR)
-        matchType(lexer.TOKEN.TYPE.SELECTOR);
+        operandValue = matchType(lexer.TOKEN.TYPE.SELECTOR);
     else if (currentToken.type === lexer.TOKEN.TYPE.KEYWORD)
         state();
     else if (currentToken.type === lexer.TOKEN.TYPE.REGEX)
-        matchType(lexer.TOKEN.TYPE.REGEX);
+        operandValue = matchType(lexer.TOKEN.TYPE.REGEX);
     else {
-        throw new Error("Invalid statement on line " + currentToken.line + ", \nexpected an operand, recieved " + currentToken.value + "\n");
+        throw new Error("Line " + currentToken.line + ": invalid expression, expected an operand, recieved " + currentToken.value + "\n");
     }
+    return function () {
+        return operandValue;
+    };
 }
+
 
 function isState(token) {
     return token.value === lexer.TOKEN.STATE.VALID ||
@@ -214,22 +215,22 @@ function matchType(inputToken) {
     if (inputToken === currentToken.type) {
         tokenString += currentToken.value + " ";
         var thisString = currentToken.value;
-        //console.log("Value: " + currentToken.value + ", Type: " + currentToken.type);
+        console.log("Value: " + currentToken.value + ", Type: " + currentToken.type);
         currentToken = lexer.getNextToken();
         return thisString;
     }
-    else throw new Error("match type failed on line " + currentToken.line + ", could not find: " + currentToken.value);
+    else throw new Error("match type failed on line " + currentToken.line + ", could not find: " + currentToken.value + " " + currentToken.type);
 }
 
 function matchValue(inputToken) {
     if (inputToken === currentToken.value) {
         tokenString += currentToken.value + " ";
         var thisString = currentToken.value;
-        //console.log("Value: " + currentToken.value + " Type: " + currentToken.type);
+        console.log("Value: " + currentToken.value + " Type: " + currentToken.type);
         currentToken = lexer.getNextToken();
         return thisString;
     }
-    else throw new Error("match value failed on line " + currentToken.line + ", could not find: " + currentToken.value);
+    else throw new Error("match value failed on line " + currentToken.line + ", could not find: " + currentToken.value + ", " + currentToken.type);
 }
 
 module.exports = {
@@ -241,5 +242,5 @@ module.exports = {
         scope.closeScope();
         console.log("Done Parsing\n");
     },
-    _expression: expression
+    _expression: expressionAndOr
 };
