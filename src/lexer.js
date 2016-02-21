@@ -213,12 +213,12 @@ module.exports = {
                     return new Token(tokenBuffer, TOKEN.TYPE.SELECTOR, lineNumber, lineIndex);
                 }
                 else {
-                    throw new Error("ERROR: Invalid token--Expected token of type: SELECTOR \n Recieved " + tokenBuffer + " on line " + lineNumber + "\n");
+                    throw new Error("Line " + lineNumber + ": Invalid token, Expected token of type: SELECTOR \n Recieved " + tokenBuffer);
                     return "ERROR";
                 }
             }
             else {
-                throw new Error("ERROR: Invalid token--Expected token of type: SELECTOR \n Recieved " + tokenBuffer + " on line " + lineNumber + "\n");
+                throw new Error("Line " + lineNumber + ": Invalid token, Expected token of type: SELECTOR \n Recieved " + tokenBuffer);
                 return "ERROR";
             }
         }
@@ -259,7 +259,7 @@ module.exports = {
 
 
                 default:
-                    throw new Error("ERROR: Invalid token--Expected token of type: OPERATOR or TAG \n Recieved " + tokenBuffer + " on line " + lineNumber + "\n");
+                    throw new Error("Line " + lineNumber + ": Invalid token, Expected token of type: OPERATOR or TAG \n Recieved " + tokenBuffer);
             }
         }
 
@@ -340,6 +340,6 @@ module.exports = {
             default:
                 break;
         }
-        throw new Error("Unknown token: --" + tokenBuffer+ "-- on line " + lineNumber + "\n");
+        return new Token(TOKEN.ENDOFFILE, TOKEN.TYPE.ENDOFFILE, lineNumber, lineIndex);
     }
 };
