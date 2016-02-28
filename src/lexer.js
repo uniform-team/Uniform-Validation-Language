@@ -156,7 +156,6 @@ module.exports = {
             else throw new Error("Line " + lineNumber + ": Invalid token, Recieved " + tokenBuffer);
 
         }
-        else throw new Error("Line " + lineNumber + ": Invalid token, Recieved " + tokenBuffer);
 
         if (lexbuffer === "f") {
             readChar();
@@ -178,7 +177,6 @@ module.exports = {
             }
             else throw new Error("Line " + lineNumber + ": Invalid token, Recieved " + tokenBuffer);
         }
-        else throw new Error("Line " + lineNumber + ": Invalid token, Recieved " + tokenBuffer);
 
 
 
