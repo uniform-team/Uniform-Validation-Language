@@ -1,13 +1,15 @@
 //Constants for lexical tokens
 var TOKEN = {
     TYPE: {
+        BOOL: "boolean",
         VARIABLE: "variable",
         NUMBER: "number",
         STRING: "string",
         ENDOFFILE: "EOF",
         SELECTOR: "selector",
         KEYWORD: "keyword",
-        REGEX: "regex"
+        REGEX: "regex",
+        STATE: "state"
     },
     OPERATOR: {
         ADD: "+",
@@ -51,16 +53,6 @@ var TOKEN = {
     ENDOFFILE: "EOF"
 };
 
-//Generates new token object
-function Token(value, type, line, col) {
-    if (value === undefined) throw new Error("Undefined Token");
-    if (type === undefined) throw new Error("Undefined Type");
-    this.value = value;
-    this.type = type;
-    this.line = line;
-    this.col = col;
-}
-
 //Regular expressions
 var isWhitespace = /\s|\t/;
 var isAlpha = /[a-zA-Z]/;
@@ -79,6 +71,15 @@ module.exports = {
     loadString: function (inString) {
         inputString = inString;
         stringIndex = 0;
+    },
+    //Generates new token object
+    Token: function (value, type, line, col) {
+        if (value === undefined) throw new Error("Undefined Value in new Token");
+        if (type === undefined) throw new Error("Undefined Type in new Token");
+        this.value = value;
+        this.type = type;
+        this.line = line;
+        this.col = col;
     },
 
     //Description: Returns the current token and prepares to return the next
@@ -124,7 +125,7 @@ module.exports = {
 
         //When the end of the uniform file is reached, exit
         if (stringIndex >= inputString.length) {
-            return new Token(TOKEN.ENDOFFILE, TOKEN.TYPE.ENDOFFILE, lineNumber, lineIndex);
+            return new this.Token(TOKEN.ENDOFFILE, TOKEN.TYPE.ENDOFFILE, lineNumber, lineIndex);
         }
 
 
@@ -134,6 +135,52 @@ module.exports = {
         //ignore whitespace, move string index until non-whitespace character is found
         ignoreWhiteSpace();
         //check for regex and comment
+
+
+        if (lexbuffer === "t")
+        {
+            readChar();
+            if (lexbuffer === "r") {
+                readChar();
+                if (lexbuffer === "u") {
+                    readChar();
+                    if (lexbuffer === "e") {
+                        readChar();
+                        return new this.Token(true, TOKEN.TYPE.BOOL, lineNumber, lineIndex);
+                    }
+                    else throw new Error("Line " + lineNumber + ": Invalid token, Recieved " + tokenBuffer);
+                }
+                else throw new Error("Line " + lineNumber + ": Invalid token, Recieved " + tokenBuffer);
+
+            }
+            else throw new Error("Line " + lineNumber + ": Invalid token, Recieved " + tokenBuffer);
+
+        }
+        else throw new Error("Line " + lineNumber + ": Invalid token, Recieved " + tokenBuffer);
+
+        if (lexbuffer === "f") {
+            readChar();
+            if (lexbuffer === "a") {
+                readChar();
+                if (lexbuffer === "l") {
+                    readChar();
+                    if (lexbuffer === "s") {
+                        readChar();
+                        if (lexbuffer === "e") {
+                            readChar();
+                            return new this.Token(false, TOKEN.TYPE.BOOL, lineNumber, lineIndex);
+                        }
+                        else throw new Error("Line " + lineNumber + ": Invalid token, Recieved " + tokenBuffer);
+                    }
+                    else throw new Error("Line " + lineNumber + ": Invalid token, Recieved " + tokenBuffer);
+                }
+                else throw new Error("Line " + lineNumber + ": Invalid token, Recieved " + tokenBuffer);
+            }
+            else throw new Error("Line " + lineNumber + ": Invalid token, Recieved " + tokenBuffer);
+        }
+        else throw new Error("Line " + lineNumber + ": Invalid token, Recieved " + tokenBuffer);
+
+
 
 
         //if a / is encountered, it may be a single line comment, multi line comment, division operation, or a regex
@@ -176,7 +223,7 @@ module.exports = {
                         skipChar();
                         if (lexbuffer === "/") {
                             skipChar();
-                            return new Token(tokenBuffer, TOKEN.TYPE.REGEX, lineNumber, lineIndex);
+                            return new this.Token(tokenBuffer, TOKEN.TYPE.REGEX, lineNumber, lineIndex);
                         }
                         else tokenBuffer += "\"";
                     }
@@ -185,7 +232,7 @@ module.exports = {
                 }
             }
             else
-                return new Token(TOKEN.OPERATOR.DIV, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
+                return new this.Token(TOKEN.OPERATOR.DIV, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
         }
 
         //check for dom element
@@ -210,20 +257,18 @@ module.exports = {
                             readChar();
                         }
                     }
-                    return new Token(tokenBuffer, TOKEN.TYPE.SELECTOR, lineNumber, lineIndex);
+                    return new this.Token(tokenBuffer, TOKEN.TYPE.SELECTOR, lineNumber, lineIndex);
                 }
                 else {
                     throw new Error("Line " + lineNumber + ": Invalid token, Expected token of type: SELECTOR \n Recieved " + tokenBuffer);
-                    return "ERROR";
                 }
             }
             else {
                 throw new Error("Line " + lineNumber + ": Invalid token, Expected token of type: SELECTOR \n Recieved " + tokenBuffer);
-                return "ERROR";
             }
         }
 
-            //check for operators and tags
+        //check for operators and tags
         if (isAlpha.test(lexbuffer)) {
             do {
                 readChar();
@@ -231,31 +276,31 @@ module.exports = {
 
             switch(tokenBuffer) {
                 case TOKEN.OPERATOR.IS:
-                    return new Token(TOKEN.OPERATOR.IS, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
+                    return new this.Token(TOKEN.OPERATOR.IS, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
                 case TOKEN.OPERATOR.AND:
-                    return new Token(TOKEN.OPERATOR.AND, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
+                    return new this.Token(TOKEN.OPERATOR.AND, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
                 case TOKEN.OPERATOR.OR:
-                    return new Token(TOKEN.OPERATOR.OR, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
+                    return new this.Token(TOKEN.OPERATOR.OR, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
                 case TOKEN.OPERATOR.NOT:
-                    return new Token(TOKEN.OPERATOR.NOT, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
+                    return new this.Token(TOKEN.OPERATOR.NOT, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
                 case TOKEN.OPERATOR.MATCHES:
-                    return new Token(TOKEN.OPERATOR.MATCHES, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
+                    return new this.Token(TOKEN.OPERATOR.MATCHES, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
                 case TOKEN.OPERATOR.EQUALS:
-                    return new Token(TOKEN.OPERATOR.EQUALS, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
+                    return new this.Token(TOKEN.OPERATOR.EQUALS, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
 
                 case TOKEN.TAG.VALID:
-                    return new Token(TOKEN.TAG.VALID, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
+                    return new this.Token(TOKEN.TAG.VALID, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
                 case TOKEN.TAG.ENABLED:
-                    return new Token(TOKEN.TAG.ENABLED, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
+                    return new this.Token(TOKEN.TAG.ENABLED, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
                 case TOKEN.TAG.VISIBLE:
-                    return new Token(TOKEN.TAG.VISIBLE, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
+                    return new this.Token(TOKEN.TAG.VISIBLE, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
                 case TOKEN.TAG.OPTIONAL:
-                    return new Token(TOKEN.TAG.OPTIONAL, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
+                    return new this.Token(TOKEN.TAG.OPTIONAL, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
 
                 case TOKEN.STATE.STRING:
-                    return new Token(TOKEN.STATE.STRING, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
+                    return new this.Token(TOKEN.STATE.STRING, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
                 case TOKEN.STATE.NUMBER:
-                    return new Token(TOKEN.STATE.NUMBER, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
+                    return new this.Token(TOKEN.STATE.NUMBER, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
 
 
                 default:
@@ -268,24 +313,26 @@ module.exports = {
             do {
                 readChar();
             } while (isDigit.test(lexbuffer));
-            return new Token(tokenBuffer, TOKEN.TYPE.NUMBER, lineNumber, lineIndex);
+            return new this.Token(tokenBuffer, TOKEN.TYPE.NUMBER, lineNumber, lineIndex);
         }
 
         //Check for variable
         else if (lexbuffer === "@") {
             skipChar();
-             while (isAlpha.test(lexbuffer) || isDigit.test(lexbuffer) || lexbuffer === "_")
+            while (isAlpha.test(lexbuffer) || isDigit.test(lexbuffer) || lexbuffer === "_")
                 readChar();
-            return new Token(tokenBuffer, TOKEN.TYPE.VARIABLE, lineNumber, lineIndex);
+            return new this.Token(tokenBuffer, TOKEN.TYPE.VARIABLE, lineNumber, lineIndex);
         }
 
         //Check for string
         else if (lexbuffer === "\"") {
-            do {
+            skipChar();
+            tokenBuffer = "";
+            while (lexbuffer !== '\"') {
                 readChar();
-            } while (lexbuffer !== '\"');
-            readChar();
-            return new Token(tokenBuffer, TOKEN.TYPE.STRING, lineNumber, lineIndex);
+            }
+            skipChar();
+            return new this.Token(tokenBuffer, TOKEN.TYPE.STRING, lineNumber, lineIndex);
         }
 
 
@@ -293,53 +340,53 @@ module.exports = {
         switch (lexbuffer) {
             case TOKEN.OPERATOR.ADD:
                 readChar();
-                return new Token(TOKEN.OPERATOR.ADD, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
+                return new this.Token(TOKEN.OPERATOR.ADD, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
             case TOKEN.OPERATOR.SUB:
                 readChar();
-                return new Token(TOKEN.OPERATOR.SUB, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
+                return new this.Token(TOKEN.OPERATOR.SUB, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
             case TOKEN.OPERATOR.MUL:
                 readChar();
-                return new Token(TOKEN.OPERATOR.MUL, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
+                return new this.Token(TOKEN.OPERATOR.MUL, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
             case TOKEN.OPERATOR.DIV:
                 readChar();
-                return new Token(TOKEN.OPERATOR.DIV, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
+                return new this.Token(TOKEN.OPERATOR.DIV, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
             case TOKEN.OPERATOR.MOD:
                 readChar();
-                return new Token(TOKEN.OPERATOR.MOD, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
+                return new this.Token(TOKEN.OPERATOR.MOD, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
 
             case TOKEN.OPERATOR.COLON:
                 readChar();
-                return new Token(TOKEN.OPERATOR.COLON, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
+                return new this.Token(TOKEN.OPERATOR.COLON, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
             case TOKEN.OPERATOR.LBRACE:
                 readChar();
-                return new Token(TOKEN.OPERATOR.LBRACE, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
+                return new this.Token(TOKEN.OPERATOR.LBRACE, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
             case TOKEN.OPERATOR.RBRACE:
                 readChar();
-                return new Token(TOKEN.OPERATOR.RBRACE, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
+                return new this.Token(TOKEN.OPERATOR.RBRACE, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
             case TOKEN.OPERATOR.LPAREN:
                 readChar();
-                return new Token(TOKEN.OPERATOR.LPAREN, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
+                return new this.Token(TOKEN.OPERATOR.LPAREN, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
             case TOKEN.OPERATOR.RPAREN:
                 readChar();
-                return new Token(TOKEN.OPERATOR.RPAREN, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
+                return new this.Token(TOKEN.OPERATOR.RPAREN, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
             case TOKEN.OPERATOR.SEMICOLON:
                 readChar();
-                return new Token(TOKEN.OPERATOR.SEMICOLON, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
+                return new this.Token(TOKEN.OPERATOR.SEMICOLON, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
             case TOKEN.OPERATOR.LT:
                 readChar();
                 if (lexbuffer === "=")
-                    return new Token(TOKEN.OPERATOR.LTE, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
+                    return new this.Token(TOKEN.OPERATOR.LTE, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
                 else
-                    return new Token(TOKEN.OPERATOR.LT, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
+                    return new this.Token(TOKEN.OPERATOR.LT, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
             case TOKEN.OPERATOR.GT:
                 readChar();
                 if (lexbuffer === "=")
-                    return new Token(TOKEN.OPERATOR.GTE, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
+                    return new this.Token(TOKEN.OPERATOR.GTE, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
                 else
-                    return new Token(TOKEN.OPERATOR.GT, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
+                    return new this.Token(TOKEN.OPERATOR.GT, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
             default:
                 break;
         }
-        return new Token(TOKEN.ENDOFFILE, TOKEN.TYPE.ENDOFFILE, lineNumber, lineIndex);
+        return new this.Token(TOKEN.ENDOFFILE, TOKEN.TYPE.ENDOFFILE, lineNumber, lineIndex);
     }
 };

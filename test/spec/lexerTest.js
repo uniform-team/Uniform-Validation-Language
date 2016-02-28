@@ -13,6 +13,18 @@ describe("The \"lexer\" module", function () {
     });
 
     describe("should tokenize valid tokens such as", function () {
+        it("the literal boolean true", function () {
+            lexer.loadString("true");
+            thisToken = lexer.getNextToken();
+            expect(thisToken.type).toBe(lexer.TOKEN.TYPE.BOOL);
+            expect(thisToken.value).toBe(true);
+        });
+        it("the literal boolean false", function () {
+            lexer.loadString("false");
+            thisToken = lexer.getNextToken();
+            expect(thisToken.type).toBe(lexer.TOKEN.TYPE.BOOL);
+            expect(thisToken.value).toBe(false);
+        });
         describe("should recognize comments and ignore them properly including", function() {
             it("single line comments //", function() {
                 lexer.loadString("//this is a comment \n \"this is not a comment\"");
@@ -42,13 +54,13 @@ describe("The \"lexer\" module", function () {
             lexer.loadString("\"Hello World\"");
             thisToken = lexer.getNextToken();
             expect(thisToken.type).toBe(lexer.TOKEN.TYPE.STRING);
-            expect(thisToken.value).toBe("\"Hello World\"");
+            expect(thisToken.value).toBe("Hello World");
         });
         it("strings that are empty", function () {
             lexer.loadString("\"\"");
             thisToken = lexer.getNextToken();
             expect(thisToken.type).toBe(lexer.TOKEN.TYPE.STRING);
-            expect(thisToken.value).toBe("\"\"");
+            expect(thisToken.value).toBe("");
         });
 
         it("selectors that are wrapped in $(\"\")", function () {
