@@ -154,7 +154,6 @@ module.exports = {
 
             }
             else throw new Error("Line " + lineNumber + ": Invalid token, Recieved " + tokenBuffer);
-
         }
 
         if (lexbuffer === "f") {
@@ -372,14 +371,18 @@ module.exports = {
                 return new this.Token(TOKEN.OPERATOR.SEMICOLON, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
             case TOKEN.OPERATOR.LT:
                 readChar();
-                if (lexbuffer === "=")
+                if (lexbuffer === "=") {
+                    readChar();
                     return new this.Token(TOKEN.OPERATOR.LTE, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
+                }
                 else
                     return new this.Token(TOKEN.OPERATOR.LT, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
             case TOKEN.OPERATOR.GT:
                 readChar();
-                if (lexbuffer === "=")
+                if (lexbuffer === "=") {
+                    readChar();
                     return new this.Token(TOKEN.OPERATOR.GTE, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
+                }
                 else
                     return new this.Token(TOKEN.OPERATOR.GT, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
             default:
