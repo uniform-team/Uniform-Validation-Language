@@ -22,7 +22,20 @@ function find(name) {
     else return null;
 }
 
+//newSelector should be "" if global scope
+function openScope(newSelector) {
+    //console.log(" > Scope Open");
+    if (scopes.length <= 0)
+        scopes.push(new Scope(newSelector));
+    else
+        scopes.push(new Scope(scopes[scopes.length-1].selector+newSelector));
+}
 
+function closeScope() {
+    //console.log(" < Scope Close");
+    //delete tail scope
+    return scopes.pop();
+}
 
 module.exports = {
 
@@ -32,22 +45,12 @@ module.exports = {
         return scopes[scopes.length-1];
     },
 
-    openScope: function (newSelector) {
-        console.log(" > Scope Open");
-        if (scopes.length <= 0)
-            scopes.push(new Scope(newSelector));
-        else
-            scopes.push(new Scope(scopes[scopes.length-1].selector+newSelector));
+    createScope: function (selector, callback) {
+        openScope(selector);
+        callback();
+        return closeScope();
     },
 
-    closeScope: function () {
-        console.log(" < Scope Close");
-        //delete tail scope
-        scopes.pop();
-    },
-    appendToSymbol: function (name, string) {
-        scopes[scopes.length - 1].symbols[name] += string;
-    },
     insert: function (symbol) {
         //add symbol to tail scope
         scopes[scopes.length - 1].symbolTable[symbol.name] = symbol;
@@ -64,15 +67,12 @@ module.exports = {
 
     isDefined: function (name) {
         var symbol = this.lookup(name);
-        if (symbol === null)
-            return true;
-        else
-            false;
+        return (symbol !== null);
     },
 
     Symbol: function (name, expression, kind) {
         if (name === undefined) throw new Error("Undefined SYMBOL, missing name");
-        if (expression === undefined) throw new Error("Undefined SYMBOL, missing expression");
+        //if (expression === undefined) throw new Error("Undefined SYMBOL, missing expression");
         if (kind === undefined) throw new Error("Undefined SYMBOL, missing kind");
         this.name = name;
         this.expression = expression;
