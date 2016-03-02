@@ -3,13 +3,6 @@ var scope = require("./scope.js");
 
 var currentToken;
 
-function isTag(token) {
-    return (token.value === lexer.TOKEN.TAG.VALID ||
-    token.value === lexer.TOKEN.TAG.OPTIONAL ||
-    token.value === lexer.TOKEN.TAG.ENABLED ||
-    token.value === lexer.TOKEN.TAG.VISIBLE);
-}
-
 function blocks() {
     while (currentToken.type === lexer.TOKEN.TYPE.SELECTOR || currentToken.type === lexer.TOKEN.TYPE.VARIABLE) {
         if (currentToken.type === lexer.TOKEN.TYPE.SELECTOR)
@@ -25,10 +18,15 @@ function blocks() {
 function block() {
     var selector = matchType(lexer.TOKEN.TYPE.SELECTOR);
     if (scope.thisScope().find(selector) !== null)
-        console.warn("Line " + currentToken.line + ": Redeclared selector in same scope " + selector);
-
+        console.warn("Line " + currentToken.line + ": Redeclared selector in same scope " + selector + ", previous definitions ignored");
     scope.insert(new scope.Symbol(selector.value, "", scope.KIND.SELECTOR));
     matchValue(lexer.TOKEN.OPERATOR.LBRACE);
+
+    $(selector.value).on("change", function(evt) {
+        $(selector.value).valid = scope.thisScope().find(selector).tagTable["valid"].expression();
+        $(selector.value).trigger("updateValid");
+    });
+
     scope.createScope(selector, function() {
         statements();
         matchValue(lexer.TOKEN.OPERATOR.RBRACE);
@@ -43,6 +41,13 @@ function variableDeclaration() {
         console.warn("Line " + currentToken.line + ": Redeclared variable in same scope " + variable);
     scope.insert(new scope.Symbol(variable.value, exprValue, scope.KIND.VARIABLE));
     matchValue(lexer.TOKEN.OPERATOR.SEMICOLON);
+}
+
+function isTag(token) {
+    return (token.value === lexer.TOKEN.TAG.VALID ||
+    token.value === lexer.TOKEN.TAG.OPTIONAL ||
+    token.value === lexer.TOKEN.TAG.ENABLED ||
+    token.value === lexer.TOKEN.TAG.VISIBLE);
 }
 
 function isValidStatement() {
@@ -71,9 +76,27 @@ function statement() {
         var tagName = tag();
         matchValue(lexer.TOKEN.OPERATOR.COLON);
         var exprValue = expressionAndOr();
+        var checkedExprValue = function () {
+            var exprValueCall = exprValue();
+            if (exprValueCall.type === lexer.TOKEN.TYPE.BOOL)
+                return exprValueCall;
+            else throw new Error("Line " + currentToken.line + ": expected boolean result, received result of type " + exprValueCall.type);
+        };
+
         if (scope.thisScope().find(tagName) !== null)
             console.warn("Line " + currentToken.line + ": Redeclared tag in same scope " + tagName);
-        scope.insert(new scope.Symbol(tagName.value, exprValue, scope.KIND.TAG));
+        if (tagName.value === lexer.TOKEN.TAG.VALID) {
+            scope.insert(new scope.Symbol("valid", checkedExprValue, scope.KIND.TAG));
+        }
+        else if (tagName.value === lexer.TOKEN.TAG.ENABLED) {
+            scope.insert(new scope.Symbol("enabled", checkedExprValue, scope.KIND.TAG));
+        }
+        else if (tagName.value === lexer.TOKEN.TAG.VISIBLE) {
+            scope.insert(new scope.Symbol("visible", checkedExprValue, scope.KIND.TAG));
+        }
+        else if (tagName.value === lexer.TOKEN.TAG.OPTIONAL) {
+            scope.insert(new scope.Symbol("optional", checkedExprValue, scope.KIND.TAG));
+        }
         matchValue(lexer.TOKEN.OPERATOR.SEMICOLON);
     }
 }
@@ -83,7 +106,7 @@ function tag() {
         return matchType(lexer.TOKEN.TYPE.KEYWORD);
     }
     else {
-        throw new Error("Invalid statement on line " + currentToken.line + ", \nexpected tag, recieved " + currentToken.value + "\n");
+        throw new Error("Line " + currentToken.line + ": Invalid statement, expected tag recieved " + currentToken.value);
     }
 }
 
@@ -91,6 +114,7 @@ function expressionAndOr() {
     var LReturn = expressionNot();
     while (currentToken.value === lexer.TOKEN.OPERATOR.AND ||
     currentToken.value === lexer.TOKEN.OPERATOR.OR) {
+        //while loop breaks closure so a function is needed to create a new one for each LReturn
         (function() {
             var op = matchType(lexer.TOKEN.TYPE.KEYWORD);
             var RReturn = expressionNot();
@@ -135,12 +159,12 @@ function isExpressionOp(token) {
 }
 
 function isState(token) {
-    return (token.value === lexer.TOKEN.STATE.VALID ||
-    token.value === lexer.TOKEN.STATE.STRING ||
-    token.value === lexer.TOKEN.STATE.NUMBER ||
-    token.value === lexer.TOKEN.STATE.ENABLED ||
-    token.value === lexer.TOKEN.STATE.VISIBLE ||
-    token.value === lexer.TOKEN.STATE.OPTIONAL);
+    return token.value === lexer.TOKEN.STATE.VALID ||
+        token.value === lexer.TOKEN.STATE.ENABLED ||
+        token.value === lexer.TOKEN.STATE.VISIBLE ||
+        token.value === lexer.TOKEN.STATE.OPTIONAL ||
+        token.value === lexer.TOKEN.STATE.STRING ||
+        token.value === lexer.TOKEN.STATE.NUMBER;
 }
 
 function expressionOp() {
@@ -290,8 +314,22 @@ function operand() {
         returnToken = matchType(lexer.TOKEN.TYPE.VARIABLE);
         return scope.lookup(returnToken.value).expression;
     }
-    else if (currentToken.type === lexer.TOKEN.TYPE.SELECTOR)
+    else if (currentToken.type === lexer.TOKEN.TYPE.SELECTOR) {
         returnToken = matchType(lexer.TOKEN.TYPE.SELECTOR);
+        //check if tag table is empty
+        var symbol = scope.thisScope().tagTable["valid"];
+        $(returnToken.value).on("updateValid", function (evt) {
+            $(scope.thisScope().selector).valid = symbol.expression();
+            $(scope.thisScope().selector).trigger("change");
+        });
+        return function () {
+            var attribute = $(returnToken.value).attr("type");
+            if (attribute === "checkbox")
+                return new lexer.Token($(returnToken.value).value(), lexer.TOKEN.TYPE.BOOL, returnToken.line, returnToken.col);
+            if (attribute === "text")
+                return new lexer.Token($(returnToken.value).value(), lexer.TOKEN.TYPE.STRING, returnToken.line, returnToken.col);
+        };
+    }
     else if (currentToken.type === lexer.TOKEN.TYPE.KEYWORD)
         returnToken = state();
     else if (currentToken.type === lexer.TOKEN.TYPE.REGEX)
@@ -348,14 +386,13 @@ function matchValue(inputToken) {
 
 module.exports = {
     parse: function (inputString) {
-        var closeScope;
+        var closedScope;
         lexer.loadString(inputString);
         currentToken = lexer.getNextToken();
-        closeScope = scope.createScope("", function () {
+        closedScope = scope.createScope("", function () {
             blocks();
         });
-        return closeScope;
+        return closedScope;
     },
-    _addSub: expressionAddSub,
     _scope: scope
 };

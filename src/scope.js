@@ -1,4 +1,6 @@
-var scopes = [];
+//root node of tree
+var root = null;
+var currentScope = null;
 
 var KIND = {
     SELECTOR: "selector",
@@ -6,43 +8,50 @@ var KIND = {
     TAG: "tag"
 };
 
-function Scope(selector) {
+function Scope(selector, parentScope) {
     if (selector === undefined) throw new Error("Undefined SCOPE, missing selector");
+    this.parentScope = parentScope;
     this.selector = selector;
-    this.symbolTable = {};
+    this.selectorTable = {};
+    this.variableTable = {};
+    this.tagTable = {};
     this.find = find;
 }
 
-//checks to see if name symbol exists in this scope and returns it, null if not found
 function find(name) {
-    var symbol = this.symbolTable[name];
-    if (symbol !== undefined) {
-        return symbol;
-    }
+    if (this.selectorTable[name] !== undefined)
+        return this.selectorTable[name];
+    else if (this.variableTable[name] !== undefined)
+        return this.variableTable[name];
+    else if (this.tagTable[name] !== undefined)
+        return this.tagTable[name];
     else return null;
 }
 
 //newSelector should be "" if global scope
 function openScope(newSelector) {
-    //console.log(" > Scope Open");
-    if (scopes.length <= 0)
-        scopes.push(new Scope(newSelector));
-    else
-        scopes.push(new Scope(scopes[scopes.length-1].selector+newSelector));
+    if (root === null) {
+        root = new Scope("", null);
+        currentScope = root;
+    }
+    else {
+        currentScope = new Scope(newSelector, root);
+    }
 }
 
 function closeScope() {
-    //console.log(" < Scope Close");
-    //delete tail scope
-    return scopes.pop();
+    var tempScope = currentScope;
+    if (root === currentScope)
+        root = null;
+    currentScope = currentScope.parentScope;
+    return tempScope;
 }
 
 module.exports = {
-
     KIND: KIND,
 
     thisScope: function () {
-        return scopes[scopes.length-1];
+        return currentScope;
     },
 
     createScope: function (selector, callback) {
@@ -52,15 +61,28 @@ module.exports = {
     },
 
     insert: function (symbol) {
-        //add symbol to tail scope
-        scopes[scopes.length - 1].symbolTable[symbol.name] = symbol;
+        if (symbol.kind === KIND.TAG)
+           currentScope.tagTable[symbol.name] = symbol;
+        else if (symbol.kind === KIND.SELECTOR)
+            currentScope.selectorTable[symbol.name] = symbol;
+        else if (symbol.kind === KIND.VARIABLE)
+            currentScope.variableTable[symbol.name] = symbol;
+        else throw new Error("invalid symbol, cannot insert");
     },
 
     //checks to see if name symbol exists in any scope and returns it, null if not found
     lookup: function (name) {
-        for (var i = scopes.length - 1; i >= 0; i--) {
-            if (scopes[i].symbolTable[name] !== undefined)
-                return scopes[i].symbolTable[name];
+        if (currentScope === null)
+            return null;
+        var tempScope = currentScope;
+        while (tempScope !== null) {
+            if (tempScope.selectorTable[name] !== undefined)
+                return tempScope.selectorTable[name];
+            else if (tempScope.variableTable[name] !== undefined)
+                return tempScope.variableTable[name];
+            else if (tempScope.tagTable[name] !== undefined)
+                return tempScope.tagTable[name];
+            else tempScope = tempScope.parentScope;
         }
         return null;
     },

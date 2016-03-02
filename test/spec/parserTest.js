@@ -12,13 +12,13 @@ describe("The \"parser\" module", function () {
 
 	var testExpression = function (expr) {
 		var returnScope = parser.parse("@test:" + expr + ";");
-		return returnScope.symbolTable["test"].expression();
+		return returnScope.find("test").expression();
 	};
 
 	describe("evaluates expressions such as", function () {
 		it("addition", function () {
-			var token = testExpression("1+2");
-			expect(token.value).toEqual(3);
+			var token = testExpression("3+2");
+			expect(token.value).toEqual(5);
 			expect(token.type).toBe(lexer.TOKEN.TYPE.NUMBER);
 		});
 		it("subtraction", function () {
@@ -32,8 +32,8 @@ describe("The \"parser\" module", function () {
 			expect(token.type).toBe(lexer.TOKEN.TYPE.NUMBER);
 		});
 		it("division", function () {
-			var token = testExpression("12/3");
-			expect(token.value).toEqual(4);
+			var token = testExpression("15/3");
+			expect(token.value).toEqual(5);
 			expect(token.type).toBe(lexer.TOKEN.TYPE.NUMBER);
 		});
 		it("modulo", function () {
