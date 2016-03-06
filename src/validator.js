@@ -45,24 +45,3 @@ try {
 catch (ex) {
     console.log(ex);
 }
-
-//module.exports = plugin;
-
-//var attribute = $(returnToken.value).attr("type");
-
-//if (attribute === "checkbox")
-//    return new lexer.Token($(returnToken.value).val(), lexer.TOKEN.TYPE.BOOL, returnToken.line, returnToken.col);
-//else if (attribute === "text")
-//    return new lexer.Token($(returnToken.value).val(), lexer.TOKEN.TYPE.STRING, returnToken.line, returnToken.col);
-//else if (attribute === "radio")
-//    return new lexer.Token($(returnToken.value).val(), lexer.TOKEN.TYPE.NUMBER, returnToken.line, returnToken.col);
-
-
-//
-//};
-
-//this.valid = true;
-//this.enabled = true;
-//this.visible = true;
-//this.optional = false;
-//

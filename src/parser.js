@@ -104,33 +104,32 @@ function block() {
     var symbol = new scope.Symbol(selector.value, null, scope.KIND.SELECTOR);
     scope.insert(symbol);
     matchValue(lexer.TOKEN.OPERATOR.LBRACE);
-    var tempScope = scope.thisScope();
-
-    //attach event listener to change all dependencies
-    $(selector.value).on("change", function(evt) {
-        var $selector = $(selector.value).ufm();
-        $selector.valid(tempScope.find(selector.value).expression().value);
-        $selector.enabled(tempScope.find(selector.value).expression().value);
-        $selector.visible(tempScope.find(selector.value).expression().value);
-        $selector.optional(tempScope.find(selector.value).expression().value);
-        $selector.trigger("ufm:validate");
-    });
-
-    //attach event listener to change all dependencies
-    $(document).on ("ufm:ready", function(evt) {
-            var $selector = $(selector.value).ufm();
-            $selector.valid(tempScope.find(selector.value).expression().value);
-            $selector.enabled(tempScope.find(selector.value).expression().value);
-            $selector.visible(tempScope.find(selector.value).expression().value);
-            $selector.optional(tempScope.find(selector.value).expression().value);
-            $selector.trigger("ufm:validate");
-    });
-
-
-
 
     //Open the scope and parse the statements
     scope.createScope(selector, function() {
+
+        var tempScope = scope.thisScope();
+
+        //attach event listener to change all dependencies
+        $(selector.value).on("change", function(evt) {
+            var $selector = $(selector.value).ufm();
+            $selector.valid(tempScope.find("valid").expression().value);
+            $selector.enabled(tempScope.find("enabled").expression().value);
+            $selector.visible(tempScope.find("visible").expression().value);
+            $selector.optional(tempScope.find("optional").expression().value);
+            $selector.trigger("ufm:validate");
+        });
+
+        //attach event listener to change all dependencies
+        $(document).on ("ufm:ready", function(evt) {
+            var $selector = $(selector.value).ufm();
+            $selector.valid(tempScope.find("valid").expression().value);
+            $selector.enabled(tempScope.find("enabled").expression().value);
+            $selector.visible(tempScope.find("visible").expression().value);
+            $selector.optional(tempScope.find("optional").expression().value);
+            $selector.trigger("ufm:validate");
+        });
+
         statements(symbol);
         matchValue(lexer.TOKEN.OPERATOR.RBRACE);
     });
@@ -443,7 +442,6 @@ function operand() {
             $selector.enabled(thisScope.tagTable["enabled"].expression().value);
             $selector.visible(thisScope.tagTable["visible"].expression().value);
             $selector.optional(thisScope.tagTable["optional"].expression().value);
-            evt.stopPropagation();
 
             $(thisScope.selector.value).trigger("ufm:validate");
         });
