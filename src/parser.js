@@ -111,7 +111,7 @@ function block() {
         var tempScope = scope.thisScope();
 
         //attach event listener to change all dependencies
-        $(selector.value).on("change", function(evt) {
+        $(document).on("change", selector.value, function(evt) {
             var $selector = $(selector.value).ufm();
             $selector.valid(tempScope.find("valid").expression().value);
             $selector.enabled(tempScope.find("enabled").expression().value);
@@ -171,7 +171,7 @@ function statement(symbol) {
 
         //checks to make sure that the expression evaluates to a boolean
         var checkedExprValue = function () {
-            var exprValue = exprFunc();
+            var exprValue = derefUfm(exprFunc());
             if (exprValue.type === lexer.TOKEN.TYPE.BOOL)
                 return exprValue;
             else throw new Error("Line " + currentToken.line + ": expected boolean result, received result of type " + exprValue.type);
@@ -436,7 +436,7 @@ function operand() {
         var thisScope = scope.thisScope();
 
         //custom event to trigger dependencies
-        $(returnToken.value).on("ufm:validate", function (evt) {
+        $(document).on("ufm:validate", returnToken.value, function (evt) {
             var $selector = $(thisScope.selector.value).ufm();
             $selector.valid(thisScope.tagTable["valid"].expression().value);
             $selector.enabled(thisScope.tagTable["enabled"].expression().value);
@@ -453,10 +453,14 @@ function operand() {
             $selector.enabled(thisScope.tagTable["enabled"].expression().value);
             $selector.visible(thisScope.tagTable["visible"].expression().value);
             $selector.optional(thisScope.tagTable["optional"].expression().value);
-            evt.stopPropagation();
-
             $(thisScope.selector.value).trigger("ufm:validate");
         });
+
+
+        $(document).on("change", returnToken.value, function (evt) {
+            $(evt.target).trigger("ufm:validate");
+        });
+
         return function () {
             return new lexer.Token($(returnToken.value).ufm(), lexer.TOKEN.TYPE.UFM, returnToken.line, returnToken.col);
         };
