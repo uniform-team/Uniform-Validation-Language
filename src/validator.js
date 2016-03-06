@@ -22,7 +22,8 @@ try {
                 return lexer.TOKEN.TYPE.NUMBER;
             else if (attribute === "number")
                 return lexer.TOKEN.TYPE.NUMBER;
-            else return lexer.TOKEN.TYPE.NUMBER;
+            else if (self.is("select"))
+                return lexer.TOKEN.TYPE.STRING;
         };
 
 

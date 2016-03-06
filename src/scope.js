@@ -8,13 +8,26 @@ var KIND = {
     TAG: "tag"
 };
 
+function Symbol(name, expression, kind) {
+    if (name === undefined) throw new Error("Undefined SYMBOL, missing name");
+    //if (expression === undefined) throw new Error("Undefined SYMBOL, missing expression");
+    if (kind === undefined) throw new Error("Undefined SYMBOL, missing kind");
+    this.name = name;
+    this.expression = expression;
+    this.kind = kind;
+}
 function Scope(selector, parentScope) {
     if (selector === undefined) throw new Error("Undefined SCOPE, missing selector");
     this.parentScope = parentScope;
     this.selector = selector;
     this.selectorTable = {};
     this.variableTable = {};
-    this.tagTable = {};
+    this.tagTable = {
+        valid: new Symbol("valid", function () {return true;}, KIND.TAG),
+        enabled: new Symbol("enabled", function () {return true;}, KIND.TAG),
+        visible: new Symbol("visible", function () {return true;}, KIND.TAG),
+        optional: new Symbol("optional", function () {return false;}, KIND.TAG),
+    };
     this.find = find;
 }
 
@@ -92,14 +105,7 @@ module.exports = {
         return (symbol !== null);
     },
 
-    Symbol: function (name, expression, kind) {
-        if (name === undefined) throw new Error("Undefined SYMBOL, missing name");
-        //if (expression === undefined) throw new Error("Undefined SYMBOL, missing expression");
-        if (kind === undefined) throw new Error("Undefined SYMBOL, missing kind");
-        this.name = name;
-        this.expression = expression;
-        this.kind = kind;
-    }
+    Symbol: Symbol
 };
 
 

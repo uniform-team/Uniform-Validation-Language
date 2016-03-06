@@ -40,6 +40,10 @@ function isValidStatement() {
 //helper function for coerce
 function derefUfm(token) {
     if (token.type === lexer.TOKEN.TYPE.UFM) {
+        if (token.value.type() === lexer.TOKEN.TYPE.BOOL)//its a checkbox
+            return new lexer.Token(token.value.is(':checked'), token.value.type(), token.line, token.col);
+        else if (token.value.type() === lexer.TOKEN.TYPE.NUMBER)
+            return new lexer.Token(parseInt(token.value.val()), token.value.type(), token.line, token.col);
         return new lexer.Token(token.value.val(), token.value.type(), token.line, token.col);
     }
     else return token;
@@ -109,9 +113,21 @@ function block() {
         $selector.enabled(tempScope.find(selector.value).expression().value);
         $selector.visible(tempScope.find(selector.value).expression().value);
         $selector.optional(tempScope.find(selector.value).expression().value);
-        evt.stopPropagation();
         $selector.trigger("ufm:validate");
     });
+
+    //attach event listener to change all dependencies
+    $(document).on ("ufm:ready", function(evt) {
+            var $selector = $(selector.value).ufm();
+            $selector.valid(tempScope.find(selector.value).expression().value);
+            $selector.enabled(tempScope.find(selector.value).expression().value);
+            $selector.visible(tempScope.find(selector.value).expression().value);
+            $selector.optional(tempScope.find(selector.value).expression().value);
+            $selector.trigger("ufm:validate");
+    });
+
+
+
 
     //Open the scope and parse the statements
     scope.createScope(selector, function() {
@@ -261,6 +277,8 @@ function expressionOp() {
                 return new lexer.Token(LToken.value <= RToken.value, lexer.TOKEN.TYPE.BOOL, LToken.line, LToken.col);
             }
             else if (op.value === lexer.TOKEN.OPERATOR.EQUALS) {
+                LToken = derefUfm(LToken);
+                RToken = derefUfm(RToken);
                 if (LToken.type === RToken.type)
                     return new lexer.Token(LToken.value === RToken.value, lexer.TOKEN.TYPE.BOOL, LToken.line, LToken.col);
                 else throw new Error("Line " + LToken.line + ": cannot equals, types of operands do not match");
@@ -425,10 +443,22 @@ function operand() {
             $selector.enabled(thisScope.tagTable["enabled"].expression().value);
             $selector.visible(thisScope.tagTable["visible"].expression().value);
             $selector.optional(thisScope.tagTable["optional"].expression().value);
+            evt.stopPropagation();
 
             $(thisScope.selector.value).trigger("ufm:validate");
         });
 
+        //custom event to trigger dependencies
+        $(document).on ("ufm:ready", function (evt) {
+            var $selector = $(thisScope.selector.value).ufm();
+            $selector.valid(thisScope.tagTable["valid"].expression().value);
+            $selector.enabled(thisScope.tagTable["enabled"].expression().value);
+            $selector.visible(thisScope.tagTable["visible"].expression().value);
+            $selector.optional(thisScope.tagTable["optional"].expression().value);
+            evt.stopPropagation();
+
+            $(thisScope.selector.value).trigger("ufm:validate");
+        });
         return function () {
             return new lexer.Token($(returnToken.value).ufm(), lexer.TOKEN.TYPE.UFM, returnToken.line, returnToken.col);
         };
@@ -500,6 +530,9 @@ module.exports = {
         currentToken = lexer.getNextToken();
         closedScope = scope.createScope("", function () {
             blocks();
+        });
+        $(document).ready(function () {
+            $(document).trigger("ufm:ready");
         });
         return closedScope;
     },
