@@ -3,8 +3,7 @@
 	<head>
 		<title>Car Form</title>
 		<script src="/lib/jquery/dist/jquery.js"></script>
-		<script src="/uniform.js"></script>
-		<script>uniform.options.href("car.ufm");</script>
+		<script src="http://code.jquery.com/ui/1.11.4/jquery-ui.js"></script>
 	</head>
 	<body>
 		<h2>Car form</h2>
@@ -16,15 +15,15 @@
 				<table>
 					<tr>
 						<td>Make:</td>
-						<td><input type="text" /></td>
+						<td><input id="make" type="text" value="toyota" /></td>
 					</tr>
 					<tr>
 						<td>Model:</td>
-						<td><input type="text" /></td>
+						<td><input id="model" type="text" /></td>
 					</tr>
 					<tr>
 						<td>Year:</td>
-						<td><input type="text" /></td>
+						<td><input id="year" type="number" value="5" /></td>
 					</tr>
 				</table>
 			</div>
@@ -33,4 +32,6 @@
 			<input type="submit" value="Submit" />
 		</div>
 	</body>
+	<script src="/uniform.js"></script>
+	<script>uniform.options.href("car.ufm");</script>
 </html>

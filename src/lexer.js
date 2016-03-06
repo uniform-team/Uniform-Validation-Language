@@ -9,7 +9,8 @@ var TOKEN = {
         SELECTOR: "selector",
         KEYWORD: "keyword",
         REGEX: "regex",
-        STATE: "state"
+        STATE: "state",
+        UFM: "ufm"
     },
     OPERATOR: {
         ADD: "+",
