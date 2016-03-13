@@ -16,15 +16,7 @@
 				<table>
 					<tr>
 						<td>Make:</td>
-						<td>
-							<select id="make"/>
-								<option></option>
-								<option>Toyota</option>
-								<option>Mitsubishi</option>
-								<option>Ford</option>
-								<option>BMW</option>
-							</select>
-						</td>
+						<td><input id="make" type="text" /></td>
 					</tr>
 					<tr>
 						<td>Model:</td>
@@ -32,7 +24,7 @@
 					</tr>
 					<tr>
 						<td>Year:</td>
-						<td><input id="year" type="number"/></td>
+						<td><input id="year" type="text"/></td>
 					</tr>
 				</table>
 			</div>
@@ -40,14 +32,22 @@
 
 			<input type="submit" value="Submit" />
 		</form>
+		<hr />
+		<input id="isValid" type="checkbox" disabled="disabled" /> Valid?
 	</body>
 	<script>
-		$("#rootForm").on("submit", function (evt) {
+		var $rootForm = $("#rootForm");
+
+		$rootForm.on("submit", function (evt) {
 			if (!$("#rootForm").ufm().valid()) {
 				alert("Invalid Form!");
 			}
 			else alert("Valid Form Submitted!");
 			evt.preventDefault();
+		});
+
+		$rootForm.on("ufm:validate", function () {
+			$("#isValid").prop("checked", $rootForm.ufm().valid());
 		});
 	</script>
 </html>

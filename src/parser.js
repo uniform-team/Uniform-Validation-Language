@@ -79,7 +79,62 @@ function coerceToBool(token) {
         throw new Error("Line " + token.line + ": cannot coerce " + token.type + " to bool");
 }
 
+function disableChildren($selector) {
+    var i = 0;
+    $selector.prop("disabled", true);
+    var selChild = $selector.children();
+    for (i; i < selChild.length; i++) {
+        disableChildren(selChild[i]);
+    }
+}
 
+function enableChildren($selector) {
+    var i = 0;
+    $selector.prop("disabled", false);
+    var selChild = $selector.children();
+    for (i; i < selChild.length; i++) {
+
+        enableChildren(selChild[i]);
+    }
+}
+
+/*
+function updateOuterSelector(selector, scope) {
+    return function () {
+        var $selector = $(selector).ufm();
+        $selector.valid(scope.find("valid").expression().value);
+        var enabledVal = scope.find("enabled").expression().value;
+        $selector.enabled(enabledVal);
+        if (enabledVal) {
+            $selector.prop("disabled", false);
+        }
+        else {
+            $selector.prop("disabled", true);
+        }
+        $selector.visible(scope.find("visible").expression().value);
+        $selector.optional(scope.find("optional").expression().value);
+        $selector.trigger("ufm:validate");
+    };
+}
+*/
+
+function updateSelector(selector, scope) {
+    return function () {
+        var $selector = $(selector).ufm();
+        $selector.valid(scope.tagTable["valid"].expression().value);
+        var enabledVal = scope.tagTable["enabled"].expression().value;
+        $selector.enabled(enabledVal);
+        if (enabledVal) {
+            $selector.prop("disabled", false);
+        }
+        else {
+            $selector.prop("disabled", true);
+        }
+        $selector.visible(scope.tagTable["visible"].expression().value);
+        $selector.optional(scope.tagTable["optional"].expression().value);
+        $selector.trigger("ufm:validate");
+    };
+}
 
 //<blocks> -> <block> <blocks> | ø
 function blocks() {
@@ -111,24 +166,10 @@ function block() {
         var tempScope = scope.thisScope();
 
         //attach event listener to change all dependencies
-        $(document).on("change", selector.value, function(evt) {
-            var $selector = $(selector.value).ufm();
-            $selector.valid(tempScope.find("valid").expression().value);
-            $selector.enabled(tempScope.find("enabled").expression().value);
-            $selector.visible(tempScope.find("visible").expression().value);
-            $selector.optional(tempScope.find("optional").expression().value);
-            $selector.trigger("ufm:validate");
-        });
+        $(document).on("change", selector.value, updateSelector(selector.value, tempScope));
 
         //attach event listener to change all dependencies
-        $(document).on ("ufm:ready", function(evt) {
-            var $selector = $(selector.value).ufm();
-            $selector.valid(tempScope.find("valid").expression().value);
-            $selector.enabled(tempScope.find("enabled").expression().value);
-            $selector.visible(tempScope.find("visible").expression().value);
-            $selector.optional(tempScope.find("optional").expression().value);
-            $selector.trigger("ufm:validate");
-        });
+        $(document).on ("ufm:ready", updateSelector(selector.value, tempScope));
 
         statements(symbol);
         matchValue(lexer.TOKEN.OPERATOR.RBRACE);
@@ -436,28 +477,13 @@ function operand() {
         var thisScope = scope.thisScope();
 
         //custom event to trigger dependencies
-        $(document).on("ufm:validate", returnToken.value, function (evt) {
-            var $selector = $(thisScope.selector.value).ufm();
-            $selector.valid(thisScope.tagTable["valid"].expression().value);
-            $selector.enabled(thisScope.tagTable["enabled"].expression().value);
-            $selector.visible(thisScope.tagTable["visible"].expression().value);
-            $selector.optional(thisScope.tagTable["optional"].expression().value);
-
-            $(thisScope.selector.value).trigger("ufm:validate");
-        });
+        var $document = $(document);
+        $document.on("ufm:validate", returnToken.value, updateSelector(thisScope.selector.value, thisScope));
 
         //custom event to trigger dependencies
-        $(document).on ("ufm:ready", function (evt) {
-            var $selector = $(thisScope.selector.value).ufm();
-            $selector.valid(thisScope.tagTable["valid"].expression().value);
-            $selector.enabled(thisScope.tagTable["enabled"].expression().value);
-            $selector.visible(thisScope.tagTable["visible"].expression().value);
-            $selector.optional(thisScope.tagTable["optional"].expression().value);
-            $(thisScope.selector.value).trigger("ufm:validate");
-        });
+        $document.on("ufm:ready", updateSelector(thisScope.selector.value, thisScope));
 
-
-        $(document).on("change", returnToken.value, function (evt) {
+        $document.on("change", returnToken.value, function (evt) {
             $(evt.target).trigger("ufm:validate");
         });
 
