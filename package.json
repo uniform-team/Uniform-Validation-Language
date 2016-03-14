@@ -1,19 +1,18 @@
 {
-  "name": "uniform",
-  "version": "1.0.0",
+  "name": "uniform-validation",
+  "main": "server-validator/validator.js",
+  "version": "0.0.5",
   "description": "Uniform: Form Validation Language",
   "directories": {
     "example": "examples",
     "test": "test"
   },
-  "dependencies": {
+  "devDependencies": {
     "bower": "^1.7.1",
     "grunt": "^0.4.5",
     "grunt-browserify": "^4.0.1",
     "grunt-cli": "^0.1.13",
-    "grunt-contrib-uglify": "^0.11.0"
-  },
-  "devDependencies": {
+    "grunt-contrib-uglify": "^0.11.0",
     "grunt-connect": "^0.2.0",
     "grunt-karma": "^0.12.1",
     "jasmine-core": "^2.4.1",
@@ -24,14 +23,13 @@
   },
   "scripts": {
     "test": "grunt test",
-    "start": "grunt dev",
-    "postinstall": "node node_modules/bower/bin/bower install && node node_modules/grunt-cli/bin/grunt build"
+    "start": "grunt dev"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://DouglasParkerSCU@bitbucket.org/scusdp/uniform-validation-language.git"
+    "url": "git+https://bitbucket.org/scusdp/uniform-validation-language.git"
   },
-  "author": "",
+  "author": "Sawyer Novak, Reid Palmquist, Douglas Parker",
   "license": "MIT",
   "homepage": "https://bitbucket.org/scusdp/uniform-validation-language#readme"
 }

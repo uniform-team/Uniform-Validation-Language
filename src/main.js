@@ -3,3 +3,5 @@ global.uniform = {
 	options: require("./options.js"),
 	lexer: require("./lexer.js")
 };
+
+module.exports = global.uniform;
