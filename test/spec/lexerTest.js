@@ -27,7 +27,7 @@ describe("The \"lexer\" module", function () {
         });
         describe("should recognize comments and ignore them properly including", function() {
             it("single line comments //", function() {
-                lexer.loadString("//this is a comment \n \"this is not a comment\"");
+                lexer.loadString("//this is a comment \n \n \"this is not a comment\" //also a comment \n");
                 thisToken = lexer.getNextToken();
                 expect(thisToken.type).toBe(lexer.TOKEN.TYPE.STRING);
             });

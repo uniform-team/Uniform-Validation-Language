@@ -136,7 +136,7 @@ function statement(symbol) {
 
 //Grammar: <tag> -> valid | optional | visible | enabled
 function tag() {
-    if (evaluator.evaluator.isTag(currentToken)) {
+    if (evaluator.isTag(currentToken)) {
         return matchType(lexer.TOKEN.TYPE.KEYWORD);
     }
     else {
