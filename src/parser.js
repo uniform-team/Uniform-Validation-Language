@@ -247,7 +247,7 @@ function expressionMulDivMod() {
 
         //<expr> * <expr>
         if (op.value === lexer.TOKEN.OPERATOR.MUL)
-            LReturn = evaluator.sub(LReturn, RReturn);
+            LReturn = evaluator.mul(LReturn, RReturn);
 
         //<expr> / <expr>
         else if (op.value === lexer.TOKEN.OPERATOR.DIV)
@@ -421,4 +421,5 @@ module.exports = {
         });
         return closedScope;
     },
+    _scope: scope
 };

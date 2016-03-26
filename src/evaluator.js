@@ -26,7 +26,10 @@ function coerceToNumber(token) {
     if (token.type === lexer.TOKEN.TYPE.NUMBER)
         return token;
     else if (token.type === lexer.TOKEN.TYPE.STRING) {
-        return new lexer.Token(parseInt(token.value), lexer.TOKEN.TYPE.NUMBER, token.line, token.col);
+        var temp = parseInt(token.value);
+        if (isNaN(temp))
+            throw new Error("Line " + token.line + ": cannot coerce " + token.type + " to number");
+        else return new lexer.Token(temp, lexer.TOKEN.TYPE.NUMBER, token.line, token.col);
     }
     throw new Error("Line " + token.line + ": cannot coerce " + token.type + " to number");
 }
@@ -38,15 +41,14 @@ function coerceToString(token) {
     else if (token.type === lexer.TOKEN.TYPE.NUMBER) {
         return new lexer.Token(token.value + "", lexer.TOKEN.TYPE.STRING, token.line, token.col);
     }
-    else throw new Error("Line " + token.line + ": cannot coerce " + token.type + " to string");
+    throw new Error("Line " + token.line + ": cannot coerce " + token.type + " to string");
 }
 
 function coerceToBool(token) {
     token = derefUfm(token);
     if (token.type === lexer.TOKEN.TYPE.BOOL)
         return token;
-    else
-        throw new Error("Line " + token.line + ": cannot coerce " + token.type + " to bool");
+    throw new Error("Line " + token.line + ": cannot coerce " + token.type + " to bool");
 }
 
 module.exports = {
@@ -134,7 +136,7 @@ module.exports = {
         return function () {
             var left = derefUfm(leftExpr());
             var right = derefUfm(rightExpr());
-            if (left.value === right.value)
+            if (left.type === right.type)
                 return new lexer.Token(left.value === right.value, lexer.TOKEN.TYPE.BOOL, right.line, right.col);
             else throw new Error("Line " + left.line + ": cannot perform equals operation, types of operands do not match");
         };
@@ -164,24 +166,15 @@ module.exports = {
                     return new lexer.Token($(left.value).ufm().optional(), lexer.TOKEN.TYPE.BOOL, left.line, left.col);
             }
 
-            //I actually don't quite remember why we did this
             else if (right.value === lexer.TOKEN.STATE.STRING) {
-                try {
-                    coerceToString(left);
-                }
-                catch (ex) {
-                    return new lexer.Token(false, lexer.TOKEN.TYPE.BOOL, left.line, left.col);
-                }
-                return new lexer.Token(true, lexer.TOKEN.TYPE.BOOL, left.line, left.col);
+                left = derefUfm(left);
+                var isString = left.type === lexer.TOKEN.TYPE.STRING;
+                return new lexer.Token(isString, lexer.TOKEN.TYPE.BOOL, left.line, left.col);
             }
             else if (right.value === lexer.TOKEN.STATE.NUMBER) {
-                try {
-                    coerceToNumber(left);
-                }
-                catch (ex) {
-                    return new lexer.Token(false, lexer.TOKEN.TYPE.BOOL, left.line, left.col);
-                }
-                return new lexer.Token(true, lexer.TOKEN.TYPE.BOOL, left.line, left.col);
+                left = derefUfm(left);
+                var isNum = left.type === lexer.TOKEN.TYPE.NUMBER;
+                return new lexer.Token(isNum, lexer.TOKEN.TYPE.BOOL, left.line, left.col);
             }
             else throw new Error("Line " + left.line + ": cannot perform is operation, invalid operands");
         };
@@ -190,41 +183,43 @@ module.exports = {
         return function () {
             var left = coerceToNumber(leftExpr());
             var right = coerceToNumber(rightExpr());
-            return new lexer.Token(left.value + right.value, lexer.TOKEN.TYPE.BOOL, right.line, right.col);
+            return new lexer.Token(left.value + right.value, lexer.TOKEN.TYPE.NUMBER, right.line, right.col);
         };
     },
     sub: function (leftExpr, rightExpr) {
         return function () {
             var left = coerceToNumber(leftExpr());
             var right = coerceToNumber(rightExpr());
-            return new lexer.Token(left.value - right.value, lexer.TOKEN.TYPE.BOOL, right.line, right.col);
+            return new lexer.Token(left.value - right.value, lexer.TOKEN.TYPE.NUMBER, right.line, right.col);
         };
     },
     mul: function (leftExpr, rightExpr) {
         return function () {
             var left = coerceToNumber(leftExpr());
             var right = coerceToNumber(rightExpr());
-            return new lexer.Token(left.value * right.value, lexer.TOKEN.TYPE.BOOL, right.line, right.col);
+            return new lexer.Token(left.value * right.value, lexer.TOKEN.TYPE.NUMBER, right.line, right.col);
         };
     },
     div: function (leftExpr, rightExpr) {
         return function () {
             var left = coerceToNumber(leftExpr());
             var right = coerceToNumber(rightExpr());
-            return new lexer.Token(left.value / right.value, lexer.TOKEN.TYPE.BOOL, right.line, right.col);
+            return new lexer.Token(left.value / right.value, lexer.TOKEN.TYPE.NUMBER, right.line, right.col);
         };
     },
     mod: function (leftExpr, rightExpr) {
         return function () {
             var left = coerceToNumber(leftExpr());
             var right = coerceToNumber(rightExpr());
-            return new lexer.Token(left.value % right.value, lexer.TOKEN.TYPE.BOOL, right.line, right.col);
+            return new lexer.Token(left.value % right.value, lexer.TOKEN.TYPE.NUMBER, right.line, right.col);
         };
     },
     neg: function (inExpr) {
         return function () {
             var expr = coerceToNumber(inExpr());
-            return new lexer.Token(-expr, lexer.TOKEN.TYPE.BOOL, right.line, right.col);
+            if (expr.type === lexer.TOKEN.TYPE.NUMBER)
+                return new lexer.Token(-expr.value, lexer.TOKEN.TYPE.NUMBER, expr.line, expr.col);
+            else throw new Error("Line " + left.line + ": cannot perform negation operation, operand is not of type NUMBER");
         };
     }
 };
