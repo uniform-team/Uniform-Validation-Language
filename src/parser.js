@@ -1,142 +1,35 @@
 var lexer = require("./lexer.js");
 var scope = require("./scope.js");
+var evaluator = require("./evaluator.js");
 
 var currentToken;
 
 
-//Helper functions
-function isState(token) {
-    return token.value === lexer.TOKEN.STATE.VALID ||
-        token.value === lexer.TOKEN.STATE.ENABLED ||
-        token.value === lexer.TOKEN.STATE.VISIBLE ||
-        token.value === lexer.TOKEN.STATE.OPTIONAL ||
-        token.value === lexer.TOKEN.STATE.STRING ||
-        token.value === lexer.TOKEN.STATE.NUMBER;
-}
-
-function isTag(token) {
-    return (token.value === lexer.TOKEN.TAG.VALID ||
-    token.value === lexer.TOKEN.TAG.OPTIONAL ||
-    token.value === lexer.TOKEN.TAG.ENABLED ||
-    token.value === lexer.TOKEN.TAG.VISIBLE);
-}
-
-function isExpressionOp(token) {
-    return (token.value === lexer.TOKEN.OPERATOR.EQUALS ||
-    token.value === lexer.TOKEN.OPERATOR.MATCHES ||
-    token.value === lexer.TOKEN.OPERATOR.IS ||
-    token.value === lexer.TOKEN.OPERATOR.LT ||
-    token.value === lexer.TOKEN.OPERATOR.GT ||
-    token.value === lexer.TOKEN.OPERATOR.LTE ||
-    token.value === lexer.TOKEN.OPERATOR.GTE);
-}
-
-function isValidStatement() {
-    return (isTag(currentToken) ||
-    currentToken.type === lexer.TOKEN.TYPE.SELECTOR ||
-    currentToken.type === lexer.TOKEN.TYPE.VARIABLE);
-}
-
-//helper function for coerce
-function derefUfm(token) {
-    if (token.type === lexer.TOKEN.TYPE.UFM) {
-        if (token.value.type() === lexer.TOKEN.TYPE.BOOL)//its a checkbox
-            return new lexer.Token(token.value.is(':checked'), token.value.type(), token.line, token.col);
-        else if (token.value.type() === lexer.TOKEN.TYPE.NUMBER)
-            return new lexer.Token(parseInt(token.value.val()), token.value.type(), token.line, token.col);
-        return new lexer.Token(token.value.val(), token.value.type(), token.line, token.col);
-    }
-    else return token;
-}
-
-
-//coerce functions will convert the ufm object to the appropriate type and throw an error otherwise
-function coerceToNumber(token) {
-    token = derefUfm(token);
-    if (token.type === lexer.TOKEN.TYPE.NUMBER)
-        return token;
-    if (token.type === lexer.TOKEN.TYPE.STRING) {
-        return new lexer.Token(parseInt(token.value), lexer.TOKEN.TYPE.NUMBER, token.line, token.col);
-    }
-    throw new Error("Line " + token.line + ": cannot coerce " + token.type + " to number");
-}
-
-function coerceToString(token) {
-    token = derefUfm(token);
-    if (token.type === lexer.TOKEN.TYPE.STRING)
-        return token;
-    if (token.type === lexer.TOKEN.TYPE.NUMBER) {
-        return new lexer.Token(token.value + "", lexer.TOKEN.TYPE.STRING, token.line, token.col);
-    }
-    throw new Error("Line " + token.line + ": cannot coerce " + token.type + " to string");
-}
-
-function coerceToBool(token) {
-    token = derefUfm(token);
-    if (token.type === lexer.TOKEN.TYPE.BOOL)
-        return token;
-    else
-        throw new Error("Line " + token.line + ": cannot coerce " + token.type + " to bool");
-}
-
-function disableChildren($selector) {
-    var i = 0;
-    $selector.prop("disabled", true);
-    var selChild = $selector.children();
-    for (i; i < selChild.length; i++) {
-        disableChildren(selChild[i]);
-    }
-}
-
-function enableChildren($selector) {
-    var i = 0;
-    $selector.prop("disabled", false);
-    var selChild = $selector.children();
-    for (i; i < selChild.length; i++) {
-
-        enableChildren(selChild[i]);
-    }
-}
-
-/*
-function updateOuterSelector(selector, scope) {
-    return function () {
-        var $selector = $(selector).ufm();
-        $selector.valid(scope.find("valid").expression().value);
-        var enabledVal = scope.find("enabled").expression().value;
-        $selector.enabled(enabledVal);
-        if (enabledVal) {
-            $selector.prop("disabled", false);
-        }
-        else {
-            $selector.prop("disabled", true);
-        }
-        $selector.visible(scope.find("visible").expression().value);
-        $selector.optional(scope.find("optional").expression().value);
-        $selector.trigger("ufm:validate");
-    };
-}
-*/
-
+//refreshes the boolean value of the selector for each tag in the scope
 function updateSelector(selector, scope) {
     return function () {
-        var $selector = $(selector).ufm();
-        $selector.valid(scope.tagTable["valid"].expression().value);
-        var enabledVal = scope.tagTable["enabled"].expression().value;
-        $selector.enabled(enabledVal);
-        if (enabledVal) {
-            $selector.prop("disabled", false);
+        try {
+            var $selector = $(selector).ufm();
+            $selector.valid(scope.tagTable["valid"].expression().value);
+            var enabledVal = scope.tagTable["enabled"].expression().value;
+            $selector.enabled(enabledVal);
+            if (enabledVal) {
+                $selector.prop("disabled", false);
+            }
+            else {
+                $selector.prop("disabled", true);
+            }
+            $selector.visible(scope.tagTable["visible"].expression().value);
+            $selector.optional(scope.tagTable["optional"].expression().value);
+            $selector.trigger("ufm:validate");
         }
-        else {
-            $selector.prop("disabled", true);
+        catch (err) {
+            console.log(err);
         }
-        $selector.visible(scope.tagTable["visible"].expression().value);
-        $selector.optional(scope.tagTable["optional"].expression().value);
-        $selector.trigger("ufm:validate");
     };
 }
 
-//<blocks> -> <block> <blocks> | ø
+//Grammar: <blocks> -> <block> <blocks> | ø
 function blocks() {
     while (currentToken.type === lexer.TOKEN.TYPE.SELECTOR || currentToken.type === lexer.TOKEN.TYPE.VARIABLE) {
         if (currentToken.type === lexer.TOKEN.TYPE.SELECTOR)
@@ -149,7 +42,7 @@ function blocks() {
     else throw new Error("Line " + currentToken.line + ": Invalid block");
 }
 
-//<block> -> <selector> { <statements> } | <variabeDeclaration>
+//Grammar: <block> -> <selector> { <statements> } | <variableDeclaration>
 function block() {
     var selector = matchType(lexer.TOKEN.TYPE.SELECTOR);
 
@@ -168,8 +61,12 @@ function block() {
         //attach event listener to change all dependencies
         $(document).on("change", selector.value, updateSelector(selector.value, tempScope));
 
+
         //attach event listener to change all dependencies
-        $(document).on ("ufm:ready", updateSelector(selector.value, tempScope));
+        $(document).on("ufm:ready", updateSelector(selector.value, tempScope));
+
+        //attach event listener for angular support
+        $(document).on("ng-change", updateSelector(selector.value, tempScope));
 
         statements(symbol);
         matchValue(lexer.TOKEN.OPERATOR.RBRACE);
@@ -177,7 +74,7 @@ function block() {
 }
 
 
-//<variableDeclaration> -> <variable> : <expression> ;
+//Grammar: <variableDeclaration> -> <variable> : <expression> ;
 function variableDeclaration() {
     var variable = matchType(lexer.TOKEN.TYPE.VARIABLE);
     matchValue(lexer.TOKEN.OPERATOR.COLON);
@@ -191,15 +88,15 @@ function variableDeclaration() {
     matchValue(lexer.TOKEN.OPERATOR.SEMICOLON);
 }
 
-//<statements> -> <statement> <statements> | ø
+//Grammar: <statements> -> <statement> <statements> | ø
 function statements(symbol) {
-    if (isValidStatement())
-        while (isValidStatement())
+    if (evaluator.isValidStatement(currentToken))
+        while (evaluator.isValidStatement(currentToken))
             statement(symbol);
     else throw new Error("Line " + currentToken.line + ": Invalid statement");
 }
 
-//<statement> -> <block> | <variableDeclaration> | <tag> : <expression> ;
+//Grammar: <statement> -> <block> | <variableDeclaration> | <tag> : <expression> ;
 function statement(symbol) {
     if (currentToken.type === lexer.TOKEN.TYPE.SELECTOR)
         block();
@@ -212,7 +109,7 @@ function statement(symbol) {
 
         //checks to make sure that the expression evaluates to a boolean
         var checkedExprValue = function () {
-            var exprValue = derefUfm(exprFunc());
+            var exprValue = evaluator.derefUfm(exprFunc());
             if (exprValue.type === lexer.TOKEN.TYPE.BOOL)
                 return exprValue;
             else throw new Error("Line " + currentToken.line + ": expected boolean result, received result of type " + exprValue.type);
@@ -237,9 +134,9 @@ function statement(symbol) {
     }
 }
 
-//<tag> -> valid | optional | visible | enabled
+//Grammar: <tag> -> valid | optional | visible | enabled
 function tag() {
-    if (isTag(currentToken)) {
+    if (evaluator.evaluator.isTag(currentToken)) {
         return matchType(lexer.TOKEN.TYPE.KEYWORD);
     }
     else {
@@ -247,184 +144,125 @@ function tag() {
     }
 }
 
-//<andOr> -> <not> <andOr_>
-//<andOr_> -> and <not>> <andOr_> | or <not> <andOr_> | ø
+//Grammar: <andOr> -> <not> <andOr_>
+//         <andOr_> -> and <not>> <andOr_> | or <not> <andOr_> | ø
 function expressionAndOr() {
     var LReturn = expressionNot();
     while (currentToken.value === lexer.TOKEN.OPERATOR.AND ||
     currentToken.value === lexer.TOKEN.OPERATOR.OR) {
-        //while loop breaks closure so a function is needed to create a new one for each LReturn
-        (function() {
-            var op = matchType(lexer.TOKEN.TYPE.KEYWORD);
-            var RReturn = expressionNot();
-            var tempLReturn = LReturn;
-            LReturn = function () {
-                var LToken = coerceToBool(tempLReturn());
-                var RToken = coerceToBool(RReturn());
-                if (op.value === lexer.TOKEN.OPERATOR.OR)
-                    return new lexer.Token(LToken.value || RToken.value, lexer.TOKEN.TYPE.BOOL, RToken.line, RToken.col);
-                else if (op.value === lexer.TOKEN.OPERATOR.AND)
-                    return new lexer.Token(LToken.value && RToken.value, lexer.TOKEN.TYPE.BOOL, RToken.line, RToken.col);
-            };
-        })();
+        var op = matchType(lexer.TOKEN.TYPE.KEYWORD);
+        var RReturn = expressionNot();
+        if (op.value === lexer.TOKEN.OPERATOR.AND)
+            LReturn = evaluator.and(LReturn, RReturn);
+        else if (op.value === lexer.TOKEN.OPERATOR.OR)
+            LReturn = evaluator.or(LReturn, RReturn);
+        else throw new Error("Line " + currentToken.line + ": Invalid Operand");
     }
     return LReturn;
 }
 
-//<not> -> not <not> | <op>
+//Grammar: <not> -> not <not> | <op>
 function expressionNot() {
     if (currentToken.value === lexer.TOKEN.OPERATOR.NOT) {
         matchValue(lexer.TOKEN.OPERATOR.NOT);
-        var RReturn = expressionNot();
-        return function () {
-            var RToken = coerceToBool(RReturn());
-            return new lexer.Token(!RToken.value, lexer.TOKEN.TYPE.BOOL, RToken.line, RToken.col);
-        };
+        return evaluator.not(expressionNot());
     }
     else
         return expressionOp();
 }
 
-//<op> -> <addSub> <op_>
-//<op_> -> equals <addSub> <op_> | is... | <.... | >... | <=... | >=... | ø
+//Grammar: <op> -> <addSub> <op_>
+//         <op_> -> equals <addSub> <op_> | is <addSub> <op_> | < ... | > ... | <= ... | >= ... | ø
 function expressionOp() {
     var LReturn = expressionAddSub();
-    while (isExpressionOp(currentToken)) {
+    while (evaluator.isExpressionOp(currentToken)) {
         var op = matchType(lexer.TOKEN.TYPE.KEYWORD);
         var RReturn = expressionAddSub();
-        var tempLReturn = LReturn;
-        LReturn = function () {
-            var LToken = tempLReturn();
-            var RToken = RReturn();
-            if (op.value === lexer.TOKEN.OPERATOR.LT) {
-                LToken = coerceToNumber(LToken);
-                RToken = coerceToNumber(RToken);
-                return new lexer.Token(LToken.value < RToken.value, lexer.TOKEN.TYPE.BOOL, LToken.line, LToken.col);
-            }
-            else if (op.value === lexer.TOKEN.OPERATOR.GT) {
-                LToken = coerceToNumber(LToken);
-                RToken = coerceToNumber(RToken);
-                return new lexer.Token(LToken.value > RToken.value, lexer.TOKEN.TYPE.BOOL, LToken.line, LToken.col);
-            }
-            else if (op.value === lexer.TOKEN.OPERATOR.GTE) {
-                LToken = coerceToNumber(LToken);
-                RToken = coerceToNumber(RToken);
-                return new lexer.Token(LToken.value >= RToken.value, lexer.TOKEN.TYPE.BOOL, LToken.line, LToken.col);
-            }
-            else if (op.value === lexer.TOKEN.OPERATOR.LTE) {
-                LToken = coerceToNumber(LToken);
-                RToken = coerceToNumber(RToken);
-                return new lexer.Token(LToken.value <= RToken.value, lexer.TOKEN.TYPE.BOOL, LToken.line, LToken.col);
-            }
-            else if (op.value === lexer.TOKEN.OPERATOR.EQUALS) {
-                LToken = derefUfm(LToken);
-                RToken = derefUfm(RToken);
-                if (LToken.type === RToken.type)
-                    return new lexer.Token(LToken.value === RToken.value, lexer.TOKEN.TYPE.BOOL, LToken.line, LToken.col);
-                else throw new Error("Line " + LToken.line + ": cannot equals, types of operands do not match");
-            }
-            else if (op.value === lexer.TOKEN.OPERATOR.MATCHES && RToken.type === lexer.TOKEN.TYPE.REGEX) {
-                LToken = coerceToString(LToken);
-                var tempRegex = new RegExp(RToken.value);
-                return new lexer.Token(tempRegex.test(LToken.value), lexer.TOKEN.TYPE.BOOL, LToken.line, LToken.col);
-            }
-            else if (isState(RToken) && op.value === lexer.TOKEN.OPERATOR.IS && LToken.type === lexer.TOKEN.TYPE.UFM) {
 
-                if (RToken.value === lexer.TOKEN.STATE.VALID)
-                    return new lexer.Token($(LToken.value).ufm().valid(), lexer.TOKEN.TYPE.BOOL, LToken.line, LToken.col);
-                else if (RToken.value === lexer.TOKEN.STATE.ENABLED)
-                    return new lexer.Token($(LToken.value).ufm().enabled(), lexer.TOKEN.TYPE.BOOL, LToken.line, LToken.col);
-                else if (RToken.value === lexer.TOKEN.STATE.VISIBLE)
-                    return new lexer.Token($(LToken.value).ufm().visible(), lexer.TOKEN.TYPE.BOOL, LToken.line, LToken.col);
-                else if (RToken.value === lexer.TOKEN.STATE.OPTIONAL)
-                    return new lexer.Token($(LToken.value).ufm().optional(), lexer.TOKEN.TYPE.BOOL, LToken.line, LToken.col)
+        //<expr> < <expr>
+        if (op.value === lexer.TOKEN.OPERATOR.LT)
+            LReturn = evaluator.lt(LReturn, RReturn);
 
-                else if (RToken.value === lexer.TOKEN.STATE.STRING) {
-                    try {
-                        coerceToString(LToken);
-                    }
-                    catch (ex) {
-                        return new lexer.Token(false, lexer.TOKEN.TYPE.BOOL, LToken.line, LToken.col);
-                    }
-                    return new lexer.Token(true, lexer.TOKEN.TYPE.BOOL, LToken.line, LToken.col);
-                }
-                else if (RToken.value === lexer.TOKEN.STATE.NUMBER) {
-                    try {
-                        coerceToNumber(LToken);
-                    }
-                    catch (ex) {
-                        return new lexer.Token(false, lexer.TOKEN.TYPE.BOOL, LToken.line, LToken.col);
-                    }
-                    return new lexer.Token(true, lexer.TOKEN.TYPE.BOOL, LToken.line, LToken.col);
-                }
-            }
-            else throw new Error("Line " + LToken.line + ": Invalid expression, cannot " + LToken.type + " " + op.value + " " + RToken.type);
-        };
+        //<expr> > <expr>
+        else if (op.value === lexer.TOKEN.OPERATOR.GT)
+            LReturn = evaluator.gt(LReturn, RReturn);
+
+        //<expr> >= <expr>
+        else if (op.value === lexer.TOKEN.OPERATOR.GTE)
+            LReturn = evaluator.gte(LReturn, RReturn);
+
+        //<expr> >= <expr>
+        else if (op.value === lexer.TOKEN.OPERATOR.LTE)
+            LReturn = evaluator.lte(LReturn, RReturn);
+
+        //<expr> equals <expr>
+        else if (op.value === lexer.TOKEN.OPERATOR.EQUALS)
+            LReturn = evaluator.equals(LReturn, RReturn);
+
+        //<expr> matches <expr>
+        else if (op.value === lexer.TOKEN.OPERATOR.MATCHES)
+            LReturn = evaluator.matches(LReturn, RReturn);
+
+        //<expr> is <expr>
+        else if (op.value === lexer.TOKEN.OPERATOR.IS)
+            LReturn = evaluator.is(LReturn, RReturn);
+        else throw new Error("Line " + op.line + ": Invalid expression operand " + op.value);
     }
     return LReturn;
 }
 
 
-//<addSub> -> <mulDivMod> <addSub_>
-//<addSub_> -> + <mulDivMod> <addSub_> | -... | ø
+//Grammar: <addSub> -> <mulDivMod> <addSub_>
+//         <addSub_> -> + <mulDivMod> <addSub_> | -... | ø
 function expressionAddSub() {
     var LReturn = expressionMulDivMod();
     while (currentToken.value === lexer.TOKEN.OPERATOR.ADD ||
     currentToken.value === lexer.TOKEN.OPERATOR.SUB) {
-        //while loop breaks closure so a function is needed to create a new one for each LReturn
-        (function(){
-            var op = matchType(lexer.TOKEN.TYPE.KEYWORD);
-            var RReturn = expressionMulDivMod();
-            var tempLReturn = LReturn;
-            LReturn = function () {
-                var LToken = coerceToNumber(tempLReturn());
-                var RToken = coerceToNumber(RReturn());
-                if (LToken.type === lexer.TOKEN.TYPE.NUMBER && RToken.type === lexer.TOKEN.TYPE.NUMBER) {
-                    if (op.value === lexer.TOKEN.OPERATOR.ADD)
-                        return new lexer.Token(LToken.value + RToken.value, lexer.TOKEN.TYPE.NUMBER, LToken.line, LToken.col);
-                    else if (op.value === lexer.TOKEN.OPERATOR.SUB)
-                        return new lexer.Token(LToken.value - RToken.value, lexer.TOKEN.TYPE.NUMBER, LToken.line, LToken.col);
-                }
-                else throw new Error("Line " + LToken.line + ": Invalid expression, cannot " + LToken.type + " " + op.value + " " + RToken.type);
-            }
-        }());
+        var op = matchType(lexer.TOKEN.TYPE.KEYWORD);
+        var RReturn = expressionMulDivMod();
+
+        //<expr> + <expr>
+        if (op.value === lexer.TOKEN.OPERATOR.ADD)
+            LReturn = evaluator.add(LReturn, RReturn);
+
+        //<expr> - <expr>
+        else if (op.value === lexer.TOKEN.OPERATOR.SUB)
+            LReturn = evaluator.sub(LReturn, RReturn);
+
+        else throw new Error("Line " + op.line + ": Invalid expression operand " + op.value);
     }
     return LReturn;
 }
 
-//<mulDivMod> -> <neg> <mulDivMod_>
-//<mulDivMod_> -> * <neg> <mulDivMod_> | /... | %... | ø
+//Grammar: <mulDivMod> -> <neg> <mulDivMod_>
+//         <mulDivMod_> -> * <neg> <mulDivMod_> | /... | %... | ø
 function expressionMulDivMod() {
     var LReturn = expressionNeg();
     while (currentToken.value === lexer.TOKEN.OPERATOR.MUL ||
     currentToken.value === lexer.TOKEN.OPERATOR.DIV ||
     currentToken.value === lexer.TOKEN.OPERATOR.MOD)
     {
-        //while loop breaks closure so a function is needed to create a new one for each LReturn
-        (function(){
-            var op = matchType(lexer.TOKEN.TYPE.KEYWORD);
-            var RReturn = expressionNeg();
-            var tempLReturn = LReturn;
-            LReturn = function () {
-                var LToken = coerceToNumber(tempLReturn());
-                var RToken = coerceToNumber(RReturn());
+        var op = matchType(lexer.TOKEN.TYPE.KEYWORD);
+        var RReturn = expressionNeg();
 
-                if (LToken.type === lexer.TOKEN.TYPE.NUMBER && RToken.type === lexer.TOKEN.TYPE.NUMBER) {
-                    if (op.value === lexer.TOKEN.OPERATOR.MUL)
-                        return new lexer.Token(LToken.value * RToken.value, lexer.TOKEN.TYPE.NUMBER, LToken.line, LToken.col);
-                    else if (op.value === lexer.TOKEN.OPERATOR.DIV)
-                        return new lexer.Token(LToken.value / RToken.value, lexer.TOKEN.TYPE.NUMBER, LToken.line, LToken.col);
-                    else if (op.value === lexer.TOKEN.OPERATOR.MOD)
-                        return new lexer.Token(LToken.value % RToken.value, lexer.TOKEN.TYPE.NUMBER, LToken.line, LToken.col);
-                }
-                else throw new Error("Line " + LToken.line + ": Invalid expression, cannot " + LToken.type + " " + op.value + " " + RToken.type);
-            }
-        }());
+        //<expr> * <expr>
+        if (op.value === lexer.TOKEN.OPERATOR.MUL)
+            LReturn = evaluator.sub(LReturn, RReturn);
+
+        //<expr> / <expr>
+        else if (op.value === lexer.TOKEN.OPERATOR.DIV)
+            LReturn = evaluator.div(LReturn, RReturn);
+
+        //<expr> % <expr>
+        else if (op.value === lexer.TOKEN.OPERATOR.MOD)
+            LReturn = evaluator.mod(LReturn, RReturn);
+
+        else throw new Error("Line " + op.line + ": Invalid expression operand " + op.value);
     }
     return LReturn;
 }
 
-//<neg> -> - <neg> | <paren>
+//Grammar: <neg> -> - <neg> | <paren>
 function expressionNeg() {
     var negCount = 0;
     while (currentToken.value === lexer.TOKEN.OPERATOR.SUB) {
@@ -434,17 +272,13 @@ function expressionNeg() {
     negCount %= 2;
     var parenReturn = expressionParen();
     //negCount will be 0 if there is an even number of '-'
-    if (negCount) {
-        return function() {
-            var parenReturnToken = coerceToNumber(parenReturn());
-            return new lexer.Token(-parenReturnToken.value, parenReturnToken.type, parenReturnToken.line, parenReturnToken.col);
-        }
-    }
+    if (negCount)
+        return evaluator.neg(parenReturn);
     else
         return parenReturn;
 }
 
-//<paren> -> ( <andOr> ) | <operand>
+//Grammar: <paren> -> ( <andOr> ) | <operand>
 function expressionParen() {
     if (currentToken.value === lexer.TOKEN.OPERATOR.LPAREN) {
         matchValue(lexer.TOKEN.OPERATOR.LPAREN);
@@ -456,23 +290,34 @@ function expressionParen() {
         return operand();
 }
 
-//<operand> -> <number> | <string> | <variable> | <selector> | <state>
+//Grammar: <operand> -> <number> | <string> | <variable> | <selector> | <state> | true | false
 function operand() {
     var returnToken;
+
+    //<number>
     if (currentToken.type === lexer.TOKEN.TYPE.NUMBER) {
         returnToken = matchType(lexer.TOKEN.TYPE.NUMBER);
         returnToken.value = parseInt(returnToken.value);
     }
+
+    //<string>
     else if (currentToken.type === lexer.TOKEN.TYPE.STRING)
         returnToken = matchType(lexer.TOKEN.TYPE.STRING);
+
+    //<variable>
     else if (currentToken.type === lexer.TOKEN.TYPE.VARIABLE) {
         if (!scope.isDefined(currentToken.value))
             throw new Error("Line " + currentToken.line + ": undefined variable " + currentToken.value);
         returnToken = matchType(lexer.TOKEN.TYPE.VARIABLE);
         return scope.lookup(returnToken.value).expression;
     }
+
+    //<selector>
     else if (currentToken.type === lexer.TOKEN.TYPE.SELECTOR) {
         returnToken = matchType(lexer.TOKEN.TYPE.SELECTOR);
+
+        //Setup Event Listeners
+
         //check if tag table is empty
         var thisScope = scope.thisScope();
 
@@ -487,16 +332,28 @@ function operand() {
             $(evt.target).trigger("ufm:validate");
         });
 
+        //angular change support
+        $document.on("ng-change", returnToken.value, function (evt) {
+            $(evt.target).trigger("ufm:validate");
+        });
+
         return function () {
             return new lexer.Token($(returnToken.value).ufm(), lexer.TOKEN.TYPE.UFM, returnToken.line, returnToken.col);
         };
     }
+
+    //<state>
     else if (currentToken.type === lexer.TOKEN.TYPE.KEYWORD)
         returnToken = state();
+
+    //<regex>
     else if (currentToken.type === lexer.TOKEN.TYPE.REGEX)
         returnToken = matchType(lexer.TOKEN.TYPE.REGEX);
+
+    //true | false
     else if (currentToken.type === lexer.TOKEN.TYPE.BOOL)
         returnToken = matchType(lexer.TOKEN.TYPE.BOOL);
+
     else {
         throw new Error("Line " + currentToken.line + ": invalid expression, expected an operand, recieved " + currentToken.value + "\n");
     }
@@ -505,9 +362,9 @@ function operand() {
     };
 }
 
-//<state> -> valid | string | number | enabled | visible | optional
+//Grammar: <state> -> valid | string | number | enabled | visible | optional
 function state() {
-    if (isState(currentToken)) {
+    if (evaluator.isState(currentToken)) {
         var temp = matchType(lexer.TOKEN.TYPE.KEYWORD);
         temp.type = lexer.TOKEN.TYPE.STATE;
         return temp;
@@ -564,5 +421,4 @@ module.exports = {
         });
         return closedScope;
     },
-    _scope: scope
 };
