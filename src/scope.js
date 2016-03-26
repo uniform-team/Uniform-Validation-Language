@@ -1,3 +1,5 @@
+var lexer = require("./lexer.js");
+
 //root node of tree
 var root = null;
 var currentScope = null;
@@ -8,13 +10,27 @@ var KIND = {
     TAG: "tag"
 };
 
+function Symbol(name, expression, kind) {
+    if (name === undefined) throw new Error("Undefined SYMBOL, missing name");
+    //if (expression === undefined) throw new Error("Undefined SYMBOL, missing expression");
+    if (kind === undefined) throw new Error("Undefined SYMBOL, missing kind");
+    this.name = name;
+    this.expression = expression;
+    this.kind = kind;
+}
+
 function Scope(selector, parentScope) {
     if (selector === undefined) throw new Error("Undefined SCOPE, missing selector");
     this.parentScope = parentScope;
     this.selector = selector;
     this.selectorTable = {};
     this.variableTable = {};
-    this.tagTable = {};
+    this.tagTable = {
+        valid: new Symbol("valid", function () {return new lexer.Token(true, lexer.TOKEN.TYPE.BOOL, -1, -1);}, KIND.TAG),
+        enabled: new Symbol("enabled", function () {return new lexer.Token(true, lexer.TOKEN.TYPE.BOOL, -1, -1);}, KIND.TAG),
+        visible: new Symbol("visible", function () {return new lexer.Token(true, lexer.TOKEN.TYPE.BOOL, -1, -1);}, KIND.TAG),
+        optional: new Symbol("optional", function () {return new lexer.Token(false, lexer.TOKEN.TYPE.BOOL, -1, -1);}, KIND.TAG),
+    };
     this.find = find;
 }
 
@@ -92,14 +108,7 @@ module.exports = {
         return (symbol !== null);
     },
 
-    Symbol: function (name, expression, kind) {
-        if (name === undefined) throw new Error("Undefined SYMBOL, missing name");
-        //if (expression === undefined) throw new Error("Undefined SYMBOL, missing expression");
-        if (kind === undefined) throw new Error("Undefined SYMBOL, missing kind");
-        this.name = name;
-        this.expression = expression;
-        this.kind = kind;
-    }
+    Symbol: Symbol
 };
 
 

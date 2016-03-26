@@ -8,29 +8,46 @@
 	</head>
 	<body>
 		<h2>Car form</h2>
-		<div ufm-type="form" id="rootForm">
+		<form id="rootForm">
 			<input id="hasCar" type="checkbox" />I have a car
 			<br /><br />
 
-			<div ufm-type="form" id="carForm">
+			<div id="carForm">
 				<table>
 					<tr>
 						<td>Make:</td>
-						<td><input type="text" /></td>
+						<td><input id="make" type="text" /></td>
 					</tr>
 					<tr>
 						<td>Model:</td>
-						<td><input type="text" /></td>
+						<td><input id="model" type="text" /></td>
 					</tr>
 					<tr>
 						<td>Year:</td>
-						<td><input type="text" /></td>
+						<td><input id="year" type="text"/></td>
 					</tr>
 				</table>
 			</div>
 			<br />
 
 			<input type="submit" value="Submit" />
-		</div>
+		</form>
+		<hr />
+		<input id="isValid" type="checkbox" disabled="disabled" /> Valid?
 	</body>
+	<script>
+		var $rootForm = $("#rootForm");
+
+		$rootForm.on("submit", function (evt) {
+			if (!$("#rootForm").ufm().valid()) {
+				alert("Invalid Form!");
+			}
+			else alert("Valid Form Submitted!");
+			evt.preventDefault();
+		});
+
+		$rootForm.on("ufm:validate", function () {
+			$("#isValid").prop("checked", $rootForm.ufm().valid());
+		});
+	</script>
 </html>
