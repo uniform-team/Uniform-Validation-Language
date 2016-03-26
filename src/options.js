@@ -8,5 +8,8 @@ module.exports = {
 		}, function (err) {
 			console.log(err);
 		});
+	},
+	refresh: function () {
+		$(document).trigger("ufm:refresh");
 	}
 };

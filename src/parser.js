@@ -63,7 +63,7 @@ function block() {
 
 
         //attach event listener to change all dependencies
-        $(document).on("ufm:ready", updateSelector(selector.value, tempScope));
+        $(document).on("ufm:refresh", updateSelector(selector.value, tempScope));
 
         //attach event listener for angular support
         $(document).on("ng-change", updateSelector(selector.value, tempScope));
@@ -326,7 +326,7 @@ function operand() {
         $document.on("ufm:validate", returnToken.value, updateSelector(thisScope.selector.value, thisScope));
 
         //custom event to trigger dependencies
-        $document.on("ufm:ready", updateSelector(thisScope.selector.value, thisScope));
+        $document.on("ufm:refresh", updateSelector(thisScope.selector.value, thisScope));
 
         $document.on("change", returnToken.value, function (evt) {
             $(evt.target).trigger("ufm:validate");
@@ -416,9 +416,12 @@ module.exports = {
         closedScope = scope.createScope("", function () {
             blocks();
         });
+
+        //refresh on ready by default
         $(document).ready(function () {
-            $(document).trigger("ufm:ready");
+            $(document).trigger("ufm:refresh");
         });
+
         return closedScope;
     },
     _scope: scope
