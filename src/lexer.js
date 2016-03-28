@@ -182,7 +182,7 @@ module.exports = {
 
 
         //if a / is encountered, it may be a single line comment, multi line comment, division operation, or a regex
-        if (lexbuffer === "/") {
+        while (lexbuffer === "/") {
             skipChar();
             //single line comment
             if (lexbuffer === "/") {
@@ -199,7 +199,7 @@ module.exports = {
                 skipChar();
                 while (1) {
                     if (lexbuffer === "*") {
-                        readChar();
+                        skipChar();
                         if (lexbuffer === "/") {
                             skipChar();
                             //end comment
