@@ -10,17 +10,32 @@ function updateSelector(selector, scope) {
     return function () {
         try {
             var $selector = $(selector).ufm();
-            $selector.valid(scope.tagTable["valid"].expression().value);
+
+            //enabled
             var enabledVal = scope.tagTable["enabled"].expression().value;
             $selector.enabled(enabledVal);
-            if (enabledVal) {
+            if (enabledVal)
                 $selector.prop("disabled", false);
-            }
-            else {
+            else
                 $selector.prop("disabled", true);
-            }
-            $selector.visible(scope.tagTable["visible"].expression().value);
-            $selector.optional(scope.tagTable["optional"].expression().value);
+
+            //visible
+            var visibleVal = scope.tagTable["visible"].expression().value;
+            $selector.visible(visibleVal);
+            if (visibleVal)
+                $selector.show();
+            else
+                $selector.hide();
+
+            //optional
+            var optionalVal = scope.tagTable["optional"].expression().value;
+            $selector.optional(optionalVal);
+
+            //valid
+            $selector.valid(scope.tagTable["valid"].expression().value);
+
+            console.log("Uniform tags for selector \"" + selector + "\" have been updated");
+
             $selector.trigger("ufm:validate");
         }
         catch (err) {
@@ -37,9 +52,8 @@ function blocks() {
         else if (currentToken.type === lexer.TOKEN.TYPE.VARIABLE)
             variableDeclaration();
     }
-    if (currentToken.value === lexer.TOKEN.ENDOFFILE)
-        return;
-    else throw new Error("Line " + currentToken.line + ": Invalid block");
+    if (currentToken.value !== lexer.TOKEN.ENDOFFILE)
+        throw new Error("Line " + currentToken.line + ": Invalid block");
 }
 
 //Grammar: <block> -> <selector> { <statements> } | <variableDeclaration>
@@ -57,16 +71,28 @@ function block() {
     scope.createScope(selector, function() {
 
         var tempScope = scope.thisScope();
+        var updateSelectorFunc = updateSelector(selector.value, tempScope);
 
+        var func = function (evt) {
+            if ($(evt.target).is(selector.value)) {
+                updateSelectorFunc();
+            }
+        };
+
+        var $document = $(document);
         //attach event listener to change all dependencies
-        $(document).on("change", selector.value, updateSelector(selector.value, tempScope));
+        $document.on("change", selector.value, func);
 
-
-        //attach event listener to change all dependencies
-        $(document).on("ufm:refresh", updateSelector(selector.value, tempScope));
+        $document.on("ufm:refresh", updateSelectorFunc);
 
         //attach event listener for angular support
-        $(document).on("ng-change", updateSelector(selector.value, tempScope));
+        $document.on("ng-change", selector.value, func);
+
+        $document.on("ufm:resetParse", function () {
+            $document.off("change", selector.value, func);
+            $document.off("ufm:refresh", updateSelectorFunc);
+            $document.off("ng-change", selector.value, func);
+        });
 
         statements(symbol);
         matchValue(lexer.TOKEN.OPERATOR.RBRACE);
@@ -317,29 +343,38 @@ function operand() {
         returnToken = matchType(lexer.TOKEN.TYPE.SELECTOR);
 
         //Setup Event Listeners
-
-        //check if tag table is empty
         var thisScope = scope.thisScope();
 
-        //custom event to trigger dependencies
-        var $document = $(document);
-        $document.on("ufm:validate", returnToken.value, updateSelector(thisScope.selector.value, thisScope));
+        if (thisScope.selector.value !== returnToken.value) {
 
-        //custom event to trigger dependencies
-        $document.on("ufm:refresh", updateSelector(thisScope.selector.value, thisScope));
+            //custom event to trigger dependencies
+            var $document = $(document);
 
-        $document.on("change", returnToken.value, function (evt) {
-            $(evt.target).trigger("ufm:validate");
-        });
+            var validateHandler = function (evt) {
+                $(evt.target).trigger("ufm:validate");
+            };
 
-        //angular change support
-        $document.on("ng-change", returnToken.value, function (evt) {
-            $(evt.target).trigger("ufm:validate");
-        });
+            var updateSelectorFunc = updateSelector(thisScope.selector.value, thisScope);
+
+            //custom event to trigger dependencies
+            $document.on("change", returnToken.value, validateHandler);
+            $document.on("ufm:validate", returnToken.value, updateSelectorFunc);
+
+            //angular change support
+            $document.on("ng-change", returnToken.value, validateHandler);
+
+            //removes all event listeners on uniform.resetParse()
+            $document.on("ufm:resetParse", function () {
+                $document.off("ufm:validate", returnToken.value, updateSelectorFunc);
+                $document.off("change", returnToken.value, validateHandler);
+                $document.off("ng-change", returnToken.value, validateHandler);
+            });
+        }
 
         return function () {
             return new lexer.Token($(returnToken.value).ufm(), lexer.TOKEN.TYPE.UFM, returnToken.line, returnToken.col);
         };
+
     }
 
     //<state>
@@ -422,6 +457,7 @@ module.exports = {
             $(document).trigger("ufm:refresh");
         });
 
+        console.log("Uniform Parse Success");
         return closedScope;
     },
     _scope: scope
