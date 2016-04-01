@@ -11,5 +11,8 @@ module.exports = {
 	},
 	refresh: function () {
 		$(document).trigger("ufm:refresh");
-	}
+	},
+	resetParse: function () {
+        $(document).trigger("ufm:resetParse");
+    }
 };

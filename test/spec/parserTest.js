@@ -4,195 +4,140 @@ describe("The \"parser\" module", function () {
 	});
 	var parser = uniform.parser;
 	var lexer = uniform.lexer;
+	var evaluator = uniform.evaluator;
+
+
 	describe("exposes the \"parse\" member", function () {
 		it("as a function", function () {
 			expect(parser.parse).toEqual(jasmine.any(Function));
 		});
 	});
 
-	var testExpression = function (expr) {
-		var returnScope = parser.parse("@test:" + expr + ";");
-		return returnScope.find("test").expression();
-	};
-
-	describe("evaluates expressions such as", function () {
-		it("addition", function () {
-			var token = testExpression("3+2");
-			expect(token.value).toEqual(5);
-			expect(token.type).toBe(lexer.TOKEN.TYPE.NUMBER);
-		});
-		it("subtraction", function () {
-			var token = testExpression("3-1");
-			expect(token.value).toEqual(2);
-			expect(token.type).toBe(lexer.TOKEN.TYPE.NUMBER);
-		});
-		it("multiplication", function () {
-			var token = testExpression("3*5");
-			expect(token.value).toEqual(15);
-			expect(token.type).toBe(lexer.TOKEN.TYPE.NUMBER);
-		});
-		it("division", function () {
-			var token = testExpression("15/3");
-			expect(token.value).toEqual(5);
-			expect(token.type).toBe(lexer.TOKEN.TYPE.NUMBER);
-		});
-		it("modulo", function () {
-			var token = testExpression("12%5");
-			expect(token.value).toEqual(2);
-			expect(token.type).toBe(lexer.TOKEN.TYPE.NUMBER);
-		});
-		it("modulo", function () {
-			var token = testExpression("12%5");
-			expect(token.value).toEqual(2);
-			expect(token.type).toBe(lexer.TOKEN.TYPE.NUMBER);
-		});
-		it("negation", function () {
-			var token = testExpression("-12");
-			expect(token.value).toEqual(-12);
-			expect(token.type).toBe(lexer.TOKEN.TYPE.NUMBER);
-		});
-		it("chained negation", function () {
-			var token = testExpression("----12");
-			expect(token.value).toEqual(12);
-			expect(token.type).toBe(lexer.TOKEN.TYPE.NUMBER);
-		});
-		describe("is operator evaluates states such as", function () {
-			it("is number true", function () {
-				var token = testExpression("12 is number");
-				expect(token.value).toEqual(true);
-				expect(token.type).toBe(lexer.TOKEN.TYPE.BOOL);
+	describe("Is able to parse expressions such as", function () {
+		it("and", function () {
+			spyOn(evaluator, "and").and.callFake(function (left, right) {
+				expect(left().value).toBe(true);
+				expect(right().value).toBe(false);
 			});
-			it("is number false", function () {
-				var token = testExpression("\"a\" is number");
-				expect(token.value).toEqual(false);
-				expect(token.type).toBe(lexer.TOKEN.TYPE.BOOL);
+			parser.parse("@test: true and false;");
+		});
+		it("or", function () {
+			spyOn(evaluator, "or").and.callFake(function (left, right) {
+				expect(left().value).toBe(true);
+				expect(right().value).toBe(false);
 			});
-			it("is string true", function () {
-				var token = testExpression("\"a\" is string");
-				expect(token.value).toEqual(true);
-				expect(token.type).toBe(lexer.TOKEN.TYPE.BOOL);
+			parser.parse("@test: true and false;");
+		});
+		it("not", function () {
+			spyOn(evaluator, "not").and.callFake(function (input) {
+				expect(input().value).toBe(false);
 			});
-			it("is string false", function () {
-				var token = testExpression("1 is string");
-				expect(token.value).toEqual(false);
-				expect(token.type).toBe(lexer.TOKEN.TYPE.BOOL);
+			parser.parse("@test: not false;");
+		});
+		it("lt", function () {
+			spyOn(evaluator, "lt").and.callFake(function (left, right) {
+				expect(left().value).toBe(1);
+				expect(right().value).toBe(2);
 			});
+			parser.parse("@test: 1 < 2;");
 		});
-
-		it("< true", function () {
-			var token = testExpression("1 < 2");
-			expect(token.value).toEqual(true);
-			expect(token.type).toBe(lexer.TOKEN.TYPE.BOOL);
+		it("gt", function () {
+			spyOn(evaluator, "gt").and.callFake(function (left, right) {
+				expect(left().value).toBe(1);
+				expect(right().value).toBe(2);
+			});
+			parser.parse("@test: 1 > 2;");
 		});
-		it("< false", function () {
-			var token = testExpression("2 < 1");
-			expect(token.value).toEqual(false);
-			expect(token.type).toBe(lexer.TOKEN.TYPE.BOOL);
+		it("lte", function () {
+			spyOn(evaluator, "lte").and.callFake(function (left, right) {
+				expect(left().value).toBe(1);
+				expect(right().value).toBe(2);
+			});
+			parser.parse("@test: 1 <= 2;");
 		});
-		it("<= true", function () {
-			var token = testExpression("1 <= 1");
-			expect(token.value).toEqual(true);
-			expect(token.type).toBe(lexer.TOKEN.TYPE.BOOL);
+		it("gte", function () {
+			spyOn(evaluator, "gte").and.callFake(function (left, right) {
+				expect(left().value).toBe(1);
+				expect(right().value).toBe(2);
+			});
+			parser.parse("@test: 1 > 2;");
 		});
-		it("<= false", function () {
-			var token = testExpression("2 <= 1");
-			expect(token.value).toEqual(false);
-			expect(token.type).toBe(lexer.TOKEN.TYPE.BOOL);
+		it("equals", function () {
+			spyOn(evaluator, "equals").and.callFake(function (left, right) {
+				expect(left().value).toBe(1);
+				expect(right().value).toBe(2);
+			});
+			parser.parse("@test: 1 equals 2;");
 		});
-		it("> true", function () {
-			var token = testExpression("2 > 1");
-			expect(token.value).toEqual(true);
-			expect(token.type).toBe(lexer.TOKEN.TYPE.BOOL);
+		it("matches", function () {
+			spyOn(evaluator, "lt").and.callFake(function (left, right) {
+				expect(left().value).toBe(1);
+				expect(right().value).toBe(".");
+			});
+			parser.parse("@test: 1 matches /\".\"/;");
 		});
-		it("> false", function () {
-			var token = testExpression("1 > 2");
-			expect(token.value).toEqual(false);
-			expect(token.type).toBe(lexer.TOKEN.TYPE.BOOL);
+		it("is", function () {
+			spyOn(evaluator, "is").and.callFake(function (left, right) {
+				expect(left().value).toBe(5);
+				expect(right().value).toBe("number");
+			});
+			parser.parse("@test: 5 is number;");
 		});
-
-		it(">= true", function () {
-			var token = testExpression("2 >= 2");
-			expect(token.value).toEqual(true);
-			expect(token.type).toBe(lexer.TOKEN.TYPE.BOOL);
+		it("add", function () {
+			spyOn(evaluator, "add").and.callFake(function (left, right) {
+				expect(left().value).toBe(3);
+				expect(right().value).toBe(2);
+			});
+			parser.parse("@test: 3 + 2;");
 		});
-		it(">= false", function () {
-			var token = testExpression("2 >= 1");
-			expect(token.value).toEqual(true);
-			expect(token.type).toBe(lexer.TOKEN.TYPE.BOOL);
+		it("sub", function () {
+			spyOn(evaluator, "sub").and.callFake(function (left, right) {
+				expect(left().value).toBe(3);
+				expect(right().value).toBe(2);
+			});
+			parser.parse("@test: 3 - 2;");
 		});
-
-		it("equals true", function () {
-			var token = testExpression("2 equals 2");
-			expect(token.value).toEqual(true);
-			expect(token.type).toBe(lexer.TOKEN.TYPE.BOOL);
+		it("mul", function () {
+			spyOn(evaluator, "mul").and.callFake(function (left, right) {
+				expect(left().value).toBe(3);
+				expect(right().value).toBe(2);
+			});
+			parser.parse("@test: 3 * 2;");
 		});
-		it("equals false", function () {
-			var token = testExpression("2 equals 5");
-			expect(token.value).toEqual(false);
-			expect(token.type).toBe(lexer.TOKEN.TYPE.BOOL);
+		it("div", function () {
+			spyOn(evaluator, "div").and.callFake(function (left, right) {
+				expect(left().value).toBe(3);
+				expect(right().value).toBe(2);
+			});
+			parser.parse("@test: 3 / 2;");
 		});
-		it("equals string true", function () {
-			var token = testExpression("\"a\" equals \"a\"");
-			expect(token.value).toEqual(true);
-			expect(token.type).toBe(lexer.TOKEN.TYPE.BOOL);
+		it("mod", function () {
+			spyOn(evaluator, "mod").and.callFake(function (left, right) {
+				expect(left().value).toBe(3);
+				expect(right().value).toBe(2);
+			});
+			parser.parse("@test: 3 % 2;");
 		});
-		it("equals string false", function () {
-			var token = testExpression("\"b\" equals \"a\"");
-			expect(token.value).toEqual(false);
-			expect(token.type).toBe(lexer.TOKEN.TYPE.BOOL);
+		it("neg", function () {
+			spyOn(evaluator, "neg").and.callFake(function (input) {
+				expect(input().value).toBe(2);
+			});
+			parser.parse("@test: -2;");
 		});
-		it("order of operations", function () {
-			var token = testExpression("(1+2)*3/9");
-			expect(token.value).toEqual(1);
-			expect(token.type).toBe(lexer.TOKEN.TYPE.NUMBER);
-		});
-		it("matches true", function () {
-			var token = testExpression("\"1231\" matches /\"^[0-9]+$\"/");
-			expect(token.value).toEqual(true);
-			expect(token.type).toBe(lexer.TOKEN.TYPE.BOOL);
-		});
-		it("matches false", function () {
-			var token = testExpression("\"1231a\" matches /\"^[0-9]+$\"/");
-			expect(token.value).toEqual(false);
-			expect(token.type).toBe(lexer.TOKEN.TYPE.BOOL);
-		});
-		it("not true", function () {
-			var token = testExpression("not false");
-			expect(token.value).toEqual(true);
-			expect(token.type).toBe(lexer.TOKEN.TYPE.BOOL);
-		});
-		it("not false", function () {
-			var token = testExpression("not true");
-			expect(token.value).toEqual(false);
-			expect(token.type).toBe(lexer.TOKEN.TYPE.BOOL);
-		});
-		it("chained not", function () {
-			var token = testExpression("not not not not true");
-			expect(token.value).toEqual(true);
-			expect(token.type).toBe(lexer.TOKEN.TYPE.BOOL);
-		});
-		it("and true", function () {
-			var token = testExpression("true and true and true");
-			expect(token.value).toEqual(true);
-			expect(token.type).toBe(lexer.TOKEN.TYPE.BOOL);
-		});
-		it("and false", function () {
-			var token = testExpression("true and true and false");
-			expect(token.value).toEqual(false);
-			expect(token.type).toBe(lexer.TOKEN.TYPE.BOOL);
-		});
-		it("or true", function () {
-			var token = testExpression("true or true or false");
-			expect(token.value).toEqual(true);
-			expect(token.type).toBe(lexer.TOKEN.TYPE.BOOL);
-		});
-		it("or false", function () {
-			var token = testExpression("false or false or false");
-			expect(token.value).toEqual(false);
-			expect(token.type).toBe(lexer.TOKEN.TYPE.BOOL);
-		});
-		//TODO need to finish tag statements
 	});
-	//TODO variables
-	//TODO selector states
+
+	describe("Is able to parse these valid blocks", function () {
+		it("parses variables", function () {
+			var parseString = "@var: true;";
+			expect(function () {
+				parser.parse(parseString);
+			}).not.toThrow();
+		});
+		it("parses selector blocks", function () {
+			var parseString = "#selector {valid: true;}";
+			expect(function () {
+				parser.parse(parseString);
+			}).not.toThrow();
+		});
+	});
 });
