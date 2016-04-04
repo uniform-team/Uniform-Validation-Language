@@ -61,7 +61,8 @@ function block() {
     var selector = matchType(lexer.TOKEN.TYPE.SELECTOR);
 
     if (scope.thisScope().find(selector) !== null)
-        console.warn("Line " + currentToken.line + ": Redeclared selector in same scope " + selector + ", previous definitions ignored");
+        console.warn("Line " + currentToken.line + ": Redeclared selector in same scope " + selector +
+            ", previous definitions ignored");
 
     var symbol = new scope.Symbol(selector.value, null, scope.KIND.SELECTOR);
     scope.insert(symbol);
@@ -116,8 +117,8 @@ function variableDeclaration() {
 
 //Grammar: <statements> -> <statement> <statements> | ø
 function statements(symbol) {
-    if (evaluator.isValidStatement(currentToken))
-        while (evaluator.isValidStatement(currentToken))
+    if (evaluator.isStatement(currentToken))
+        while (evaluator.isStatement(currentToken))
             statement(symbol);
     else throw new Error("Line " + currentToken.line + ": Invalid statement");
 }
@@ -138,7 +139,8 @@ function statement(symbol) {
             var exprValue = evaluator.derefUfm(exprFunc());
             if (exprValue.type === lexer.TOKEN.TYPE.BOOL)
                 return exprValue;
-            else throw new Error("Line " + currentToken.line + ": expected boolean result, received result of type " + exprValue.type);
+            else throw new Error("Line " + currentToken.line + ": expected boolean result, " +
+                "received result of type " + exprValue.type);
         };
 
         if (scope.thisScope().find(tagName) !== null)
@@ -166,7 +168,8 @@ function tag() {
         return matchType(lexer.TOKEN.TYPE.KEYWORD);
     }
     else {
-        throw new Error("Line " + currentToken.line + ": Invalid statement, expected tag recieved " + currentToken.value);
+        throw new Error("Line " + currentToken.line + ": Invalid statement, " +
+            "expected tag recieved " + currentToken.value);
     }
 }
 
@@ -390,7 +393,8 @@ function operand() {
         returnToken = matchType(lexer.TOKEN.TYPE.BOOL);
 
     else {
-        throw new Error("Line " + currentToken.line + ": invalid expression, expected an operand, recieved " + currentToken.value + "\n");
+        throw new Error("Line " + currentToken.line + ": invalid expression, " +
+            "expected an operand, recieved " + currentToken.value + "\n");
     }
     return function () {
         return returnToken;
@@ -405,7 +409,8 @@ function state() {
         return temp;
     }
     else {
-        throw new Error("Line "+ currentToken.line + ": Invalid statement, \nexpected a state, recieved " + currentToken.value + "\n");
+        throw new Error("Line "+ currentToken.line + ": Invalid statement, " +
+            "expected a state, recieved " + currentToken.value + "\n");
     }
 }
 
@@ -419,7 +424,8 @@ function matchType(inputToken) {
         currentToken = lexer.getNextToken();
         return tempCurrentToken;
     }
-    else throw new Error("match type failed on line " + currentToken.line + ", could not find: " + currentToken.value + " " + currentToken.type);
+    else throw new Error("match type failed on line " + currentToken.line + ", could not find: " +
+        currentToken.value + " " + currentToken.type);
 }
 
 //Parameters: token object
@@ -432,7 +438,8 @@ function matchValue(inputToken) {
         currentToken = lexer.getNextToken();
         return tempCurrentToken;
     }
-    else throw new Error("match value failed on line " + currentToken.line + ", could not find: " + currentToken.value + ", " + currentToken.type);
+    else throw new Error("match value failed on line " + currentToken.line + ", could not find: " +
+        currentToken.value + ", " + currentToken.type);
 }
 
 /*
@@ -440,7 +447,7 @@ function matchValue(inputToken) {
 Parse is the "main" function
  it opens the global scope and calls lexer to get the next token into the currentToken
  blocks() is the top-level layer in the grammar tree.
- when scope is closed, it returns the root of the symbol tree.
+ parse returns the root of the symbol tree.
 
 */
 module.exports = {

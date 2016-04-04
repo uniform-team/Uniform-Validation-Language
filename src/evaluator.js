@@ -62,7 +62,7 @@ module.exports = {
         token.value === lexer.TOKEN.TAG.ENABLED ||
         token.value === lexer.TOKEN.TAG.VISIBLE);
     },
-    isValidStatement: function (token) {
+    isStatement: function (token) {
         return (this.isTag(token) ||
         token.type === lexer.TOKEN.TYPE.SELECTOR ||
         token.type === lexer.TOKEN.TYPE.VARIABLE);
@@ -219,7 +219,7 @@ module.exports = {
             var expr = coerceToNumber(inExpr());
             if (expr.type === lexer.TOKEN.TYPE.NUMBER)
                 return new lexer.Token(-expr.value, lexer.TOKEN.TYPE.NUMBER, expr.line, expr.col);
-            else throw new Error("Line " + left.line + ": cannot perform negation operation, operand is not of type NUMBER");
+            else throw new Error("Line " + expr.line + ": cannot perform negation operation, operand is not of type NUMBER");
         };
     }
 };
