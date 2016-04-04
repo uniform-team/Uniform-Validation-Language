@@ -13,6 +13,6 @@ module.exports = {
 		$(document).trigger("ufm:refresh");
 	},
 	resetParse: function () {
-        $(document).trigger("ufm:resetParse");
+       uniform.parser.reset();
     }
 };

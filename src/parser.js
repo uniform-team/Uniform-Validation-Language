@@ -3,6 +3,16 @@ var scope = require("./scope.js");
 var evaluator = require("./evaluator.js");
 
 var currentToken;
+var listeners = [];
+
+function addListener(evt, selector, func) {
+    $(document).on(evt, selector, func);
+    listeners.push({
+        evt: evt,
+        selector: selector,
+        func: func
+    });
+};
 
 
 //refreshes the boolean value of the selector for each tag in the scope
@@ -70,30 +80,22 @@ function block() {
 
     //Open the scope and parse the statements
     scope.createScope(selector, function() {
-
         var tempScope = scope.thisScope();
-        var updateSelectorFunc = updateSelector(selector.value, tempScope);
 
+        //need references to functions so the event can be removed
+        var updateSelectorFunc = updateSelector(selector.value, tempScope);
         var func = function (evt) {
             if ($(evt.target).is(selector.value)) {
                 updateSelectorFunc();
             }
         };
 
-        var $document = $(document);
         //attach event listener to change all dependencies
-        $document.on("change", selector.value, func);
-
-        $document.on("ufm:refresh", updateSelectorFunc);
+        addListener("change", selector.value, func);
+        addListener("ufm:refresh", updateSelectorFunc);
 
         //attach event listener for angular support
-        $document.on("ng-change", selector.value, func);
-
-        $document.on("ufm:resetParse", function () {
-            $document.off("change", selector.value, func);
-            $document.off("ufm:refresh", updateSelectorFunc);
-            $document.off("ng-change", selector.value, func);
-        });
+        addListener("ng-change", selector.value, func);
 
         statements(symbol);
         matchValue(lexer.TOKEN.OPERATOR.RBRACE);
@@ -350,28 +352,18 @@ function operand() {
 
         if (thisScope.selector.value !== returnToken.value) {
 
-            //custom event to trigger dependencies
-            var $document = $(document);
-
+            //need pointers to functions to remove listeners
+            var updateSelectorFunc = updateSelector(thisScope.selector.value, thisScope);
             var validateHandler = function (evt) {
                 $(evt.target).trigger("ufm:validate");
             };
 
-            var updateSelectorFunc = updateSelector(thisScope.selector.value, thisScope);
-
             //custom event to trigger dependencies
-            $document.on("change", returnToken.value, validateHandler);
-            $document.on("ufm:validate", returnToken.value, updateSelectorFunc);
+            addListener("change", returnToken.value, validateHandler);
+            addListener("ufm:validate", returnToken.value, updateSelectorFunc);
 
             //angular change support
-            $document.on("ng-change", returnToken.value, validateHandler);
-
-            //removes all event listeners on uniform.resetParse()
-            $document.on("ufm:resetParse", function () {
-                $document.off("ufm:validate", returnToken.value, updateSelectorFunc);
-                $document.off("change", returnToken.value, validateHandler);
-                $document.off("ng-change", returnToken.value, validateHandler);
-            });
+            addListener("ng-change", returnToken.value, validateHandler);
         }
 
         return function () {
@@ -466,6 +458,13 @@ module.exports = {
 
         console.log("Uniform Parse Success");
         return closedScope;
+    },
+    reset: function () {
+        while (listeners.length > 0) {
+            var listener = listeners.pop();
+            $(document).off(listener.evt, listener.selector, listener.func);
+        }
+        console.log("Uniform has Reset, Listeners were Removed");
     },
     _scope: scope
 };
