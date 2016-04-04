@@ -13,6 +13,45 @@ describe("The \"parser\" module", function () {
 		});
 	});
 
+	it("is able to add and remove event listeners", function () {
+		var onCalls = 0;
+		var offCalls = 0;
+		var first = function () { };
+		var second = function () { };
+
+		spyOn($, "on").and.callFake(function (evt, sel, func) {
+			onCalls++;
+			if (onCalls === 1) {
+				expect(evt).toBe("myEvent");
+				expect(sel).toBe("mySelector");
+				expect(func).toBe(first);
+			} else if (onCalls === 2) {
+				expect(evt).toBe("myOtherEvent");
+				expect(sel).toBe("myOtherSelector");
+				expect(func).toBe(second);
+			}
+		});
+
+		spyOn($, "off").and.callFake(function (evt, sel, func) {
+			offCalls++;
+			if (offCalls === 1) {
+				expect(evt).toBe("myEvent");
+				expect(sel).toBe("mySelector");
+				expect(func).toBe(first);
+			} else if (offCalls === 2) {
+				expect(evt).toBe("myOtherEvent");
+				expect(sel).toBe("myOtherSelector");
+				expect(func).toBe(second);
+			}
+		});
+		parser.addListener("myEvent", "mySelector", first);
+		//parser.addListener("myOtherEvent", "myOtherSelector", second);
+		parser.reset();
+
+		expect(onCalls).toBe(1);
+		expect(offCalls).toBe(1);
+	});
+
 	describe("Is able to parse expressions such as", function () {
 		it("and", function () {
 			spyOn(evaluator, "and").and.callFake(function (left, right) {

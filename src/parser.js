@@ -466,5 +466,6 @@ module.exports = {
         }
         console.log("Uniform has Reset, Listeners were Removed");
     },
+    addListener: addListener,
     _scope: scope
 };
