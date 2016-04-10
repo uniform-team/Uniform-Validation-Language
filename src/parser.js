@@ -447,7 +447,8 @@ module.exports = {
         var closedScope;
         lexer.loadString(inputString);
         currentToken = lexer.getNextToken();
-        closedScope = scope.createScope("", function () {
+        //global scope
+        closedScope = scope.createScope(null, function () {
             blocks();
         });
 

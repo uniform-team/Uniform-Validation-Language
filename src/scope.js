@@ -47,11 +47,11 @@ function find(name) {
 //newSelector should be "" if global scope
 function openScope(newSelector) {
     if (root === null) {
-        root = new Scope("", null);
+        root = new Scope(new lexer.Token("", lexer.TOKEN.TYPE.SELECTOR, -1, -1), null);
         currentScope = root;
     }
     else {
-        currentScope = new Scope(newSelector, root);
+        currentScope = new Scope(newSelector, currentScope);
     }
 }
 
