@@ -1,14 +1,15 @@
-@integer: /"someregex"/;
+@filled: /"."/;
+@integer: /"^[0-9]{4}$"/;
 
 $("#rootForm") {
 	valid:
-	       not $("#hasCar") is valid or
-	       $("#carForm") is valid;
+		not $("#hasCar") or
+		$("#carForm") is valid;
 }
 
 $("#carForm") {
 	valid:
-	    $("#make") is valid and
-	    $("#model") is valid and
+	    $("#make") matches @filled and
+	    $("#model") matches @filled and
 	    $("#year") matches @integer;
 }
