@@ -1,15 +1,30 @@
 var lexer = require("./lexer.js");
 
+var State = function ($sel) {
+	this.valid = $sel.valid();
+	this.enabled = $sel.enabled();
+	this.visible = $sel.visible();
+	this.optional = $sel.optional();
+};
+
+State.prototype = {
+	different: function (other) {
+		return this.valid !== other.valid
+			|| this.enabled !== other.enabled
+			|| this.visible !== other.visible
+			|| this.optional !== other.optional;
+	}
+};
+
 try {
     $.fn.ufm = function () {
         var self = this;
-
 
         function stateAttr(state, value) {
             if (value === undefined)
                 return self.attr("ufm-" + state) === "true";
             else
-                self.attr("ufm-" + state, value);
+				self.attr("ufm-" + state, value);
         }
 
         this.type = function () {
@@ -24,8 +39,9 @@ try {
                 return lexer.TOKEN.TYPE.NUMBER;
             else if (self.is("select"))
                 return lexer.TOKEN.TYPE.STRING;
+            else
+                throw new Error("Unknown type for $(\"" + this.selector + "\"), is it a block element?");
         };
-
 
         this.valid = function (value) {
             return stateAttr("valid", value);
@@ -39,6 +55,11 @@ try {
         this.optional = function (value) {
             return stateAttr("optional", value);
         };
+
+		this.getState = function () {
+			return new State(this);
+		};
+
         return this;
     };
 }

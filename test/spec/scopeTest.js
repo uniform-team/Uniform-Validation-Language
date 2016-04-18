@@ -1,21 +1,25 @@
-var scope = uniform.parser._scope;
+var scope = uniform.scope;
 
-describe("The \"scope\" module should", function () {
-    it("Open new scopes, insert new ones, and look them up", function () {
+describe("The \"scope\" module", function () {
+    it("is exposed as an object", function () {
+        expect(scope).toEqual(jasmine.any(Object));
+    });
+
+    it("can open new scopes, insert new ones, and look them up", function () {
         scope.createScope("", function () {
             var testScope = new scope.Symbol("test", "true", scope.KIND.VARIABLE);
             scope.insert(testScope);
             expect(scope.lookup("test")).toEqual(testScope);
         });
     });
-    it("Close scopes removing the innermost scope", function () {
+    it("can close scopes, removing the innermost scope", function () {
         scope.createScope("", function () {
             var testScope = new scope.Symbol("test", "true", scope.KIND.VARIABLE);
             scope.insert(testScope);
         });
         expect(scope.lookup("test")).toEqual(null);
     });
-    it("isDefined will return null if symbol does not exist in symbol table and true if it does", function () {
+    it("exposes isDefined, which will return null if symbol does not exist in symbol table and true if it does", function () {
         scope.createScope("", function () {
             var testScope = new scope.Symbol("test", "true", scope.KIND.VARIABLE);
             scope.insert(testScope);

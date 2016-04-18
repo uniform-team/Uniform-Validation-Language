@@ -2,57 +2,15 @@ describe("The \"parser\" module", function () {
 	it("is exposed as an object", function () {
 		expect(uniform.parser).toEqual(jasmine.any(Object));
 	});
+
 	var parser = uniform.parser;
-	var lexer = uniform.lexer;
 	var evaluator = uniform.evaluator;
 
-
-	describe("exposes the \"parse\" member", function () {
-		it("as a function", function () {
-			expect(parser.parse).toEqual(jasmine.any(Function));
-		});
+	it("exposes the \"parse\" member as a function", function () {
+		expect(parser.parse).toEqual(jasmine.any(Function));
 	});
 
-	it("is able to add and remove event listeners", function () {
-		var onCalls = 0;
-		var offCalls = 0;
-		var first = function () { };
-		var second = function () { };
-
-		spyOn($, "on").and.callFake(function (evt, sel, func) {
-			onCalls++;
-			if (onCalls === 1) {
-				expect(evt).toBe("myEvent");
-				expect(sel).toBe("mySelector");
-				expect(func).toBe(first);
-			} else if (onCalls === 2) {
-				expect(evt).toBe("myOtherEvent");
-				expect(sel).toBe("myOtherSelector");
-				expect(func).toBe(second);
-			}
-		});
-
-		spyOn($, "off").and.callFake(function (evt, sel, func) {
-			offCalls++;
-			if (offCalls === 1) {
-				expect(evt).toBe("myEvent");
-				expect(sel).toBe("mySelector");
-				expect(func).toBe(first);
-			} else if (offCalls === 2) {
-				expect(evt).toBe("myOtherEvent");
-				expect(sel).toBe("myOtherSelector");
-				expect(func).toBe(second);
-			}
-		});
-		parser.addListener("myEvent", "mySelector", first);
-		//parser.addListener("myOtherEvent", "myOtherSelector", second);
-		parser.reset();
-
-		expect(onCalls).toBe(1);
-		expect(offCalls).toBe(1);
-	});
-
-	describe("Is able to parse expressions such as", function () {
+	describe("is able to parse expressions such as", function () {
 		it("and", function () {
 			spyOn(evaluator, "and").and.callFake(function (left, right) {
 				expect(left().value).toBe(true);
@@ -163,17 +121,39 @@ describe("The \"parser\" module", function () {
 			});
 			parser.parse("@test: -2;");
 		});
+		describe("dot", function () {
+			it("with no arguments", function () {
+				spyOn(evaluator, "dot").and.callFake(function (expr, id, args) {
+					expect(expr().value).$toEqual($("#child"));
+					expect(id).toBe("parent");
+
+					expect(args.length).toBe(0);
+				});
+				parser.parse("@test: $(\"#child\").parent();");
+			});
+
+			it("with arguments", function () {
+				spyOn(evaluator, "dot").and.callFake(function (expr, id, args) {
+					expect(expr().value).$toEqual($("#parent"));
+					expect(id).toBe("find");
+
+					expect(args.length).toBe(1);
+					expect(args[0]().value).toBe("#child");
+				});
+				parser.parse("@test: $(\"#parent\").find(\"#child\");");
+			});
+		});
 	});
 
-	describe("Is able to parse these valid blocks", function () {
-		it("parses variables", function () {
+	describe("is able to parse valid Uniform scripts such as", function () {
+		it("variables", function () {
 			var parseString = "@var: true;";
 			expect(function () {
 				parser.parse(parseString);
 			}).not.toThrow();
 		});
-		it("parses selector blocks", function () {
-			var parseString = "#selector {valid: true;}";
+		it("selector blocks", function () {
+			var parseString = "$(\"#selector\") {valid: true;}";
 			expect(function () {
 				parser.parse(parseString);
 			}).not.toThrow();

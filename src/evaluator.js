@@ -84,67 +84,67 @@ module.exports = {
 
     //Evaluation Functions
     and: function (leftExpr, rightExpr) { // Implicitly creates the closure we needed the self-executing function for
-        return function () {
-            var left = coerceToBool(leftExpr());
-            var right = coerceToBool(rightExpr());
+        return function (self) {
+            var left = coerceToBool(leftExpr(self));
+            var right = coerceToBool(rightExpr(self));
             return new lexer.Token(left.value && right.value, lexer.TOKEN.TYPE.BOOL, right.line, right.col);
         };
     },
     or: function (leftExpr, rightExpr) {
-        return function () {
-            var left = coerceToBool(leftExpr());
-            var right = coerceToBool(rightExpr());
+        return function (self) {
+            var left = coerceToBool(leftExpr(self));
+            var right = coerceToBool(rightExpr(self));
             return new lexer.Token(left.value || right.value, lexer.TOKEN.TYPE.BOOL, right.line, right.col);
         };
     },
     not: function (inExpr) {
-        return function () {
-            var expr = coerceToBool(inExpr());
+        return function (self) {
+            var expr = coerceToBool(inExpr(self));
             return new lexer.Token(!expr.value, lexer.TOKEN.TYPE.BOOL, expr.line, expr.col);
         };
     },
 
     lt: function (leftExpr, rightExpr) {
-        return function () {
-            var left = coerceToNumber(leftExpr());
-            var right = coerceToNumber(rightExpr());
+        return function (self) {
+            var left = coerceToNumber(leftExpr(self));
+            var right = coerceToNumber(rightExpr(self));
             return new lexer.Token(left.value < right.value, lexer.TOKEN.TYPE.BOOL, right.line, right.col);
         };
     },
     gt: function (leftExpr, rightExpr) {
-        return function () {
-            var left = coerceToNumber(leftExpr());
-            var right = coerceToNumber(rightExpr());
+        return function (self) {
+            var left = coerceToNumber(leftExpr(self));
+            var right = coerceToNumber(rightExpr(self));
             return new lexer.Token(left.value > right.value, lexer.TOKEN.TYPE.BOOL, right.line, right.col);
         };
     },
     gte: function (leftExpr, rightExpr) {
-        return function () {
-            var left = coerceToNumber(leftExpr());
-            var right = coerceToNumber(rightExpr());
+        return function (self) {
+            var left = coerceToNumber(leftExpr(self));
+            var right = coerceToNumber(rightExpr(self));
             return new lexer.Token(left.value >= right.value, lexer.TOKEN.TYPE.BOOL, right.line, right.col);
         };
     },
     lte: function (leftExpr, rightExpr) {
-        return function () {
-            var left = coerceToNumber(leftExpr());
-            var right = coerceToNumber(rightExpr());
+        return function (self) {
+            var left = coerceToNumber(leftExpr(self));
+            var right = coerceToNumber(rightExpr(self));
             return new lexer.Token(left.value <= right.value, lexer.TOKEN.TYPE.BOOL, right.line, right.col);
         };
     },
     equals: function (leftExpr, rightExpr) {
-        return function () {
-            var left = derefUfm(leftExpr());
-            var right = derefUfm(rightExpr());
+        return function (self) {
+            var left = derefUfm(leftExpr(self));
+            var right = derefUfm(rightExpr(self));
             if (left.type === right.type)
                 return new lexer.Token(left.value === right.value, lexer.TOKEN.TYPE.BOOL, right.line, right.col);
             else throw new Error("Line " + left.line + ": cannot perform equals operation, types of operands do not match");
         };
     },
     matches: function (leftExpr, rightExpr) {
-        return function () {
-            var left = coerceToString(leftExpr());
-            var right = rightExpr();
+        return function (self) {
+            var left = coerceToString(leftExpr(self));
+            var right = rightExpr(self);
             var tempRegex = new RegExp(right.value);
             if (right.type === lexer.TOKEN.TYPE.REGEX)
                 return new lexer.Token(tempRegex.test(left.value), lexer.TOKEN.TYPE.BOOL, left.line, left.col);
@@ -152,9 +152,9 @@ module.exports = {
         };
     },
     is: function (leftExpr, rightExpr) {
-        return function () {
-            var left = leftExpr();
-            var right = rightExpr();
+        return function (self) {
+            var left = leftExpr(self);
+            var right = rightExpr(self);
             if (isState(right) && left.type === lexer.TOKEN.TYPE.UFM) {
                 if (right.value === lexer.TOKEN.STATE.VALID)
                     return new lexer.Token($(left.value).ufm().valid(), lexer.TOKEN.TYPE.BOOL, left.line, left.col);
@@ -180,46 +180,71 @@ module.exports = {
         };
     },
     add: function (leftExpr, rightExpr) {
-        return function () {
-            var left = coerceToNumber(leftExpr());
-            var right = coerceToNumber(rightExpr());
+        return function (self) {
+            var left = coerceToNumber(leftExpr(self));
+            var right = coerceToNumber(rightExpr(self));
             return new lexer.Token(left.value + right.value, lexer.TOKEN.TYPE.NUMBER, right.line, right.col);
         };
     },
     sub: function (leftExpr, rightExpr) {
-        return function () {
-            var left = coerceToNumber(leftExpr());
-            var right = coerceToNumber(rightExpr());
+        return function (self) {
+            var left = coerceToNumber(leftExpr(self));
+            var right = coerceToNumber(rightExpr(self));
             return new lexer.Token(left.value - right.value, lexer.TOKEN.TYPE.NUMBER, right.line, right.col);
         };
     },
     mul: function (leftExpr, rightExpr) {
-        return function () {
-            var left = coerceToNumber(leftExpr());
-            var right = coerceToNumber(rightExpr());
+        return function (self) {
+            var left = coerceToNumber(leftExpr(self));
+            var right = coerceToNumber(rightExpr(self));
             return new lexer.Token(left.value * right.value, lexer.TOKEN.TYPE.NUMBER, right.line, right.col);
         };
     },
     div: function (leftExpr, rightExpr) {
-        return function () {
-            var left = coerceToNumber(leftExpr());
-            var right = coerceToNumber(rightExpr());
+        return function (self) {
+            var left = coerceToNumber(leftExpr(self));
+            var right = coerceToNumber(rightExpr(self));
             return new lexer.Token(left.value / right.value, lexer.TOKEN.TYPE.NUMBER, right.line, right.col);
         };
     },
     mod: function (leftExpr, rightExpr) {
-        return function () {
-            var left = coerceToNumber(leftExpr());
-            var right = coerceToNumber(rightExpr());
+        return function (self) {
+            var left = coerceToNumber(leftExpr(self));
+            var right = coerceToNumber(rightExpr(self));
             return new lexer.Token(left.value % right.value, lexer.TOKEN.TYPE.NUMBER, right.line, right.col);
         };
     },
     neg: function (inExpr) {
-        return function () {
-            var expr = coerceToNumber(inExpr());
+        return function (self) {
+            var expr = coerceToNumber(inExpr(self));
             if (expr.type === lexer.TOKEN.TYPE.NUMBER)
                 return new lexer.Token(-expr.value, lexer.TOKEN.TYPE.NUMBER, expr.line, expr.col);
             else throw new Error("Line " + expr.line + ": cannot perform negation operation, operand is not of type NUMBER");
         };
+    },
+    dot: function (leftExpr, id, args) {
+        return function (self) {
+			var expr = leftExpr(self);
+			if (expr.type !== lexer.TOKEN.TYPE.UFM) {
+				throw new Error("Line " + expr.line + ", column " + expr.col + ": cannot perform dot operation, operand is not of type SELECTOR");
+			}
+
+			// Evaluate arguments
+			var evaluatedArgs = [];
+			for (var i = 0; i < args.length; ++i) {
+				evaluatedArgs.push(args[i](self).value);
+			}
+
+            var func = expr.value[id];
+            if (typeof func !== "function") {
+                throw new Error("Line " + expr.line + ", column " + expr.col + ": cannot execute \"" + id + "\" of type \"" + typeof func + "\" as a function.")
+            }
+
+			// Execute function with the provided arguments
+			var result = func.apply(expr.value, evaluatedArgs);
+
+			// Assume result is a selector and wrap as a UFM object (may not be true for some jQuery functions)
+			return new lexer.Token(result.ufm(), lexer.TOKEN.TYPE.UFM, expr.line, expr.col);
+		};
     }
 };

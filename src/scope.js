@@ -72,7 +72,7 @@ module.exports = {
 
     createScope: function (selector, callback) {
         openScope(selector);
-        callback();
+        callback(currentScope);
         return closeScope();
     },
 

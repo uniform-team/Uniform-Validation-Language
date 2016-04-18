@@ -1,3 +1,5 @@
+var listeners = require("./listeners.js");
+
 module.exports = {
 	href: function (href) {
 		$.ajax({
@@ -10,7 +12,7 @@ module.exports = {
 		});
 	},
 	refresh: function () {
-		$(document).trigger("ufm:refresh");
+		$(document).trigger(listeners.EVENTS.REFRESH);
 	},
 	resetParse: function () {
        uniform.parser.reset();

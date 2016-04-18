@@ -1,58 +1,9 @@
 var lexer = require("./lexer.js");
 var scope = require("./scope.js");
 var evaluator = require("./evaluator.js");
+var listeners = require("./listeners.js");
 
 var currentToken;
-var listeners = [];
-
-function addListener(evt, selector, func) {
-    $(document).on(evt, selector, func);
-    listeners.push({
-        evt: evt,
-        selector: selector,
-        func: func
-    });
-};
-
-
-//refreshes the boolean value of the selector for each tag in the scope
-function updateSelector(selector, scope) {
-    return function () {
-        try {
-            var $selector = $(selector).ufm();
-
-            //enabled
-            var enabledVal = scope.tagTable["enabled"].expression().value;
-            $selector.enabled(enabledVal);
-            if (enabledVal)
-                $selector.prop("disabled", false);
-            else
-                $selector.prop("disabled", true);
-
-            //visible
-            var visibleVal = scope.tagTable["visible"].expression().value;
-            $selector.visible(visibleVal);
-            if (visibleVal)
-                $selector.show();
-            else
-                $selector.hide();
-
-            //optional
-            var optionalVal = scope.tagTable["optional"].expression().value;
-            $selector.optional(optionalVal);
-
-            //valid
-            $selector.valid(scope.tagTable["valid"].expression().value);
-
-            console.log("Uniform tags for selector \"" + selector + "\" have been updated");
-
-            $selector.trigger("ufm:validate");
-        }
-        catch (err) {
-            console.log(err);
-        }
-    };
-}
 
 //Grammar: <blocks> -> <block> <blocks> | ø
 function blocks() {
@@ -79,23 +30,10 @@ function block() {
     matchValue(lexer.TOKEN.OPERATOR.LBRACE);
 
     //Open the scope and parse the statements
-    scope.createScope(selector, function() {
-        var tempScope = scope.thisScope();
-
-        //need references to functions so the event can be removed
-        var updateSelectorFunc = updateSelector(selector.value, tempScope);
-        var func = function (evt) {
-            if ($(evt.target).is(selector.value)) {
-                updateSelectorFunc();
-            }
-        };
-
-        //attach event listener to change all dependencies
-        addListener("change", selector.value, func);
-        addListener("ufm:refresh", updateSelectorFunc);
-
-        //attach event listener for angular support
-        addListener("ng-change", selector.value, func);
+    scope.createScope(selector, function(thisScope) {
+        //attach event listeners
+		listeners.updateOnChange(thisScope);
+		listeners.updateOnRefresh(thisScope);
 
         statements(symbol);
         matchValue(lexer.TOKEN.OPERATOR.RBRACE);
@@ -137,8 +75,8 @@ function statement(symbol) {
         var exprFunc = expressionAndOr();
 
         //checks to make sure that the expression evaluates to a boolean
-        var checkedExprValue = function () {
-            var exprValue = evaluator.derefUfm(exprFunc());
+        var checkedExprValue = function (self) {
+            var exprValue = evaluator.derefUfm(exprFunc(self));
             if (exprValue.type === lexer.TOKEN.TYPE.BOOL)
                 return exprValue;
             else throw new Error("Line " + currentToken.line + ": expected boolean result, " +
@@ -293,7 +231,7 @@ function expressionMulDivMod() {
     return LReturn;
 }
 
-//Grammar: <neg> -> - <neg> | <paren>
+//Grammar: <neg> -> - <neg> | <dot>
 function expressionNeg() {
     var negCount = 0;
     while (currentToken.value === lexer.TOKEN.OPERATOR.SUB) {
@@ -301,12 +239,57 @@ function expressionNeg() {
         negCount++;
     }
     negCount %= 2;
-    var parenReturn = expressionParen();
+    var parenReturn = expressionDot();
     //negCount will be 0 if there is an even number of '-'
     if (negCount)
         return evaluator.neg(parenReturn);
     else
         return parenReturn;
+}
+
+//Grammar: <dot> -> <paren> <dot_>
+//         <dot_> -> . <identifier> ( <args> ) <dot_> | ø
+function expressionDot() {
+	var result = expressionParen();
+
+	while (currentToken.value === lexer.TOKEN.OPERATOR.DOT) {
+		// Parse function to execute
+		matchValue(lexer.TOKEN.OPERATOR.DOT);
+		var id = currentToken.value;
+		matchType(lexer.TOKEN.TYPE.IDENTIFIER);
+
+		// Parse parenthesized argument list
+		matchValue(lexer.TOKEN.OPERATOR.LPAREN);
+		var args = expressionArgs();
+		matchValue(lexer.TOKEN.OPERATOR.RPAREN);
+
+        // Chain evaluation onto result
+		result = evaluator.dot(result, id, args);
+
+        // Dot operators hide dependency information, must update on ALL changes to DOM tree
+		listeners.updateOnAllValidations(scope.thisScope());
+	}
+
+	return result;
+}
+
+//Grammar: <args> -> <expression> <args_> | ø
+//         <args_> -> , <expression> <args_>
+function expressionArgs() {
+	var result = [];
+
+	// Parse first argument if present
+	if (currentToken.value !== lexer.TOKEN.OPERATOR.RPAREN) {
+		result.push(expressionAndOr());
+	}
+
+	// Parse remaining arguments comma separated
+	while (currentToken.value === lexer.TOKEN.OPERATOR.COMMA) {
+		matchValue(lexer.TOKEN.OPERATOR.COMMA);
+		result.push(expressionAndOr());
+	}
+
+	return result;
 }
 
 //Grammar: <paren> -> ( <andOr> ) | <operand>
@@ -347,29 +330,20 @@ function operand() {
     else if (currentToken.type === lexer.TOKEN.TYPE.SELECTOR) {
         returnToken = matchType(lexer.TOKEN.TYPE.SELECTOR);
 
-        //Setup Event Listeners
-        var thisScope = scope.thisScope();
+		//this
+		if (returnToken.value === lexer.TOKEN.THIS) {
+			return function (self) {
+				return new lexer.Token(self, lexer.TOKEN.TYPE.UFM, returnToken.line, returnToken.col);
+			};
+		}
 
-        if (thisScope.selector.value !== returnToken.value) {
+        // Found a selector, set up a dependency between it and the current scope
+		listeners.setDependency(returnToken.value, scope.thisScope());
 
-            //need pointers to functions to remove listeners
-            var updateSelectorFunc = updateSelector(thisScope.selector.value, thisScope);
-            var validateHandler = function (evt) {
-                $(evt.target).trigger("ufm:validate");
-            };
-
-            //custom event to trigger dependencies
-            addListener("change", returnToken.value, validateHandler);
-            addListener("ufm:validate", returnToken.value, updateSelectorFunc);
-
-            //angular change support
-            addListener("ng-change", returnToken.value, validateHandler);
-        }
-
+        // Return new selector
         return function () {
             return new lexer.Token($(returnToken.value).ufm(), lexer.TOKEN.TYPE.UFM, returnToken.line, returnToken.col);
         };
-
     }
 
     //<state>
@@ -412,8 +386,7 @@ function state() {
 function matchType(inputToken) {
     if (inputToken === currentToken.type) {
         var tempCurrentToken = currentToken;
-        //console.log("Value: " + currentToken.value + ", Type: " + currentToken.type);
-        currentToken = lexer.getNextToken();
+		currentToken = lexer.getNextToken();
         return tempCurrentToken;
     }
     else throw new Error("match type failed on line " + currentToken.line + ", could not find: " +
@@ -426,9 +399,8 @@ function matchType(inputToken) {
 function matchValue(inputToken) {
     if (inputToken === currentToken.value) {
         var tempCurrentToken = currentToken;
-        //console.log("Value: " + currentToken.value + " Type: " + currentToken.type);
-        currentToken = lexer.getNextToken();
-        return tempCurrentToken;
+		currentToken = lexer.getNextToken();
+		return tempCurrentToken;
     }
     else throw new Error("match value failed on line " + currentToken.line + ", could not find: " +
         currentToken.value + ", " + currentToken.type);
@@ -447,26 +419,20 @@ module.exports = {
         var closedScope;
         lexer.loadString(inputString);
         currentToken = lexer.getNextToken();
+		
         //global scope
         closedScope = scope.createScope(null, function () {
             blocks();
         });
 
-        //refresh on ready by default
-        $(document).ready(function () {
-            $(document).trigger("ufm:refresh");
-        });
+		// Initialize listeners
+		listeners.init();
 
         console.log("Uniform Parse Success");
         return closedScope;
     },
     reset: function () {
-        while (listeners.length > 0) {
-            var listener = listeners.pop();
-            $(document).off(listener.evt, listener.selector, listener.func);
-        }
-        console.log("Uniform has Reset, Listeners were Removed");
-    },
-    addListener: addListener,
-    _scope: scope
+        listeners.reset();
+        console.log("Uniform has reset, listeners were removed");
+    }
 };

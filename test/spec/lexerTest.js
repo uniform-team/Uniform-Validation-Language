@@ -6,45 +6,78 @@ describe("The \"lexer\" module", function () {
     });
     var lexer = uniform.lexer;
     it("should throw error when given an invalid token", function () {
-        lexer.loadString("test");
+        lexer.loadString("^test&");
         expect(function () {
             lexer.getNextToken();
         }).toThrow();
     });
 
+    describe("should recognize comments and ignore them properly including", function() {
+        it("single line comments //", function() {
+            lexer.loadString("//this is a comment \n \n \"this is not a comment\" //also a comment \n");
+            thisToken = lexer.getNextToken();
+            expect(thisToken.type).toBe(lexer.TOKEN.TYPE.STRING);
+        });
+        it("multi line comments /* */", function() {
+            lexer.loadString("/* multi line comment \n still going */ \"this is a string\"");
+            thisToken = lexer.getNextToken();
+            expect(thisToken.type).toBe(lexer.TOKEN.TYPE.STRING);
+        });
+        it("tricky multi line comments /*** **/", function() {
+            lexer.loadString("/** multi line comment \n still going ***/ \"this is a string\"");
+            thisToken = lexer.getNextToken();
+            expect(thisToken.type).toBe(lexer.TOKEN.TYPE.STRING);
+        });
+
+    });
+
     describe("should tokenize valid tokens such as", function () {
-        it("the literal boolean true", function () {
-            lexer.loadString("true");
-            thisToken = lexer.getNextToken();
-            expect(thisToken.type).toBe(lexer.TOKEN.TYPE.BOOL);
-            expect(thisToken.value).toBe(true);
-        });
-        it("the literal boolean false", function () {
-            lexer.loadString("false");
-            thisToken = lexer.getNextToken();
-            expect(thisToken.type).toBe(lexer.TOKEN.TYPE.BOOL);
-            expect(thisToken.value).toBe(false);
-        });
-        describe("should recognize comments and ignore them properly including", function() {
-            it("single line comments //", function() {
-                lexer.loadString("//this is a comment \n \n \"this is not a comment\" //also a comment \n");
-                thisToken = lexer.getNextToken();
-                expect(thisToken.type).toBe(lexer.TOKEN.TYPE.STRING);
-            });
-            it("multi line comments /* */", function() {
-                lexer.loadString("/* multi line comment \n still going */ \"this is a string\"");
-                thisToken = lexer.getNextToken();
-                expect(thisToken.type).toBe(lexer.TOKEN.TYPE.STRING);
-            });
-            it("tricky multi line comments /*** **/", function() {
-                lexer.loadString("/** multi line comment \n still going ***/ \"this is a string\"");
-                thisToken = lexer.getNextToken();
-                expect(thisToken.type).toBe(lexer.TOKEN.TYPE.STRING);
-            });
-
+        describe("values including", function () {
+			it("the literal boolean true", function () {
+				lexer.loadString("true");
+				thisToken = lexer.getNextToken();
+				expect(thisToken.type).toBe(lexer.TOKEN.TYPE.BOOL);
+				expect(thisToken.value).toBe(true);
+			});
+			it("the literal boolean false", function () {
+				lexer.loadString("false");
+				thisToken = lexer.getNextToken();
+				expect(thisToken.type).toBe(lexer.TOKEN.TYPE.BOOL);
+				expect(thisToken.value).toBe(false);
+			});
         });
 
-        it("should recognize regular expressions", function () {
+		describe("identifiers", function () {
+			it("leading with a letter", function () {
+				lexer.loadString("test_123$");
+				thisToken = lexer.getNextToken();
+				expect(thisToken.type).toBe(lexer.TOKEN.TYPE.IDENTIFIER);
+				expect(thisToken.value).toBe("test_123$");
+			});
+
+			it("leading with an underscore", function () {
+				lexer.loadString("_test_123$");
+				thisToken = lexer.getNextToken();
+				expect(thisToken.type).toBe(lexer.TOKEN.TYPE.IDENTIFIER);
+				expect(thisToken.value).toBe("_test_123$");
+			});
+
+			it("leading with a dollar sign", function () {
+				lexer.loadString("$test_123$");
+				thisToken = lexer.getNextToken();
+				expect(thisToken.type).toBe(lexer.TOKEN.TYPE.IDENTIFIER);
+				expect(thisToken.value).toBe("$test_123$");
+			});
+		});
+
+		it("the keyword \"this\"", function () {
+			lexer.loadString("this");
+			thisToken = lexer.getNextToken();
+			expect(thisToken.type).toBe(lexer.TOKEN.TYPE.SELECTOR);
+			expect(thisToken.value).toBe(lexer.TOKEN.THIS);
+		});
+
+        it("regular expressions", function () {
             lexer.loadString("/\"<\"([A-Z][A-Z0-9]*)\b[^>]*>(.*?)</\1>\"/");
             thisToken = lexer.getNextToken();
             expect(thisToken.type).toBe(lexer.TOKEN.TYPE.REGEX);
@@ -173,6 +206,12 @@ describe("The \"lexer\" module", function () {
                 expect(thisToken.type).toBe(lexer.TOKEN.TYPE.KEYWORD);
                 expect(thisToken.value).toBe(lexer.TOKEN.OPERATOR.SEMICOLON);
             });
+			it(",", function () {
+				lexer.loadString(",");
+				thisToken = lexer.getNextToken();
+				expect(thisToken.type).toBe(lexer.TOKEN.TYPE.KEYWORD);
+				expect(thisToken.value).toBe(lexer.TOKEN.OPERATOR.COMMA);
+			});
             it("<", function () {
                 lexer.loadString("<");
                 thisToken = lexer.getNextToken();
@@ -197,9 +236,15 @@ describe("The \"lexer\" module", function () {
                 expect(thisToken.type).toBe(lexer.TOKEN.TYPE.KEYWORD);
                 expect(thisToken.value).toBe(lexer.TOKEN.OPERATOR.GTE);
             });
+			it(".", function () {
+				lexer.loadString(".");
+				thisToken = lexer.getNextToken();
+				expect(thisToken.type).toBe(lexer.TOKEN.TYPE.KEYWORD);
+				expect(thisToken.value).toBe(lexer.TOKEN.OPERATOR.DOT);
+			})
         });
 
-        it("variables such as an \"@ sign followed by alphanumerics or _", function () {
+        it("variables such as an \"@\" sign followed by alphanumerics or _", function () {
             lexer.loadString("@testVariable123__test123");
             thisToken = lexer.getNextToken();
             expect(thisToken.type).toBe(lexer.TOKEN.TYPE.VARIABLE);
