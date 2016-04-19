@@ -3,7 +3,7 @@
 
 $("#rootForm") {
 	valid:
-		not $("#hasCar") or
+		$("#hasCar") equals false or
 		$("#carForm") is valid;
 }
 
