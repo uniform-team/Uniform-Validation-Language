@@ -66,6 +66,11 @@ function closeScope() {
 module.exports = {
     KIND: KIND,
 
+    reset: function () {
+        root = null;
+        currentScope = null;
+    },
+
     thisScope: function () {
         return currentScope;
     },
@@ -107,6 +112,8 @@ module.exports = {
         var symbol = this.lookup(name);
         return (symbol !== null);
     },
+
+
 
     Symbol: Symbol
 };

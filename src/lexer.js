@@ -73,6 +73,14 @@ var inputString = "";   //the entire uniform file to be lexed
 module.exports = {
     TOKEN: TOKEN,
 
+
+    reset: function() {
+        lineNumber = 1;
+        lineIndex = 1;
+        stringIndex = 0;
+        inputString = 0;
+    },
+
     //Description: Call load string before calling lexer, used for scope
     //Parameters: inString -- a string containing the entire uniform file to be lexed
     loadString: function (inString) {
