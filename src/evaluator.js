@@ -15,7 +15,7 @@ function derefUfm(token) {
             return new lexer.Token(token.value.is(':checked'), token.value.type(), token.line, token.col);
         else if (token.value.type() === lexer.TOKEN.TYPE.NUMBER)
             return new lexer.Token(parseInt(token.value.val()), token.value.type(), token.line, token.col);
-        return new lexer.Token(token.value.val(), token.value.type(), token.line, token.col);
+        else return new lexer.Token(token.value.val(), token.value.type(), token.line, token.col);
     }
     else return token;
 }

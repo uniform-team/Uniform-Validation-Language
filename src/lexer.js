@@ -10,7 +10,8 @@ var TOKEN = {
         KEYWORD: "keyword",
         REGEX: "regex",
         STATE: "state",
-        UFM: "ufm"
+        UFM: "ufm",
+        DATE: "date"
     },
     OPERATOR: {
         ADD: "+",

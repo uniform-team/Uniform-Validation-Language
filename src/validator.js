@@ -34,11 +34,13 @@ try {
             else if (attribute === "text")
                 return lexer.TOKEN.TYPE.STRING;
             else if (attribute === "radio")
-                return lexer.TOKEN.TYPE.NUMBER;
+                return lexer.TOKEN.TYPE.STRING;
             else if (attribute === "number")
                 return lexer.TOKEN.TYPE.NUMBER;
             else if (self.is("select"))
                 return lexer.TOKEN.TYPE.STRING;
+            else if (attribute === "date")
+                return lexer.TOKEN.TYPE.STRING; //change to date later?
             else
                 throw new Error("Unknown type for $(\"" + this.selector + "\"), is it a block element?");
         };
