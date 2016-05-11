@@ -40,7 +40,9 @@ try {
             else if (self.is("select"))
                 return lexer.TOKEN.TYPE.STRING;
             else if (attribute === "date")
-                return lexer.TOKEN.TYPE.STRING; //change to date later?
+                return lexer.TOKEN.TYPE.STRING; //will add additional support later
+            else if (attribute === "email")
+                return lexer.TOKEN.TYPE.STRING; //will add additional support later
             else
                 throw new Error("Unknown type for $(\"" + this.selector + "\"), is it a block element?");
         };

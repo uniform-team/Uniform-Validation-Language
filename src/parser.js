@@ -231,7 +231,7 @@ function expressionMulDivMod() {
     return LReturn;
 }
 
-//Grammar: <neg> -> - <neg> | <dot>
+//Grammar: <neg> -> - <neg> | <anyAll>
 function expressionNeg() {
     var negCount = 0;
     while (currentToken.value === lexer.TOKEN.OPERATOR.SUB) {
@@ -239,12 +239,33 @@ function expressionNeg() {
         negCount++;
     }
     negCount %= 2;
-    var parenReturn = expressionDot();
+    var anyAllReturn = expressionAnyAll();
     //negCount will be 0 if there is an even number of '-'
     if (negCount)
-        return evaluator.neg(parenReturn);
+        return evaluator.neg(anyAllReturn);
     else
-        return parenReturn;
+        return anyAllReturn;
+}
+
+//Grammar: <anyAll> -> any <dot> | all <dot> | <dot>
+function expressionAnyAll() {
+    //any or all prefix of selector
+    var dotReturn;
+
+    if (currentToken.value === lexer.TOKEN.OPERATOR.ALL || currentToken.value === lexer.TOKEN.OPERATOR.ANY) {
+        var op = matchType(lexer.TOKEN.TYPE.KEYWORD);
+        dotReturn = expressionDot();
+
+        if (op.value === lexer.TOKEN.OPERATOR.ALL) {
+            dotReturn = evaluator.all(dotReturn);
+        }
+        else if (op.value === lexer.TOKEN.OPERATOR.ANY) {
+            dotReturn = evaluator.any(dotReturn);
+        }
+    }
+    else dotReturn = expressionDot();
+
+    return dotReturn;
 }
 
 //Grammar: <dot> -> <paren> <dot_>

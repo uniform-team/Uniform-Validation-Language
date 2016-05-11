@@ -20,7 +20,8 @@ function Symbol(name, expression, kind) {
 }
 
 function Scope(selector, parentScope) {
-    if (selector === undefined) throw new Error("Undefined SCOPE, missing selector");
+    if (selector === undefined)
+        throw new Error("Undefined SCOPE, missing selector");
     this.parentScope = parentScope;
     this.selector = selector;
     this.selectorTable = {};
@@ -107,14 +108,10 @@ module.exports = {
         }
         return null;
     },
-
     isDefined: function (name) {
         var symbol = this.lookup(name);
         return (symbol !== null);
     },
-
-
-
     Symbol: Symbol
 };
 

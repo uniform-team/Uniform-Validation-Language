@@ -11,7 +11,11 @@ var TOKEN = {
         REGEX: "regex",
         STATE: "state",
         UFM: "ufm",
-        DATE: "date"
+        DATE: "date",
+        ARRAY: "array",
+        ANY: "any_array",
+        ALL: "all_array",
+        ERROR: "error"
     },
     OPERATOR: {
         ADD: "+",
@@ -37,7 +41,9 @@ var TOKEN = {
         LTE: "<=",
         GTE: ">=",
         REGEX: "/",
-        DOT: "."
+        DOT: ".",
+        ALL: "all",
+        ANY: "any"
     },
     TAG: {
         VALID: "valid",
@@ -55,7 +61,8 @@ var TOKEN = {
     },
 	VALUE: {
 		TRUE: "true",
-		FALSE: "false"
+		FALSE: "false",
+        ERROR: "error"
 	},
 	THIS: "this",
     ENDOFFILE: "EOF"
@@ -264,12 +271,16 @@ module.exports = {
                     return new this.Token(TOKEN.STATE.STRING, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
                 case TOKEN.STATE.NUMBER:
                     return new this.Token(TOKEN.STATE.NUMBER, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
-				case TOKEN.THIS:
-					return new this.Token(TOKEN.THIS, TOKEN.TYPE.SELECTOR, lineNumber, lineIndex);
-				case TOKEN.VALUE.TRUE:
-					return new this.Token(true, TOKEN.TYPE.BOOL, lineNumber, lineIndex);
-				case TOKEN.VALUE.FALSE:
-					return new this.Token(false, TOKEN.TYPE.BOOL, lineNumber, lineIndex);
+                case TOKEN.THIS:
+                    return new this.Token(TOKEN.THIS, TOKEN.TYPE.SELECTOR, lineNumber, lineIndex);
+                case TOKEN.VALUE.TRUE:
+                    return new this.Token(true, TOKEN.TYPE.BOOL, lineNumber, lineIndex);
+                case TOKEN.VALUE.FALSE:
+                    return new this.Token(false, TOKEN.TYPE.BOOL, lineNumber, lineIndex);
+                case TOKEN.OPERATOR.ALL:
+                    return new this.Token(TOKEN.OPERATOR.ALL, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
+                case TOKEN.OPERATOR.ANY:
+                    return new this.Token(TOKEN.OPERATOR.ANY, TOKEN.TYPE.KEYWORD, lineNumber, lineIndex);
                 default:
                     return new this.Token(tokenBuffer, TOKEN.TYPE.IDENTIFIER, lineNumber, lineIndex);
             }
