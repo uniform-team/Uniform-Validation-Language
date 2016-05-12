@@ -17,6 +17,27 @@ describe("The \"evaluator\" module", function () {
 			};
 		};
 
+        describe("throws errors on non-boolean results such as", function () {
+            it("true + 1", function () {
+                var self = {};
+                var left = tokenize(1, TOK_TYPE.NUMBER, self);
+                var right = tokenize(true, TOK_TYPE.BOOL, self);
+
+                expect(function () {
+                    evaluator.add(left, right)(self)
+                }).toThrow();
+            });
+            it("true + \"string\"", function () {
+                var self = {};
+                var left = tokenize(1, TOK_TYPE.NUMBER, self);
+                var right = tokenize(true, TOK_TYPE.STRING, self);
+
+                expect(function () {
+                    evaluator.add(left, right)(self)
+                }).toThrow();
+            });
+        });
+
         it("addition", function () {
 			var self = {};
             var left = tokenize(122, TOK_TYPE.NUMBER, self);

@@ -10,7 +10,8 @@ var TOKEN = {
         KEYWORD: "keyword",
         REGEX: "regex",
         STATE: "state",
-        UFM: "ufm"
+        UFM: "ufm",
+        DATE: "date"
     },
     OPERATOR: {
         ADD: "+",
@@ -72,6 +73,14 @@ var inputString = "";   //the entire uniform file to be lexed
 
 module.exports = {
     TOKEN: TOKEN,
+
+
+    reset: function() {
+        lineNumber = 1;
+        lineIndex = 1;
+        stringIndex = 0;
+        inputString = 0;
+    },
 
     //Description: Call load string before calling lexer, used for scope
     //Parameters: inString -- a string containing the entire uniform file to be lexed
@@ -140,6 +149,9 @@ module.exports = {
 
         //ignore whitespace, move string index until non-whitespace character is found
         ignoreWhiteSpace();
+        if (lexbuffer === "")
+            return new this.Token(TOKEN.ENDOFFILE, TOKEN.ENDOFFILE, lineNumber, lineIndex);
+
 
         //if a / is encountered, it may be a single line comment, multi line comment, division operation, or a regex
         while (lexbuffer === "/") {
@@ -337,7 +349,6 @@ module.exports = {
             default:
                 break;
         }
-
-		throw new Error("Line " + lineNumber + ": Unknown token, \"" + tokenBuffer + "\"");
+        throw new Error("Line " + lineNumber + ": Unknown token, \"" + tokenBuffer + "\"");
     }
 };

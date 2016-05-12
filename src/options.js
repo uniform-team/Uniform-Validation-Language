@@ -14,7 +14,9 @@ module.exports = {
 	refresh: function () {
 		$(document).trigger(listeners.EVENTS.REFRESH);
 	},
-	resetParse: function () {
-       uniform.parser.reset();
+	reset: function () {
+       	uniform.parser.reset();
+		uniform.lexer.reset();
+		uniform.scope.reset();
     }
 };

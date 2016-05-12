@@ -5,6 +5,7 @@ var EVENTS = {
 	NG_CHANGE: "ng-change"
 };
 
+//exposed for testing purposes only
 var priv = {
 	//refreshes the boolean value of the selector for each tag in the scope
 	createRefreshListener: function (scope) {
@@ -47,7 +48,7 @@ var priv = {
 				}
 			}
 			catch (err) {
-				console.log(err);
+				console.error(err);
 			}
 		};
 	},
