@@ -15,6 +15,38 @@ function isUfmArray(token) {
             token.type === lexer.TOKEN.TYPE.ALL);
 }
 
+function arrayHelper(op, leftFunction, rightFunction) {
+    var opResult;
+    switch(op) {
+        case lexer.TOKEN.OPERATOR.EQUALS:
+            opResult = module.exports.equals(leftFunction, rightFunction);
+            break;
+        case lexer.TOKEN.OPERATOR.AND:
+            opResult = module.exports.and(leftFunction, rightFunction);
+            break;
+        case lexer.TOKEN.OPERATOR.OR:
+            opResult = module.exports.or(leftFunction, rightFunction);
+            break;
+        case lexer.TOKEN.OPERATOR.MATCHES:
+            opResult = module.exports.matches(leftFunction, rightFunction);
+            break;
+        case lexer.TOKEN.OPERATOR.LT:
+            opResult = module.exports.lt(leftFunction, rightFunction);
+            break;
+        case lexer.TOKEN.OPERATOR.GT:
+            opResult = module.exports.gt(leftFunction, rightFunction);
+            break;
+        case lexer.TOKEN.OPERATOR.LTE:
+            opResult = module.exports.lte(leftFunction, rightFunction);
+            break;
+        case lexer.TOKEN.OPERATOR.GTE:
+            opResult = module.exports.gte(leftFunction, rightFunction);
+            break;
+        default:
+            throw new Error("Line " + leftFunction().line + ": invalid array operation " + op);
+    }
+    return opResult;
+}
 //Selectors are stored in the token(value, type, line, col) format
 //token.value refers to the literal selector, or selector array in the value field above ie '$("#selector")'
 //token.value.type() is a jQuery funciton being called on that particular selector
@@ -370,7 +402,7 @@ module.exports = {
                 expr.type = lexer.TOKEN.TYPE.ALL;
                 return expr;
             }
-            else throw new Error("Line " + expr.line + ": selector must follow ALL keyowrd ");
+            else throw new Error("Line " + expr.line + ": selector must follow ALL keyword ");
         };
     },
     any: function(inExpr) {
@@ -380,7 +412,7 @@ module.exports = {
                 expr.type = lexer.TOKEN.TYPE.ANY;
                 return expr;
             }
-            else throw new Error("Line " + expr.line + ": selector must follow ALL keyowrd ");
+            else throw new Error("Line " + expr.line + ": selector must follow ANY keyword ");
         };
     }
 }
@@ -388,145 +420,115 @@ module.exports = {
 function arrayOperation(left, right, op) {
     //any any
     if (left.type === lexer.TOKEN.TYPE.ANY && right.type === lexer.TOKEN.TYPE.ANY) {
-
+        for(var i = 0; i < left.value.length; i++) {
+            for (var j = 0; j < right.value.length; j++) {
+                var leftFunction = function() {return left.value[i]};
+                var rightFunction = function() {return right.value[i]};
+                var opResult = arrayHelper(op, leftFunction, rightFunction);
+                if (opResult().value === true) {
+                    return new lexer.Token(true, lexer.TOKEN.TYPE.BOOL, left.line, left.col);
+                }
+            }
+        }
+        return new lexer.Token(false, lexer.TOKEN.TYPE.BOOL, left.line, left.col);
     }
     //any all
     else if (left.type === lexer.TOKEN.TYPE.ANY && right.type === lexer.TOKEN.TYPE.ALL) {
-        //TODO ANY stuff
+        var opSuccess = true;
+        for(var i = 0; i < right.value.length; i++) {
+            for (var j = 0; j < left.value.length; j++) {
+                var leftFunction = function() {return left.value[j]};
+                var rightFunction = function() {return right.value[i]};
+                var opResult = arrayHelper(op, leftFunction, rightFunction);
+                if (opResult().value === false)
+                    opSuccess = false;
+                else {
+                    opSuccess = true;
+                    break;
+                }
+            }
+            if (!opSuccess)
+                return new lexer.Token(false, lexer.TOKEN.TYPE.BOOL, left.line, left.col);
+        }
+        return new lexer.Token(true, lexer.TOKEN.TYPE.BOOL, left.line, left.col);
     }
 
     //all any
     else if (left.type === lexer.TOKEN.TYPE.ALL && right.type === lexer.TOKEN.TYPE.ANY) {
-        //TODO ANY stuff
+        var opSuccess = true;
+        for(var i = 0; i < left.value.length; i++) {
+            for (var j = 0; j < right.value.length; j++) {
+                var leftFunction = function() {return left.value[i]};
+                var rightFunction = function() {return right.value[j]};
+                var opResult = arrayHelper(op, leftFunction, rightFunction);
+                if (opResult().value === false)
+                    opSuccess = false;
+                else {
+                    opSuccess = true;
+                    break;
+                }
+            }
+            if (!opSuccess)
+                return new lexer.Token(false, lexer.TOKEN.TYPE.BOOL, left.line, left.col);
+        }
+        return new lexer.Token(true, lexer.TOKEN.TYPE.BOOL, left.line, left.col);
     }
     //all all
     else if (left.type === lexer.TOKEN.TYPE.ALL && right.type === lexer.TOKEN.TYPE.ALL) {
-        //TODO ANY stuff
+        for(var i = 0; i < left.value.length; i++) {
+            for (var j = 0; j < right.value.length; j++) {
+                var leftFunction = function() {return left.value[i]};
+                var rightFunction = function() {return right.value[i]};
+                var opResult = arrayHelper(op, leftFunction, rightFunction);
+                if (opResult().value === false)
+                    return new lexer.Token(false, lexer.TOKEN.TYPE.BOOL, left.line, left.col);
+            }
+        }
+        return new lexer.Token(true, lexer.TOKEN.TYPE.BOOL, left.line, left.col);
     }
 
     //sel/const all
     else if (right.type === lexer.TOKEN.TYPE.ALL) {
-        //TODO ANY stuff
+        for (var i = 0; i < right.value.length; i++) {
+            var leftFunction = function() {return left};
+            var rightFunction = function() {return right.value[i]};
+            var opResult = arrayHelper(op, leftFunction, rightFunction);
+            if (opResult().value === false)
+                return new lexer.Token(false, lexer.TOKEN.TYPE.BOOL, left.line, left.col);
+        }
+        return new lexer.Token(true, lexer.TOKEN.TYPE.BOOL, left.line, left.col);
     }
     //all sel/const
     else if (left.type === lexer.TOKEN.TYPE.ALL) {
         for (var i = 0; i < left.value.length; i++) {
-            var opResult;
-            switch(op) {
-                case lexer.TOKEN.OPERATOR.EQUALS:
-                    opResult = module.exports.equals(left.value[i], right);
-                    break;
-                case lexer.TOKEN.OPERATOR.AND:
-                    opResult = module.exports.and(left.value[i], right);
-                    break;
-                case lexer.TOKEN.OPERATOR.OR:
-                    opResult = module.exports.or(left.value[i], right);
-                    break;
-                case lexer.TOKEN.OPERATOR.MATCHES:
-                    opResult = module.exports.matches(left.value[i], right);
-                    break;
-                case lexer.TOKEN.OPERATOR.LT:
-                    opResult = module.exports.lt(left.value[i], right);
-                    break;
-                case lexer.TOKEN.OPERATOR.GT:
-                    opResult = module.exports.gt(left.value[i], right);
-                    break;
-                case lexer.TOKEN.OPERATOR.LTE:
-                    opResult = module.exports.lte(left.value[i], right);
-                    break;
-                case lexer.TOKEN.OPERATOR.GTE:
-                    opResult = module.exports.gte(left.value[i], right);
-                    break;
-                default:
-                    throw new Error("Line " + token.line + ": invalid array operation " + op);
-            }
-            if (!opResult().value)
-                return opResult;
+            var rightFunction = function() {return right};
+            var leftFunction = function() {return left.value[i]};
+            var opResult = arrayHelper(op, leftFunction, rightFunction);
+            if (opResult().value === false)
+                return new lexer.Token(false, lexer.TOKEN.TYPE.BOOL, left.line, left.col);
         }
-        return opResult();
+        return new lexer.Token(true, lexer.TOKEN.TYPE.BOOL, left.line, left.col);
     }
 
     //any sel/const
     else if (left.type === lexer.TOKEN.TYPE.ANY) {
-        //faster to run through hash for equals
-        if (op === lexer.TOKEN.OPERATOR.EQUALS) {
-            var leftHash = {};
-            for (var i = 0; i < left.value.length; i++) {
-                leftHash[left.value[i].value] = left.value[i].value;
-            }
-            if (leftHash[right.value])
-                return new lexer.Token(true, lexer.TOKEN.TYPE.BOOL, left.line, left.col);
-            else return new lexer.Token(false, lexer.TOKEN.TYPE.BOOL, left.line, left.col);
-        }
-
         for (var i = 0; i < left.value.length; i++) {
-            var opResult;
-            switch(op) {
-                case lexer.TOKEN.OPERATOR.AND:
-                    opResult = module.exports.and(left.value[i], right);
-                    break;
-                case lexer.TOKEN.OPERATOR.OR:
-                    opResult = module.exports.or(left.value[i], right);
-                    break;
-                case lexer.TOKEN.OPERATOR.MATCHES:
-                    opResult = module.exports.matches(left.value[i], right);
-                    break;
-                case lexer.TOKEN.OPERATOR.LT:
-                    opResult = module.exports.lt(left.value[i], right);
-                    break;
-                case lexer.TOKEN.OPERATOR.GT:
-                    opResult = module.exports.gt(left.value[i], right);
-                    break;
-                case lexer.TOKEN.OPERATOR.LTE:
-                    opResult = module.exports.lte(left.value[i], right);
-                    break;
-                case lexer.TOKEN.OPERATOR.GTE:
-                    opResult = module.exports.gte(left.value[i], right);
-                    break;
-                default:
-                    throw new Error("Line " + token.line + ": invalid array operation " + op);
-            }
+            var rightFunction = function() {return right};
+            var leftFunction = function() {return left.value[i]};
+            var opResult = arrayHelper(op, leftFunction, rightFunction);
             if (opResult().value)
-                return opResult;
+                return new lexer.Token(true, lexer.TOKEN.TYPE.BOOL, left.line, left.col);
         }
-        return opResult();
+        return new lexer.Token(false, lexer.TOKEN.TYPE.BOOL, left.line, left.col);
     }
     //sel/const any
     else if (right.type === lexer.TOKEN.TYPE.ANY) {
         for (var i = 0; i < right.value.length; i++) {
-            var opResult;
             var leftFunction = function() {return left};
             var rightFunction = function() {return right.value[i]};
-            switch(op) {
-                case lexer.TOKEN.OPERATOR.EQUALS:
-                    opResult = module.exports.equals(leftFunction, rightFunction);
-                    break;
-                case lexer.TOKEN.OPERATOR.AND:
-                    opResult = module.exports.and(leftFunction, rightFunction);
-                    break;
-                case lexer.TOKEN.OPERATOR.OR:
-                    opResult = module.exports.or(leftFunction, rightFunction);
-                    break;
-                case lexer.TOKEN.OPERATOR.MATCHES:
-                    opResult = module.exports.matches(leftFunction, rightFunction);
-                    break;
-                case lexer.TOKEN.OPERATOR.LT:
-                    opResult = module.exports.lt(leftFunction, rightFunction);
-                    break;
-                case lexer.TOKEN.OPERATOR.GT:
-                    opResult = module.exports.gt(leftFunction, rightFunction);
-                    break;
-                case lexer.TOKEN.OPERATOR.LTE:
-                    opResult = module.exports.lte(leftFunction, rightFunction);
-                    break;
-                case lexer.TOKEN.OPERATOR.GTE:
-                    opResult = module.exports.gte(leftFunction, rightFunction);
-                    break;
-                default:
-                    throw new Error("Line " + token.line + ": invalid array operation " + op);
-            }
+            var opResult = arrayHelper(op, leftFunction, rightFunction);
             if (opResult().value)
-                return opResult();
+                return new lexer.Token(true, lexer.TOKEN.TYPE.BOOL, left.line, left.col);
         }
         return new lexer.Token(false, lexer.TOKEN.TYPE.BOOL, left.line, left.col);
     }
