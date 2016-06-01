@@ -44,7 +44,7 @@ try {
             else if (attribute === "email")
                 return lexer.TOKEN.TYPE.STRING; //will add additional support later
             else
-                throw new Error("Unknown type for $(\"" + this.selector + "\"), is it a block element?");
+                return lexer.TOKEN.TYPE.STATE; //will add additional support later
         };
 
         this.valid = function (value) {
@@ -63,7 +63,6 @@ try {
 		this.getState = function () {
 			return new State(this);
 		};
-
         return this;
     };
 }
