@@ -1,15 +1,18 @@
+
+
 @filled: /"."/;
 @integer: /"^[0-9]{4}$"/;
 
 $("#rootForm") {
-	valid:
-		$("#hasCar") equals false or
-		$("#carForm") is valid;
+	valid: $("#subForm") is valid;
 }
 
-$("#carForm") {
-	valid:
-	    $("#make") matches @filled and
-	    $("#model") matches @filled and
-	    $("#year") matches @integer;
+$("#subForm") {
+    valid: $("#make") matches @filled and
+           $("#model") matches @filled and
+           $("#year") matches @integer;
+}
+
+$("#subForm input") {
+    enabled: $("#hasCar") equals true;
 }

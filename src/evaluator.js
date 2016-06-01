@@ -42,6 +42,9 @@ function arrayHelper(op, leftFunction, rightFunction) {
         case lexer.TOKEN.OPERATOR.GTE:
             opResult = module.exports.gte(leftFunction, rightFunction);
             break;
+        case lexer.TOKEN.OPERATOR.IS:
+            opResult = module.exports.is(leftFunction, rightFunction);
+            break;
         default:
             throw new Error("Line " + leftFunction().line + ": invalid array operation " + op);
     }
@@ -63,6 +66,8 @@ function derefUfm(token) {
                 ufmArray.push(new lexer.Token(parseInt(tokenVal.val()), lexer.TOKEN.TYPE.NUMBER, token.line, token.col));
             else if (tokenVal.type() === lexer.TOKEN.TYPE.STRING)
                 ufmArray.push(new lexer.Token(tokenVal.val(), lexer.TOKEN.TYPE.STRING, token.line, token.col));
+            else if (tokenVal.type() === lexer.TOKEN.TYPE.STATE)
+                ufmArray.push(new lexer.Token(tokenVal.getState(), lexer.TOKEN.TYPE.STATE_OBJECT, token.line, token.col));
         }
         if (token.value.length === 1)
             return new lexer.Token(ufmArray[0].value, ufmArray[0].type, token.line, token.col)
@@ -277,7 +282,6 @@ module.exports = {
     },
     is: function (leftExpr, rightExpr) {
         return function (self) {
-            //TODO is array
             var left = derefUfm(leftExpr(self));
             var right = rightExpr(self);
             if (isUfmArray(left))
@@ -285,15 +289,15 @@ module.exports = {
             if (left.type === lexer.TOKEN.TYPE.ERROR || right.type === lexer.TOKEN.TYPE.ERROR)
                 return new lexer.Token(false, lexer.TOKEN.TYPE.BOOL, left.line, left.col);
 
-            if (isState(right) && left.type === lexer.TOKEN.TYPE.UFM) {
+            if (isState(right) && left.type === lexer.TOKEN.TYPE.STATE_OBJECT) {
                 if (right.value === lexer.TOKEN.STATE.VALID)
-                    return new lexer.Token($(left.value).ufm().valid(), lexer.TOKEN.TYPE.BOOL, left.line, left.col);
+                    return new lexer.Token(left.value.valid, lexer.TOKEN.TYPE.BOOL, left.line, left.col);
                 else if (right.value === lexer.TOKEN.STATE.ENABLED)
-                    return new lexer.Token($(left.value).ufm().enabled(), lexer.TOKEN.TYPE.BOOL, left.line, left.col);
+                    return new lexer.Token(left.value.enabled, lexer.TOKEN.TYPE.BOOL, left.line, left.col);
                 else if (right.value === lexer.TOKEN.STATE.VISIBLE)
-                    return new lexer.Token($(left.value).ufm().visible(), lexer.TOKEN.TYPE.BOOL, left.line, left.col);
+                    return new lexer.Token(left.value.visible, lexer.TOKEN.TYPE.BOOL, left.line, left.col);
                 else if (right.value === lexer.TOKEN.STATE.OPTIONAL)
-                    return new lexer.Token($(left.value).ufm().optional(), lexer.TOKEN.TYPE.BOOL, left.line, left.col);
+                    return new lexer.Token(left.value.optional, lexer.TOKEN.TYPE.BOOL, left.line, left.col);
             }
 
             else if (right.value === lexer.TOKEN.STATE.STRING) {

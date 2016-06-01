@@ -15,6 +15,7 @@ var TOKEN = {
         ARRAY: "array",
         ANY: "any_array",
         ALL: "all_array",
+        STATE_OBJECT: "state_object",
         ERROR: "error"
     },
     OPERATOR: {
@@ -360,6 +361,8 @@ module.exports = {
             default:
                 break;
         }
+        if (token === "")
+            return new this.Token(TOKEN.ENDOFFILE, TOKEN.ENDOFFILE, lineNumber, lineIndex);
         throw new Error("Line " + lineNumber + ": Unknown token, \"" + tokenBuffer + "\"");
     }
 };

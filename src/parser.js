@@ -437,20 +437,25 @@ Parse is the "main" function
 */
 module.exports = {
     parse: function (inputString) {
-        var closedScope;
-        lexer.loadString(inputString);
-        currentToken = lexer.getNextToken();
-		
-        //global scope
-        closedScope = scope.createScope(null, function () {
-            blocks();
-        });
+        try {
+            var closedScope;
+            lexer.loadString(inputString);
+            currentToken = lexer.getNextToken();
 
-		// Initialize listeners
-		listeners.init();
+            //global scope
+            closedScope = scope.createScope(null, function () {
+                blocks();
+            });
 
-        console.log("Uniform Parse Success");
-        return closedScope;
+            // Initialize listeners
+            listeners.init();
+
+            console.log("Uniform Parse Success");
+            return closedScope;
+        }
+        catch (ex) {
+            console.log(ex);
+        }
     },
     reset: function () {
         listeners.reset();
