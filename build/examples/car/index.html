@@ -8,19 +8,20 @@
 	</head>
 	<body>
 		<h2>Car form</h2>
-		<form id="rootForm">
+		<form id="rootForm" method="POST" action="submit">
 			<input id="hasCar" type="checkbox" />I have a car
 			<br /><br />
 
 			<div id="subForm">
-				Make: <input id="make" type="text" value="a"/> <br>
+				Make:<input id="make" type="text" value="a"/> <br>
 				Model:<input id="model" type="text"/> <br>
 				Year:<input id="year" type="text"/> <br>
 			</div>
+			<br />
 			<div id="testForm">
-				Test 1:<input id="test1" type="text"/> <br>
-				Test 2:<input id="test2" type="text"/> <br>
-				Test 3:<input id="test3" type="text"/> <br>
+				Test 1:<input id="test1" class="test" type="text"/> <br>
+				Test 2:<input id="test2" class="test" type="text"/> <br>
+				Test 3:<input id="test3" class="test" type="text"/> <br>
 			</div>
 			<br/>
 
@@ -31,14 +32,6 @@
 	</body>
 	<script>
 		var $rootForm = $("#rootForm");
-
-		$rootForm.on("submit", function (evt) {
-			if (!$("#rootForm").ufm().valid()) {
-				alert("Invalid Form!");
-			}
-			else alert("Valid Form Submitted!");
-			evt.preventDefault();
-		});
 
 		$rootForm.on("ufm:validate", function () {
 			$("#isValid").prop("checked", $rootForm.ufm().valid());

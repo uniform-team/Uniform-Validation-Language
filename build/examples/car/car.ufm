@@ -1,5 +1,3 @@
-
-
 @filled: /"."/;
 @integer: /"^[0-9]{4}$"/;
 
@@ -8,9 +6,11 @@ $("#rootForm") {
 }
 
 $("#subForm") {
-    valid: $("#make") matches @filled and
-           $("#model") matches @filled and
-           $("#year") matches @integer;
+    valid: not $("#hasCar") or (
+    	$("#make") matches @filled and
+	    $("#model") matches @filled and
+	    $("#year") matches @integer
+	) and any $(".test") matches @filled;
 }
 
 $("#subForm input") {

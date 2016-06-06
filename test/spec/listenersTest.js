@@ -30,35 +30,27 @@ describe("The \"listeners\" module", function () {
 		});
 		
 		it("which triggers \"" + EVENTS.REFRESH + "\" on the $(document) when ready", function () {
-			var $mock = null;
-			jQuerySpy(function (mock) {
-				$mock = mock;
-				spyOn($mock, "ready").and.callFake(function (onReady) {
-					onReady(); // Automatically execute callback given to ready()
-				});
-				spyOn($mock, "trigger");
+			spyOn($.$mock, "ready").and.callFake(function (onReady) {
+				onReady();
 			});
+			spyOn($.$mock, "trigger");
 
 			listeners.init();
 
-			expect($mock.trigger).toHaveBeenCalledWith(EVENTS.REFRESH); // Callback should have triggered "ufm:refresh"
+			expect($.$mock.trigger).toHaveBeenCalledWith(EVENTS.REFRESH); // Callback should have triggered "ufm:refresh"
 		});
 
 		it("which triggers \"" + EVENTS.VALIDATE + "\" on an element when changed", function () {
-			var $mock = null;
-			jQuerySpy(function (mock) {
-				$mock = mock;
-				spyOn($mock, "on").and.callFake(function (evt, listener) {
-					listener({ target: "#selector" }); // Automatically execute callback given to on()
-				});
-				spyOn($mock, "trigger");
+			spyOn($.$mock, "on").and.callFake(function (evt, listener) {
+				listener({ target: "#selector" }); // Automatically execute callback given to on()
 			});
+			spyOn($.$mock, "trigger");
 
 			listeners.init();
 
-			expect($mock.on).toHaveBeenCalledWith(EVENTS.CHANGE, jasmine.any(Function));
-			expect($mock.on).toHaveBeenCalledWith(EVENTS.NG_CHANGE, jasmine.any(Function));
-			expect($mock.trigger).toHaveBeenCalledWith(EVENTS.VALIDATE); // Callback should have triggered "ufm:validate"
+			expect($.$mock.on).toHaveBeenCalledWith(EVENTS.CHANGE, jasmine.any(Function));
+			expect($.$mock.on).toHaveBeenCalledWith(EVENTS.NG_CHANGE, jasmine.any(Function));
+			expect($.$mock.trigger).toHaveBeenCalledWith(EVENTS.VALIDATE); // Callback should have triggered "ufm:validate"
 		});
 	});
 
@@ -73,21 +65,16 @@ describe("The \"listeners\" module", function () {
 
 			var refresh = jasmine.createSpy("refresh");
 			spyOn(listeners._priv, "createRefreshListener").and.returnValue(refresh);
-
-			var $mock = null;
-			jQuerySpy(function (mock) {
-				$mock = mock;
-				spyOn($mock, "on").and.callFake(function (evt, target, listener) {
-					listener({ target: target }); // Immediately trigger listener on correct selector
-				});
-				spyOn($mock, "is").and.returnValue(true);
+			spyOn($.$mock, "on").and.callFake(function (evt, target, listener) {
+				listener({ target: target }); // Immediately trigger listener on correct selector
 			});
+			spyOn($.$mock, "is").and.returnValue(true);
 
 			listeners.updateOnChange(scope);
 
 			expect(listeners._priv.createRefreshListener).toHaveBeenCalledWith(scope);
-			expect($mock.on).toHaveBeenCalledWith(EVENTS.CHANGE, sel, jasmine.any(Function));
-			expect($mock.on).toHaveBeenCalledWith(EVENTS.NG_CHANGE, sel, jasmine.any(Function));
+			expect($.$mock.on).toHaveBeenCalledWith(EVENTS.CHANGE, sel, jasmine.any(Function));
+			expect($.$mock.on).toHaveBeenCalledWith(EVENTS.NG_CHANGE, sel, jasmine.any(Function));
 			expect(refresh.calls.mostRecent().args[0]).$toEqual($(sel));
 		});
 
@@ -98,20 +85,16 @@ describe("The \"listeners\" module", function () {
 			var refresh = jasmine.createSpy("refresh");
 			spyOn(listeners._priv, "createRefreshListener").and.returnValue(refresh);
 
-			var $mock = null;
-			jQuerySpy(function (mock) {
-				$mock = mock;
-				spyOn($mock, "on").and.callFake(function (evt, target, listener) {
-					listener({ target: "#sel" }); // Immediately trigger listener on incorrect selector
-				});
-				spyOn($mock, "is").and.returnValue(false);
+			spyOn($.$mock, "on").and.callFake(function (evt, target, listener) {
+				listener({ target: "#sel" }); // Immediately trigger listener on incorrect selector
 			});
+			spyOn($.$mock, "is").and.returnValue(false);
 
 			listeners.updateOnChange(scope);
 
 			expect(listeners._priv.createRefreshListener).toHaveBeenCalledWith(scope);
-			expect($mock.on).toHaveBeenCalledWith(EVENTS.CHANGE, sel, jasmine.any(Function));
-			expect($mock.on).toHaveBeenCalledWith(EVENTS.NG_CHANGE, sel, jasmine.any(Function));
+			expect($.$mock.on).toHaveBeenCalledWith(EVENTS.CHANGE, sel, jasmine.any(Function));
+			expect($.$mock.on).toHaveBeenCalledWith(EVENTS.NG_CHANGE, sel, jasmine.any(Function));
 			expect(refresh).not.toHaveBeenCalled();
 		});
 	});
@@ -127,18 +110,14 @@ describe("The \"listeners\" module", function () {
 			var refresh = jasmine.createSpy("refresh");
 			spyOn(listeners._priv, "createRefreshListener").and.returnValue(refresh);
 
-			var $mock = null;
-			jQuerySpy(function (mock) {
-				$mock = mock;
-				spyOn($mock, "on").and.callFake(function (evt, listener) {
-					listener(); // Immediately trigger listener
-				});
+			spyOn($.$mock, "on").and.callFake(function (evt, listener) {
+				listener(); // Immediately trigger listener
 			});
 
 			listeners.updateOnRefresh(scope);
 
 			expect(listeners._priv.createRefreshListener).toHaveBeenCalledWith(scope);
-			expect($mock.on).toHaveBeenCalledWith("ufm:refresh", jasmine.any(Function));
+			expect($.$mock.on).toHaveBeenCalledWith("ufm:refresh", jasmine.any(Function));
 			expect(refresh).toHaveBeenCalled()
 		});
 	});
@@ -155,18 +134,14 @@ describe("The \"listeners\" module", function () {
 			var refresh = jasmine.createSpy("refresh");
 			spyOn(listeners._priv, "createRefreshListener").and.returnValue(refresh);
 
-			var $mock = null;
-			jQuerySpy(function (mock) {
-				$mock = mock;
-				spyOn($mock, "on").and.callFake(function (evt, listener) {
-					listener({ target: "#other" }); // Immediately invoke listener with different target
-				});
+			spyOn($.$mock, "on").and.callFake(function (evt, listener) {
+				listener({ target: "#other" }); // Immediately invoke listener with different target
 			});
 
 			listeners.updateOnAllValidations(scope);
 
 			expect(listeners._priv.createRefreshListener).toHaveBeenCalledWith(scope);
-			expect($mock.on).toHaveBeenCalledWith(EVENTS.VALIDATE, jasmine.any(Function));
+			expect($.$mock.on).toHaveBeenCalledWith(EVENTS.VALIDATE, jasmine.any(Function));
 			expect(refresh.calls.mostRecent().args[0]).$toEqual($(sel));
 		});
 	});
@@ -184,18 +159,14 @@ describe("The \"listeners\" module", function () {
 			var refresh = jasmine.createSpy("refresh");
 			spyOn(listeners._priv, "createRefreshListener").and.returnValue(refresh);
 
-			var $mock = null;
-			jQuerySpy(function (mock) {
-				$mock = mock;
-				spyOn($mock, "on").and.callFake(function (evt, selector, listener) {
-					listener(); // Immediately trigger listener
-				});
+			spyOn($.$mock, "on").and.callFake(function (evt, selector, listener) {
+				listener(); // Immediately trigger listener
 			});
 
 			listeners.setDependency(dependent, scope);
 
 			expect(listeners._priv.createRefreshListener).toHaveBeenCalledWith(scope);
-			expect($mock.on).toHaveBeenCalledWith(EVENTS.VALIDATE, dependent, jasmine.any(Function));
+			expect($.$mock.on).toHaveBeenCalledWith(EVENTS.VALIDATE, dependent, jasmine.any(Function));
 			expect(refresh.calls.mostRecent().args[0]).$toEqual($(sel));
 		});
 	});
@@ -218,11 +189,7 @@ describe("The \"listeners\" module", function () {
 				listener: function () { }
 			};
 
-			var $mock = null;
-			jQuerySpy(function (mock) {
-				$mock = mock;
-				spyOn($mock, "off");
-			});
+			spyOn($.$mock, "off");
 
 			listeners._priv.listeners = []; // Reset
 
@@ -231,8 +198,8 @@ describe("The \"listeners\" module", function () {
 
 			listeners.reset();
 
-			expect($mock.off).toHaveBeenCalledWith(firstArgs.event, firstArgs.selector, firstArgs.listener);
-			expect($mock.off).toHaveBeenCalledWith(secondArgs.event, null, secondArgs.listener);
+			expect($.$mock.off).toHaveBeenCalledWith(firstArgs.event, firstArgs.selector, firstArgs.listener);
+			expect($.$mock.off).toHaveBeenCalledWith(secondArgs.event, null, secondArgs.listener);
 		});
 	});
 });

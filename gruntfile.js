@@ -1,10 +1,9 @@
 module.exports = function (grunt) {
 	grunt.initConfig({
-		connect: {
-			// Run development server on port 8000
+		execute: {
+			// Run development server
 			dev: {
-				port: 8000,
-				base: "build/"
+				src: [ "test-server.js" ]
 			}
 		},
 
@@ -12,7 +11,7 @@ module.exports = function (grunt) {
 			// Build production (minified) script
 			prod: {
 				files: {
-					"build/uniform.min.js": [ "src/**/*.js" ]
+					"build/uniform.min.js": [ "src/*.js" ]
 				}
 			},
 
@@ -24,7 +23,7 @@ module.exports = function (grunt) {
 					}
 				},
 				files: {
-					"build/uniform.js": [ "src/**/*.js" ]
+					"build/uniform.js": [ "src/*.js" ]
 				}
 			}
 		},
@@ -52,7 +51,7 @@ module.exports = function (grunt) {
 	});
 
 	// Load Grunt modules
-	grunt.loadNpmTasks("grunt-connect");
+	grunt.loadNpmTasks("grunt-execute");
 	grunt.loadNpmTasks("grunt-browserify");
 	grunt.loadNpmTasks("grunt-contrib-uglify");
 	grunt.loadNpmTasks("grunt-karma");
@@ -65,7 +64,7 @@ module.exports = function (grunt) {
 	grunt.registerTask("test", [ "karma:test" ]);
 
 	// Register serve task
-	grunt.registerTask("serve", [ "connect:dev" ]);
+	grunt.registerTask("serve", [ "execute:dev" ]);
 
 	// Register aliases
 	grunt.registerTask("build", [ "build-dev", "build-prod" ]);

@@ -12,9 +12,9 @@ module.exports = function (config) {
 
 		// list of files / patterns to load in the browser
 		files: [
-			'test/helper/**/*.js',
+			'test/helper/*.js',
 			'build/uniform.js',
-			'test/**/*.js'
+			'test/spec/*.js'
 		],
 
 		// preprocess matching files before serving them to the browser
