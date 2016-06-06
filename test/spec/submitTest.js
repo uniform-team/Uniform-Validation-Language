@@ -19,7 +19,31 @@ describe("The \"submit\" module", function () {
 			expect($.$mock.on).toHaveBeenCalledWith("submit", "form", jasmine.any(Function));
 		});
 	});
-	
+
+	describe("exposes the \"ajax\" member", function () {
+		it("as a function", function () {
+			expect(submit.ajax).toEqual(jasmine.any(Function));
+		});
+
+		it("which sends an AJAX request with the given options and Uniform encoded data", function () {
+			var options = {
+				method: "POST",
+				url: "/submit"
+			};
+			var data = {
+				"#hasCar": [ { value: true, type: "boolean" } ]
+			};
+
+			spyOn($, "ajax");
+			spyOn(submit._priv, "buildSelectorMap").and.returnValue(data);
+
+			submit.ajax(options);
+
+			expect(options.data).toBe("ufm=" + JSON.stringify(data));
+			expect($.ajax).toHaveBeenCalledWith(options);
+		});
+	});
+
 	describe("exposes the \"reset\" member", function () {
 		it("as a function", function () {
 			expect(submit.reset).toEqual(jasmine.any(Function));
