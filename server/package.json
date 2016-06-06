@@ -1,0 +1,15 @@
+{
+  "name": "test-server",
+  "version": "1.0.0",
+  "description": "Test server for the Uniform Validation Language development environment",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "author": "Douglas Parker and Sawyer Novak",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "express": "^4.13.4"
+  }
+}

@@ -1,5 +1,17 @@
 var express = require("express");
-var validate = require("./src/validator/validator.js");
+
+var validate;
+try {
+	validate = require("uniform-validation");
+} catch (err) {
+	console.log("Unable to require(\"uniform-validation\"). Link it with\n"
+		+ "$ npm link\n"
+		+ "$ cd server\n"
+		+ "$ npm link uniform-validation\n"
+		+ "$ cd .."
+	);
+	return;
+}
 
 var app = express();
 
