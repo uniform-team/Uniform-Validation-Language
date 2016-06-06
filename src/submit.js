@@ -77,6 +77,15 @@ require("./env.js")(function (document, $) {
 			$document.on("submit", "form", priv.onSubmit);
 		},
 
+		// Send an AJAX request with the options given to submit the current page without redirecting the user
+		ajax: function (options) {
+			// Set data
+			options.data = "ufm=" + JSON.stringify(priv.buildSelectorMap());
+
+			// Send AJAX request
+			return $.ajax(options);
+		},
+
 		// Mark the given selector as one to send to the server when the user submits
 		mark: function (sel) {
 			priv.selectorsToSend.push(sel);
