@@ -1,7 +1,7 @@
 {
   "name": "uniform-validation",
   "main": "src/validator/validator.js",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "Uniform: Form Validation Language",
   "dependencies": {
     "body-parser": "^1.15.1"

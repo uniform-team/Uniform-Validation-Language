@@ -3,7 +3,7 @@ module.exports = function (grunt) {
 		execute: {
 			// Run development server
 			dev: {
-				src: [ "test-server.js" ]
+				src: [ "server/server.js" ]
 			}
 		},
 
