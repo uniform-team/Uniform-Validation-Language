@@ -19,7 +19,7 @@ var app = express();
 app.use(express.static("build/"));
 
 // Handle submission of the car form
-app.post("/examples/car/submit", validate("build/examples/car/car.ufm", "#rootForm"), function (req, res) {
+app.post("/examples/car/submit", validate({ path: "build/examples/car/car.ufm", main: "#rootForm" }), function (req, res) {
 	res.end("Valid!"); // Successfully validated
 }, function (err, req, res, next) {
 	res.end("Invalid!"); // Failed to validate for some reason (stored in err)

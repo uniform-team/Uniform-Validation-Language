@@ -2,7 +2,7 @@ var rewire = require("rewire");
 
 var mocks = require("../../helper/validator/mocks.js");
 
-var validator = rewire("../../../src/validator/validator.js");
+var validate = rewire("../../../src/validator/validator.js");
 
 beforeEach(function () {
 	spyOn(console, "log");
@@ -10,7 +10,7 @@ beforeEach(function () {
 
 describe("The \"validator\" module", function () {
 	it("is exposed as a function", function () {
-		expect(validator).toEqual(jasmine.any(Function));
+		expect(validate).toEqual(jasmine.any(Function));
 	});
 
 	it("reads the file at the path given", function () {
@@ -19,9 +19,9 @@ describe("The \"validator\" module", function () {
 		var main = "#rootForm";
 
 		var readFile = mocks.createReadFile(script);
-		validator.__set__("fs", { readFile: readFile });
+		validate.__set__("fs", { readFile: readFile });
 
-		validator(filePath, main);
+		validate({ path: filePath, main: main });
 
 		expect(readFile).toHaveBeenCalledWith(filePath, { encoding: "utf8" }, jasmine.any(Function));
 	});
@@ -31,10 +31,10 @@ describe("The \"validator\" module", function () {
 		var scripts = [ "$(\"#rootForm\") { valid: $(\"#carForm\") is valid; }", "$(\"#carForm\") { valid: true; }" ];
 
 		var readFile = mocks.createReadFiles(scripts);
-		validator.__set__("fs", { readFile: readFile });
+		validate.__set__("fs", { readFile: readFile });
 		var main = "#rootForm";
 
-		validator(filePaths, main);
+		validate({ path: filePaths, main: main });
 
 		var fileOptions = { encoding: "utf8" };
 		expect(readFile).toHaveBeenCalledWith(filePaths[0], fileOptions, jasmine.any(Function));
@@ -49,12 +49,12 @@ describe("The \"validator\" module", function () {
 			var req = { body: { ufm: JSON.stringify({ }) } };
 			var res = { };
 
-			validator.__set__("fs", { readFile: mocks.createReadFile(script) });
-			validator.__set__("uniform", mocks.createUniform(main, true));
-			validator.__set__("jQuery", mocks.createjQueryEnv());
+			validate.__set__("fs", { readFile: mocks.createReadFile(script) });
+			validate.__set__("uniform", mocks.createUniform(main, true));
+			validate.__set__("jQuery", mocks.createjQueryEnv());
 
 			var cb = jasmine.createSpy("callback");
-			validator(filePath, main)(req, res, cb);
+			validate({ path: filePath, main: main })(req, res, cb);
 
 			expect(cb).toHaveBeenCalledWith(); // Called without error
 		});
@@ -66,12 +66,12 @@ describe("The \"validator\" module", function () {
 			var req = { body: { ufm: JSON.stringify({ }) } };
 			var res = { };
 
-			validator.__set__("fs", { readFile: mocks.createReadFile(script) });
-			validator.__set__("uniform", mocks.createUniform(main, false));
-			validator.__set__("jQuery", mocks.createjQueryEnv());
+			validate.__set__("fs", { readFile: mocks.createReadFile(script) });
+			validate.__set__("uniform", mocks.createUniform(main, false));
+			validate.__set__("jQuery", mocks.createjQueryEnv());
 
 			var cb = jasmine.createSpy("callback");
-			validator(filePath, main)(req, res, cb);
+			validate({ path: filePath, main: main })(req, res, cb);
 
 			expect(cb).toHaveBeenCalledWith(jasmine.any(Error)); // Called with error
 		});
@@ -83,12 +83,12 @@ describe("The \"validator\" module", function () {
 			var req = { body: { ufm: JSON.stringify({ }) } };
 			var res = { };
 
-			validator.__set__("fs", { readFile: mocks.createReadFile(script) });
-			validator.__set__("uniform", mocks.createUniform(main));
-			validator.__set__("jQuery", mocks.createjQueryEnv());
+			validate.__set__("fs", { readFile: mocks.createReadFile(script) });
+			validate.__set__("uniform", mocks.createUniform(main));
+			validate.__set__("jQuery", mocks.createjQueryEnv());
 
 			var cb = jasmine.createSpy("callback");
-			validator(filePath, main)(req, res, cb);
+			validate({ path: filePath, main: main })(req, res, cb);
 
 			expect(cb).toHaveBeenCalledWith(jasmine.any(Error)); // Called with error
 		});
@@ -101,12 +101,12 @@ describe("The \"validator\" module", function () {
 			var res = { };
 			var error = new Error("Uh oh");
 
-			validator.__set__("fs", { readFile: mocks.createReadFile(script) });
-			validator.__set__("uniform", mocks.createUniform(main, error));
-			validator.__set__("jQuery", mocks.createjQueryEnv());
+			validate.__set__("fs", { readFile: mocks.createReadFile(script) });
+			validate.__set__("uniform", mocks.createUniform(main, error));
+			validate.__set__("jQuery", mocks.createjQueryEnv());
 
 			var cb = jasmine.createSpy("callback");
-			validator(filePath, main)(req, res, cb);
+			validate({ path: filePath, main: main })(req, res, cb);
 
 			expect(cb).toHaveBeenCalledWith(error); // Called with error
 		});
@@ -119,13 +119,12 @@ describe("The \"validator\" module", function () {
 			var res = { };
 
 			var bodyParser = mocks.createBodyParser({ ufm: JSON.stringify({ }) });
-			validator.__set__("fs", { readFile: mocks.createReadFile(script) });
-			validator.__set__("bodyParser", bodyParser);
-			validator.__set__("uniform", mocks.createUniform(main));
-			validator.__set__("jQuery", mocks.createjQueryEnv());
+			validate.__set__("fs", { readFile: mocks.createReadFile(script) });
+			validate.__set__("bodyParser", bodyParser);
+			validate.__set__("uniform", mocks.createUniform(main));
+			validate.__set__("jQuery", mocks.createjQueryEnv());
 
-			var cb = jasmine.createSpy("callback");
-			validator(filePath, main)(req, res, function () { });
+			validate({ path: filePath, main: main })(req, res, function () { });
 
 			expect(bodyParser).toHaveBeenCalledWith(req, res, jasmine.any(Function));
 		});
@@ -138,12 +137,12 @@ describe("The \"validator\" module", function () {
 			var res = { };
 
 			var bodyParser = mocks.createBodyParser({ ufm: JSON.stringify({ }) });
-			validator.__set__("fs", { readFile: mocks.createReadFile(script) });
-			validator.__set__("bodyParser", bodyParser);
-			validator.__set__("uniform", mocks.createUniform(main));
-			validator.__set__("jQuery", mocks.createjQueryEnv());
+			validate.__set__("fs", { readFile: mocks.createReadFile(script) });
+			validate.__set__("bodyParser", bodyParser);
+			validate.__set__("uniform", mocks.createUniform(main));
+			validate.__set__("jQuery", mocks.createjQueryEnv());
 
-			validator(filePath, main)(req, res, function () { });
+			validate({ path: filePath, main: main })(req, res, function () { });
 
 			expect(bodyParser).not.toHaveBeenCalled();
 		});

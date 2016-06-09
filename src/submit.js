@@ -44,7 +44,13 @@ require("./env.js")(function (document, $) {
 			// Get the submitting form
 			var $form = $(evt.target).ufm();
 
-			// Don't submit the form normally
+			// Check if form should be ignored
+			var ignore = $form.attr("ufm-ignore");
+			if (ignore || ignore === "") {
+				return; // Ignore forms with the ufm-ignore attribute
+			}
+
+			// Don't submit the form normally, only after Uniform has validated it
 			if ($form.attr("ufm-submit") === "true") {
 				return; // Uniform is submitting (recursive case), allow it
 			} else {

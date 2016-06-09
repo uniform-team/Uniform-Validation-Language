@@ -5,21 +5,27 @@ var bodyParser = require("body-parser").urlencoded({ extended: false });
 var jQuery = require("./jquery.js");
 var uniform = require("../main.js");
 
-module.exports = function (path, main) {
-	// Load files
-	var files;
-	if (typeof path === "string") files = [ path ];
-	else files = path;
-
-	// Read the script file given
+module.exports = function (options) {
+	var main = options.main; // Load main selector
 	var scripts = [];
-	files.forEach(function (file) {
-		fs.readFile(file, { encoding: "utf8" }, function (err, script) {
-			if (err) throw err; // Rethrow file reading error
 
-			scripts.push(script);
+	// Load files
+	if (options.script) { // Load string Uniform content from options.script
+		scripts.push(options.script);
+	} else { // Load string or array of Uniform file paths from options.path
+		var files;
+		if (typeof options.path === "string") files = [options.path];
+		else files = options.path;
+
+		// Read the script file given
+		files.forEach(function (file) {
+			fs.readFile(file, { encoding: "utf8" }, function (err, script) {
+				if (err) throw err; // Rethrow file reading error
+
+				scripts.push(script);
+			});
 		});
-	});
+	}
 
 	// Validate against the request data given
 	var validate = function (req, res, next) {
@@ -63,6 +69,16 @@ module.exports = function (path, main) {
 
 	// Return middleware function to wrap validation
 	return function (req, res, next) {
+		var promise;
+		if (!next) { // No callback given, return a promise
+			promise = new Promise(function (success, failure) {
+				next = function (err) {
+					if (err) failure(err);
+					else success();
+				};
+			});
+		}
+
 		// Parse request body if necessary
 		if (!req.body) {
 			bodyParser(req, res, function () {
@@ -71,5 +87,7 @@ module.exports = function (path, main) {
 		} else {
 			validate(req, res, next);
 		}
+
+		return promise;
 	};
 };
