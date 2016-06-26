@@ -76,10 +76,20 @@ describe("The \"submit\" module", function () {
 	});
 
 	describe("listens for form submission", function () {
+		var createAttrMock = function (attrMap) {
+			return function (key) {
+				if (key in attrMap) {
+					return attrMap[key];
+				}
+
+				throw new Error("Unknown attribute \"" + key + "\".");
+			};
+		};
+
 		it("and sends valid Uniform data to the server", function () {
 			var event = {
 				target: "#myForm",
-				preventDefault: jasmine.createSpy("preventDefualt")
+				preventDefault: jasmine.createSpy("preventDefault")
 			};
 			var selectorMap = {
 				"#make": [ "Mitsubishi" ],
@@ -88,15 +98,13 @@ describe("The \"submit\" module", function () {
 			};
 			var form = { submit: jasmine.createSpy("submit") };
 
-			spyOn($.$mock, "attr").and.callFake(function (key) {
-				switch (key) {
-					case "ufm-submit": return undefined; // Not the recursive case
-					case "ufm-valid": return "true"; // Form is valid
-					case "method": return "POST"; // Submission is POST
-					case "action": return "/submit"; // Url is /submit
-					default: throw new Error("Unknown attribute \"" + key + "\".");
-				}
-			});
+			spyOn($.$mock, "attr").and.callFake(createAttrMock({
+				"ufm-submit": undefined,
+				"ufm-valid": "true",
+				"ufm-ignore": undefined,
+				"method": "POST",
+				"action": "/submit"
+			}));
 			spyOn(uniform.options, "getSettings").and.returnValue({ validateClient: true });
 			spyOn(submit._priv, "buildSelectorMap").and.returnValue(selectorMap);
 			spyOn(submit._priv, "buildSubmitForm").and.returnValue(form);
@@ -112,16 +120,14 @@ describe("The \"submit\" module", function () {
 		it("and alerts the user on invalid data", function () {
 			var event = {
 				target: "#myForm",
-				preventDefault: jasmine.createSpy("preventDefualt")
+				preventDefault: jasmine.createSpy("preventDefault")
 			};
 
-			spyOn($.$mock, "attr").and.callFake(function (key) {
-				switch (key) {
-					case "ufm-submit": return undefined; // Not the recursive case
-					case "ufm-valid": return "false"; // Form is invalid
-					default: throw new Error("Unknown attribute \"" + key + "\".");
-				}
-			});
+			spyOn($.$mock, "attr").and.callFake(createAttrMock({
+				"ufm-submit": undefined,
+				"ufm-valid": "false",
+				"ufm-ignore": undefined
+			}));
 			spyOn(uniform.options, "getSettings").and.returnValue({ validateClient: true });
 			spyOn(submit._priv, "buildSelectorMap");
 			spyOn(submit._priv, "buildSubmitForm");
@@ -138,7 +144,7 @@ describe("The \"submit\" module", function () {
 		it("and sends invalid data if set to do so", function () {
 			var event = {
 				target: "#myForm",
-				preventDefault: jasmine.createSpy("preventDefualt")
+				preventDefault: jasmine.createSpy("preventDefault")
 			};
 			var selectorMap = {
 				"#make": [ "Mitsubishi" ],
@@ -147,15 +153,13 @@ describe("The \"submit\" module", function () {
 			};
 			var form = { submit: jasmine.createSpy("submit") };
 
-			spyOn($.$mock, "attr").and.callFake(function (key) {
-				switch (key) {
-					case "ufm-submit": return undefined; // Not the recursive case
-					case "ufm-valid": return "false"; // Form is invalid
-					case "method": return "POST"; // Submission is POST
-					case "action": return "/submit"; // Url is /submit
-					default: throw new Error("Unknown attribute \"" + key + "\".");
-				}
-			});
+			spyOn($.$mock, "attr").and.callFake(createAttrMock({
+				"ufm-submit": undefined,
+				"ufm-valid": "false",
+				"ufm-ignore": undefined,
+				"method": "POST",
+				"action": "/submit"
+			}));
 			spyOn(uniform.options, "getSettings").and.returnValue({ validateClient: false }); // Ignore client errors
 			spyOn(submit._priv, "buildSelectorMap").and.returnValue(selectorMap);
 			spyOn(submit._priv, "buildSubmitForm").and.returnValue(form);
@@ -166,6 +170,56 @@ describe("The \"submit\" module", function () {
 			expect(submit._priv.buildSelectorMap).toHaveBeenCalled();
 			expect(submit._priv.buildSubmitForm).toHaveBeenCalledWith("POST", "/submit", selectorMap);
 			expect(form.submit).toHaveBeenCalled();
+		});
+
+		it("and ignores any forms marked with the \"ufm-ignore\" attribute set with data", function () {
+			var event = {
+				target: "#myForm",
+				preventDefault: jasmine.createSpy("preventDefault")
+			};
+			var selectorMap = {
+				"#make": [ "Mitsubishi" ],
+				"#model": [ "Eclipse" ],
+				"#year": [ 2006 ]
+			};
+			var form = { submit: jasmine.createSpy("submit") };
+
+			spyOn($.$mock, "attr").and.callFake(createAttrMock({
+				"ufm-ignore": "true"
+			}));
+			spyOn(uniform.options, "getSettings").and.returnValue({ validateClient: false }); // Ignore client errors
+			spyOn(submit._priv, "buildSelectorMap").and.returnValue(selectorMap);
+			spyOn(submit._priv, "buildSubmitForm").and.returnValue(form);
+
+			submit._priv.onSubmit(event);
+
+			expect(event.preventDefault).not.toHaveBeenCalled();
+			expect(form.submit).not.toHaveBeenCalled();
+		});
+
+		it("and ignores any forms marked with the \"ufm-ignore\" attribute set as a flag", function () {
+			var event = {
+				target: "#myForm",
+				preventDefault: jasmine.createSpy("preventDefault")
+			};
+			var selectorMap = {
+				"#make": [ "Mitsubishi" ],
+				"#model": [ "Eclipse" ],
+				"#year": [ 2006 ]
+			};
+			var form = { submit: jasmine.createSpy("submit") };
+
+			spyOn($.$mock, "attr").and.callFake(createAttrMock({
+				"ufm-ignore": "" // <input ufm-ignore /> makes an attribute that returns ""
+			}));
+			spyOn(uniform.options, "getSettings").and.returnValue({ validateClient: false }); // Ignore client errors
+			spyOn(submit._priv, "buildSelectorMap").and.returnValue(selectorMap);
+			spyOn(submit._priv, "buildSubmitForm").and.returnValue(form);
+
+			submit._priv.onSubmit(event);
+
+			expect(event.preventDefault).not.toHaveBeenCalled();
+			expect(form.submit).not.toHaveBeenCalled();
 		});
 
 		it("and builds a selector map of the form's data", function () {

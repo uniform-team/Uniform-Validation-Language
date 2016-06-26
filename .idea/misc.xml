@@ -11,6 +11,6 @@
     <ConfirmationsSetting value="0" id="Remove" />
   </component>
   <component name="TaskProjectConfiguration">
-    <server type="JIRA" url="https://hpmobilitysolutions.atlassian.net" />
+    <server type="GitHub" url="https://github.com" />
   </component>
 </project>
