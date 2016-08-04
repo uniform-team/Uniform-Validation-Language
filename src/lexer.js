@@ -1,4 +1,5 @@
 var constants = require("./constants.js");
+var TokenClass = require("./token.js");
 
 //Regular expressions
 var isWhitespace = /\s|\t/;
@@ -12,6 +13,18 @@ module.exports = function (input) {
 	
 	var lexbuffer = "";   //contains a single character to be analyzed
 	var tokenBuffer = ""; //buffer that appends the lexbuffer until a token is built
+	
+	// Wrap the Token class to automatically add the current line and column
+	function Token(value, type) {
+		if (value === undefined) throw new Error("Undefined Value in new Token");
+		if (type === undefined) throw new Error("Undefined Type in new Token");
+		
+		this.value = value;
+		this.type = type;
+		this.line = lineNumber;
+		this.col = lineIndex;
+	}
+	Token.prototype = TokenClass.prototype;
 	
 	//When called, will reset the line and index numbers if a new line is encountered or increments the line index otherwise
 	function resetLine() {
@@ -55,17 +68,6 @@ module.exports = function (input) {
 		this.colNumber = lineIndex;
 	}
 	SyntaxError.prototype = Error.prototype;
-	
-	//Generates new token object
-	function Token(value, type) {
-		if (value === undefined) throw new Error("Undefined Value in new Token");
-		if (type === undefined) throw new Error("Undefined Type in new Token");
-		
-		this.value = value;
-		this.type = type;
-		this.line = lineNumber;
-		this.col = lineIndex;
-	}
 	
 	// Create a tokenizer function and return it
 	return function () {

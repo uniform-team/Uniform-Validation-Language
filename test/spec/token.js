@@ -1,0 +1,168 @@
+describe("The Token class", function () {
+	it("is exposed globally", function () {
+		expect(uniform.Token).toEqual(jasmine.any(Function));
+	});
+	
+	var Token = uniform.Token;
+	var constants = uniform.constants;
+	describe("exposes the \"isTag\" member", function () {
+		it("as a function", function () {
+			expect(Token.prototype.isTag).toEqual(jasmine.any(Function));
+		});
+		
+		var assertTag = function (value, type) {
+			return new Token(value, type).isTag();
+		};
+		
+		describe("which returns true when this Token is a tag, such as", function () {
+			it("valid", function () {
+				expect(assertTag("valid", constants.TAG.VALID)).toBe(true);
+			});
+			
+			it("enabled", function () {
+				expect(assertTag("enabled", constants.TAG.ENABLED)).toBe(true);
+			});
+			
+			it("visible", function () {
+				expect(assertTag("visible", constants.TAG.VISIBLE)).toBe(true);
+			});
+			
+			it("return", function () {
+				expect(assertTag("return", constants.TAG.RETURN)).toBe(true);
+			});
+		});
+		
+		it("which returns false when this Token is not a tag", function () {
+			expect(assertTag(constants.STATE.STRING, constants.TYPE.KEYWORD)).toBe(false);
+			expect(assertTag(true, constants.TYPE.BOOL)).toBe(false);
+			expect(assertTag(constants.OPERATOR.ADD, constants.TYPE.KEYWORD)).toBe(false);
+			// ...
+		});
+	});
+	
+	describe("exposes the \"isComparator\" member", function () {
+		it("as a function", function () {
+			expect(Token.prototype.isComparator).toEqual(jasmine.any(Function));
+		});
+		
+		var assertComparator = function (value, type) {
+			return new Token(value, type).isComparator();
+		};
+		
+		describe("which returns true when this Token is a comparator, such as", function () {
+			it("equals", function () {
+				expect(assertComparator(constants.OPERATOR.EQUALS, constants.TYPE.KEYWORD)).toBe(true);
+			});
+			
+			it("matches", function () {
+				expect(assertComparator(constants.OPERATOR.MATCHES, constants.TYPE.KEYWORD)).toBe(true);
+			});
+			
+			it("is", function () {
+				expect(assertComparator(constants.OPERATOR.IS, constants.TYPE.KEYWORD)).toBe(true);
+			});
+			
+			it("<", function () {
+				expect(assertComparator(constants.OPERATOR.LT, constants.TYPE.KEYWORD)).toBe(true);
+			});
+			
+			it(">", function () {
+				expect(assertComparator(constants.OPERATOR.GT, constants.TYPE.KEYWORD)).toBe(true);
+			});
+			
+			it("<=", function () {
+				expect(assertComparator(constants.OPERATOR.LTE, constants.TYPE.KEYWORD)).toBe(true);
+			});
+			
+			it(">=", function () {
+				expect(assertComparator(constants.OPERATOR.GTE, constants.TYPE.KEYWORD)).toBe(true);
+			});
+		});
+		
+		it("which returns false when this Token is not a comparator", function () {
+			expect(assertComparator(constants.STATE.STRING, constants.TYPE.KEYWORD)).toBe(false);
+			expect(assertComparator(true, constants.TYPE.BOOL)).toBe(false);
+			expect(assertComparator(constants.OPERATOR.ADD, constants.TYPE.KEYWORD)).toBe(false);
+			// ...
+		});
+	});
+	
+	describe("exposes the \"isOperand\" member", function () {
+		it("as a function", function () {
+			expect(Token.prototype.isOperand).toEqual(jasmine.any(Function));
+		});
+		
+		var assertOperand = function (value, type) {
+			return new Token(value, type).isOperand();
+		};
+		
+		describe("which returns true when this Token is an operand, such as", function () {
+			it("identifiers", function () {
+				expect(assertOperand("test", constants.TYPE.IDENTIFIER)).toBe(true);
+			});
+			
+			it("booleans", function () {
+				expect(assertOperand(true, constants.TYPE.BOOL)).toBe(true);
+				expect(assertOperand(false, constants.TYPE.BOOL)).toBe(true);
+			});
+			
+			it("numbers", function () {
+				expect(assertOperand(1, constants.TYPE.NUMBER)).toBe(true);
+			});
+			
+			it("strings", function () {
+				expect(assertOperand("test", constants.TYPE.STRING)).toBe(true);
+			});
+			
+			it("regular expressions", function () {
+				expect(assertOperand("test", constants.TYPE.REGEX)).toBe(true);
+			});
+			
+			it("variables", function () {
+				expect(assertOperand("test", constants.TYPE.VARIABLE)).toBe(true);
+			});
+			
+			it("states", function () {
+				expect(assertOperand(constants.STATE.STRING, constants.TYPE.KEYWORD)).toBe(true);
+				expect(assertOperand(constants.STATE.NUMBER, constants.TYPE.KEYWORD)).toBe(true);
+			});
+			
+			it("this keyword", function () {
+				expect(assertOperand("this", constants.THIS)).toBe(true);
+			});
+		});
+		
+		it("which returns false when this Token is not an operand", function () {
+			expect(assertOperand(constants.OPERATOR.COLON, constants.TYPE.KEYWORD)).toBe(false);
+			expect(assertOperand(constants.OPERATOR.LBRACE, constants.TYPE.KEYWORD)).toBe(false);
+			expect(assertOperand(constants.OPERATOR.ADD, constants.TYPE.KEYWORD)).toBe(false);
+			// ...
+		});
+	});
+	
+	describe("exposes the \"isState\" member", function () {
+		it("as a function", function () {
+			expect(Token.prototype.isState).toEqual(jasmine.any(Function));
+		});
+		
+		var assertState = function (value, type) {
+			return new Token(value, type).isState();
+		};
+		describe("which returns true when this Token is a state, such as", function () {
+			it("string", function () {
+				expect(assertState(constants.STATE.STRING, constants.TYPE.KEYWORD)).toBe(true);
+			});
+			
+			it("number", function () {
+				expect(assertState(constants.STATE.NUMBER, constants.TYPE.KEYWORD)).toBe(true);
+			});
+		});
+		
+		it("which returns false when this Token is not a state", function () {
+			expect(assertState("test", constants.TYPE.IDENTIFIER)).toBe(false);
+			expect(assertState(true, constants.TYPE.BOOL)).toBe(false);
+			expect(assertState(constants.OPERATOR.ADD, constants.TYPE.KEYWORD)).toBe(false);
+			// ...
+		});
+	});
+});

@@ -1,6 +1,6 @@
 describe("The lexer module", function () {
 	it("is exposed globally", function () {
-		expect(uniform.tokenizer).toBeDefined();
+		expect(uniform.tokenizer).toEqual(jasmine.any(Function));
 	});
 	
 	var assertToken = function (input, value, type) {
