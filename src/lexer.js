@@ -1,12 +1,12 @@
-var constants = require("./constants.js");
-var TokenClass = require("./token.js");
+import constants from "./constants.js";
+import TokenClass from "./token.js";
 
 //Regular expressions
 var isWhitespace = /\s|\t/;
 var isAlpha = /[a-zA-Z]/;
 var isDigit = /[0-9]/;
 
-module.exports = function (input) {
+export default function (input) {
 	var lineNumber = 1;     //keeps track of current line number for error messages
 	var lineIndex = 1;      //keeps track of the current index of the line for error messages
 	var stringIndex = 0;    //the index of the string, lexbuffer contains the character at this index
@@ -14,17 +14,12 @@ module.exports = function (input) {
 	var lexbuffer = "";   //contains a single character to be analyzed
 	var tokenBuffer = ""; //buffer that appends the lexbuffer until a token is built
 	
-	// Wrap the Token class to automatically add the current line and column
-	function Token(value, type) {
-		if (value === undefined) throw new Error("Undefined Value in new Token");
-		if (type === undefined) throw new Error("Undefined Type in new Token");
-		
-		this.value = value;
-		this.type = type;
-		this.line = lineNumber;
-		this.col = lineIndex;
+	// Wrap the Token class with one which automatically inserts the current line number and index
+	class Token extends TokenClass {
+		constructor(value, type) {
+			super(value, type, lineNumber, lineIndex);
+		}
 	}
-	Token.prototype = TokenClass.prototype;
 	
 	//When called, will reset the line and index numbers if a new line is encountered or increments the line index otherwise
 	function resetLine() {

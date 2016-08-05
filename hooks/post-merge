@@ -1,0 +1,6 @@
+#!/bin/sh
+
+# Git post-merge script. Symlink this to .git/hooks/post-merge to automatically run it after every pull (technically merge, but close enough...)
+
+# Install any new node modules and run post-install script
+npm install

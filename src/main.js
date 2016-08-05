@@ -1,7 +1,12 @@
+import Token from "./token.js";
+import constants from "./constants.js";
+import tokenizer from "./lexer.js";
+import parser from "./parser.js";
+
 // Create global Uniform object
 window.uniform = {
-	constants: require("./constants.js"),
-	Token: require("./token.js"),
-	tokenizer: require("./lexer.js"),
-	parser: require("./parser.js")
+	constants: constants,
+	Token: Token,
+	tokenizer: tokenizer,
+	parser: parser
 };

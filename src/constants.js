@@ -1,4 +1,4 @@
-module.exports = {
+export default {
 	TYPE: {
 		BOOL: "boolean",
 		VARIABLE: "variable",

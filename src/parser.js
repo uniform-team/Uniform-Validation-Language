@@ -1,7 +1,7 @@
-var constants = require("./constants.js");
-var tokenizer = require("./lexer.js");
+import constants from "./constants.js";
+import tokenizer from "./lexer.js";
 
-module.exports = {
+export default {
 	parse: function (input) {
 		// Stack for holding tokens retrieved via lookahead()
 		var tokenStack = [];
