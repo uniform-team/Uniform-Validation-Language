@@ -1,10 +1,45 @@
 describe("The Token class", function () {
+	let uniform = window.uniform;
+	
 	it("is exposed globally", function () {
 		expect(uniform.Token).toEqual(jasmine.any(Function));
 	});
 	
 	var Token = uniform.Token;
 	var constants = uniform.constants;
+	describe("exposes the \"clone\" member", function () {
+		it("as a function", function () {
+			expect(Token.prototype.clone).toEqual(jasmine.any(Function));
+		});
+		
+		it("which returns a new Token as a clone of this one with no arguments", function () {
+			var token = new Token("test", constants.TYPE.IDENTIFIER, 0, 1);
+			expect(token.clone()).toEqual(jasmine.objectContaining({
+				value: "test",
+				type: constants.TYPE.IDENTIFIER,
+				line: 0,
+				col: 1
+			}));
+		});
+		
+		it("which returns a new Token as a clone of this one using the value, type, line, or col specified", function () {
+			var token = new Token("test", constants.TYPE.IDENTIFIER, 0, 1);
+			expect(token.clone({ value: "test2", type: constants.TYPE.VARIABLE })).toEqual(jasmine.objectContaining({
+				value: "test2",
+				type: constants.TYPE.VARIABLE,
+				line: 0,
+				col: 1
+			}));
+			
+			expect(token.clone({ line: 2, col: 3 })).toEqual(jasmine.objectContaining({
+				value: "test",
+				type: constants.TYPE.IDENTIFIER,
+				line: 2,
+				col: 3
+			}));
+		});
+	});
+	
 	describe("exposes the \"isTag\" member", function () {
 		it("as a function", function () {
 			expect(Token.prototype.isTag).toEqual(jasmine.any(Function));

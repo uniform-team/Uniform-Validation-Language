@@ -1,23 +1,31 @@
 import constants from "./constants.js";
 import TokenClass from "./token.js";
+import { SyntaxError as SyntaxErrorClass } from "./errors.js";
 
 //Regular expressions
-var isWhitespace = /\s|\t/;
-var isAlpha = /[a-zA-Z]/;
-var isDigit = /[0-9]/;
+let isWhitespace = /\s|\t/;
+let isAlpha = /[a-zA-Z]/;
+let isDigit = /[0-9]/;
 
 export default function (input) {
-	var lineNumber = 1;     //keeps track of current line number for error messages
-	var lineIndex = 1;      //keeps track of the current index of the line for error messages
-	var stringIndex = 0;    //the index of the string, lexbuffer contains the character at this index
+	let lineNumber = 1;     //keeps track of current line number for error messages
+	let lineIndex = 1;      //keeps track of the current index of the line for error messages
+	let stringIndex = 0;    //the index of the string, lexbuffer contains the character at this index
 	
-	var lexbuffer = "";   //contains a single character to be analyzed
-	var tokenBuffer = ""; //buffer that appends the lexbuffer until a token is built
+	let lexbuffer = "";   //contains a single character to be analyzed
+	let tokenBuffer = ""; //buffer that appends the lexbuffer until a token is built
 	
 	// Wrap the Token class with one which automatically inserts the current line number and index
 	class Token extends TokenClass {
 		constructor(value, type) {
 			super(value, type, lineNumber, lineIndex);
+		}
+	}
+	
+	// Wrap the SyntaxError class with one which automatically inserts the current line number and index
+	class SyntaxError extends SyntaxErrorClass {
+		constructor(msgOrError) {
+			super(msgOrError, lineNumber, lineIndex);
 		}
 	}
 	
@@ -56,13 +64,6 @@ export default function (input) {
 			skipChar();
 		}
 	}
-	
-	function SyntaxError(msg) {
-		this.message = "Syntax Error (line " + lineNumber + ", col " + lineIndex + "): " + msg;
-		this.lineNumber = lineNumber;
-		this.colNumber = lineIndex;
-	}
-	SyntaxError.prototype = Error.prototype;
 	
 	// Create a tokenizer function and return it
 	return function () {
@@ -236,7 +237,7 @@ export default function (input) {
 			}
 			
 			//check for non-alpha operators
-			var token = lexbuffer;
+			let token = lexbuffer;
 			skipChar();
 			switch (token) {
 				case constants.OPERATOR.ADD:
@@ -285,9 +286,7 @@ export default function (input) {
 			
 			throw new SyntaxError("Unknown token, \"" + tokenBuffer + "\"");
 		} catch (err) {
-			if (err instanceof SyntaxError) throw err; // Return SyntaxErrors
-			
-			return new Token(constants.ENDOFFILE, constants.ENDOFFILE);
+			throw new SyntaxError(err);
 		}
 	};
 };

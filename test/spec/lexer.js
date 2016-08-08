@@ -1,18 +1,21 @@
 describe("The lexer module", function () {
+	let uniform = window.uniform;
+	
 	it("is exposed globally", function () {
 		expect(uniform.tokenizer).toEqual(jasmine.any(Function));
 	});
 	
-	var assertToken = function (input, value, type) {
-		var tokenize = tokenizer(input);
-		var token = tokenize();
+	let assertToken = function (input, value, type) {
+		let tokenize = tokenizer(input);
+		let token = tokenize();
 		
 		expect(token.value).toEqual(value);
 		expect(token.type).toBe(type);
 	};
 	
-	var tokenizer = uniform.tokenizer;
-	var constants = uniform.constants;
+	let tokenizer = uniform.tokenizer;
+	let constants = uniform.constants;
+	let SyntaxError = uniform.errors.SyntaxError;
 	
 	describe("tokenizes inputs such as", function () {
 		it("identifiers", function () {
@@ -193,40 +196,40 @@ describe("The lexer module", function () {
 	});
 	
 	describe("throws errors on bad inputs such as", function () {
-		var assertError = function (input) {
-			var tokenize = tokenizer(input);
-			expect(tokenize).toThrow();
+		let assertSyntaxError = function (input) {
+			let tokenize = tokenizer(input);
+			expect(tokenize).toThrowUfmError(SyntaxError);
 		};
 		
 		describe("malformed selector", function () {
 			it("from a missing open parenthesis", function () {
-				assertError("$test");
+				assertSyntaxError("$test");
 			});
 			
 			it("from a missing open quote", function () {
-				assertError("$(test)");
+				assertSyntaxError("$(test)");
 			});
 			
 			it("from a missing close quote", function () {
-				assertError("$(\"test)");
+				assertSyntaxError("$(\"test)");
 			});
 			
 			it("from a missing close parenthesis", function () {
-				assertError("$(\"test\"");
+				assertSyntaxError("$(\"test\"");
 			});
 		});
 		
 		it("malformed string", function () {
-			assertError("\"test");
+			assertSyntaxError("\"test");
 		});
 		
 		describe("malformed regular expression", function () {
 			it("from a missing close quote", function () {
-				assertError("/\"test");
+				assertSyntaxError("/\"test");
 			});
 			
 			it("from a missing close slash", function () {
-				assertError("/\"test\"");
+				assertSyntaxError("/\"test\"");
 			});
 		});
 	});

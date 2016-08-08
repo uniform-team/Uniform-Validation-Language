@@ -14,8 +14,7 @@ export default {
 		ARRAY: "array",
 		ANY: "any_array",
 		ALL: "all_array",
-		STATE_OBJECT: "state_object",
-		ERROR: "error"
+		OBJECT: "object"
 	},
 	OPERATOR: {
 		ADD: "+",
@@ -57,8 +56,7 @@ export default {
 	},
 	VALUE: {
 		TRUE: "true",
-		FALSE: "false",
-		ERROR: "error"
+		FALSE: "false"
 	},
 	THIS: "this",
 	ENDOFFILE: "EOF"
