@@ -190,6 +190,8 @@ export default function (input) {
 						return new Token(constants.TAG.VISIBLE, constants.TYPE.KEYWORD);
 					case constants.TAG.RETURN:
 						return new Token(constants.TAG.RETURN, constants.TYPE.KEYWORD);
+					case constants.TAG.SELECTOR:
+						return new Token(constants.TAG.SELECTOR, constants.TYPE.KEYWORD);
 					case constants.STATE.STRING:
 						return new Token(constants.STATE.STRING, constants.TYPE.KEYWORD);
 					case constants.STATE.NUMBER:

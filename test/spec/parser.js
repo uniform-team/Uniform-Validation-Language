@@ -1,5 +1,5 @@
 describe("The parser module", function () {
-	var uniform = window.uniform;
+	let uniform = window.uniform;
 	
 	it("is exposed globally", function () {
 		expect(uniform.parser).toEqual(jasmine.any(Object));

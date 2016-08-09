@@ -36,3 +36,4 @@ export class SyntaxError extends UfmError { }
 export class ParsingError extends UfmError { }
 export class AssertionError extends UfmError { }
 export class TypeError extends UfmError { }
+export class DuplicateDeclarationError extends UfmError { }

@@ -48,7 +48,8 @@ export default {
 		VALID: "valid",
 		ENABLED: "enabled",
 		VISIBLE: "visible",
-		RETURN: "return"
+		RETURN: "return",
+		SELECTOR: "selector"
 	},
 	STATE: {
 		STRING: "string",

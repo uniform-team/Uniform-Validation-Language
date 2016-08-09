@@ -5,15 +5,15 @@ describe("The Token class", function () {
 		expect(uniform.Token).toEqual(jasmine.any(Function));
 	});
 	
-	var Token = uniform.Token;
-	var constants = uniform.constants;
+	let Token = uniform.Token;
+	let constants = uniform.constants;
 	describe("exposes the \"clone\" member", function () {
 		it("as a function", function () {
 			expect(Token.prototype.clone).toEqual(jasmine.any(Function));
 		});
 		
 		it("which returns a new Token as a clone of this one with no arguments", function () {
-			var token = new Token("test", constants.TYPE.IDENTIFIER, 0, 1);
+			let token = new Token("test", constants.TYPE.IDENTIFIER, 0, 1);
 			expect(token.clone()).toEqual(jasmine.objectContaining({
 				value: "test",
 				type: constants.TYPE.IDENTIFIER,
@@ -23,7 +23,7 @@ describe("The Token class", function () {
 		});
 		
 		it("which returns a new Token as a clone of this one using the value, type, line, or col specified", function () {
-			var token = new Token("test", constants.TYPE.IDENTIFIER, 0, 1);
+			let token = new Token("test", constants.TYPE.IDENTIFIER, 0, 1);
 			expect(token.clone({ value: "test2", type: constants.TYPE.VARIABLE })).toEqual(jasmine.objectContaining({
 				value: "test2",
 				type: constants.TYPE.VARIABLE,
@@ -45,7 +45,7 @@ describe("The Token class", function () {
 			expect(Token.prototype.isTag).toEqual(jasmine.any(Function));
 		});
 		
-		var assertTag = function (value, type) {
+		let assertTag = function (value, type) {
 			return new Token(value, type).isTag();
 		};
 		
@@ -80,7 +80,7 @@ describe("The Token class", function () {
 			expect(Token.prototype.isComparator).toEqual(jasmine.any(Function));
 		});
 		
-		var assertComparator = function (value, type) {
+		let assertComparator = function (value, type) {
 			return new Token(value, type).isComparator();
 		};
 		
@@ -127,7 +127,7 @@ describe("The Token class", function () {
 			expect(Token.prototype.isOperand).toEqual(jasmine.any(Function));
 		});
 		
-		var assertOperand = function (value, type) {
+		let assertOperand = function (value, type) {
 			return new Token(value, type).isOperand();
 		};
 		
@@ -180,7 +180,7 @@ describe("The Token class", function () {
 			expect(Token.prototype.isState).toEqual(jasmine.any(Function));
 		});
 		
-		var assertState = function (value, type) {
+		let assertState = function (value, type) {
 			return new Token(value, type).isState();
 		};
 		describe("which returns true when this Token is a state, such as", function () {

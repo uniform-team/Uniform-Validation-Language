@@ -1,6 +1,7 @@
 import constants from "./constants.js";
 import { ParsingError as ParsingErrorClass, AssertionError as AssertionErrorClass } from "./errors.js";
 import tokenizer from "./lexer.js";
+import Scope from "./scope.js";
 import * as evaluator from "./evaluator.js";
 
 export default {
@@ -123,7 +124,9 @@ export default {
 		function block() {
 			match();
 			matchValue(constants.OPERATOR.LBRACE);
-			blockOrStatements();
+			new Scope(function () {
+				blockOrStatements();
+			});
 			matchValue(constants.OPERATOR.RBRACE);
 		}
 		
