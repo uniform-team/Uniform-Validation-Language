@@ -8,11 +8,13 @@ describe("The Scope class", function () {
     let Scope = uniform.Scope;
     let Variable = uniform.Variable;
     let Tag = uniform.Tag;
+	let Identifier = uniform.Identifier;
     let DuplicateDeclarationError = uniform.errors.DuplicateDeclarationError;
 
     it("creates new scopes with inheriting parent scopes", function () {
         let childScope = null;
         let innerScope = null;
+		Scope.reset();
         let parentScope = new Scope(function (myScope) {
             innerScope = myScope;
             childScope = new Scope();
@@ -25,7 +27,7 @@ describe("The Scope class", function () {
     describe("exposes the insert member", function () {
         it("which inserts a variable", function () {
             new Scope(function (scope) {
-                let testVar = new Variable("test", 1, 2);
+            	let testVar = new Variable("test", 1, 2);
                 scope.insert(testVar);
                 expect(scope.variables["test"]).toBe(testVar);
             });
@@ -69,7 +71,22 @@ describe("The Scope class", function () {
             });
         });
     });
-
+    
+    describe("exposes the findIdentifier member", function () {
+        it("which returns the identifier if found", function () {
+            new Scope(function (scope) {
+                let testIdentifier = new Identifier("test", 1, 2);
+                scope.identifiers["test"] = testIdentifier;
+                expect(scope.findIdentifier("test")).toBe(testIdentifier);
+            });
+        });
+        it("which returns null if not found", function () {
+            new Scope(function (scope) {
+                expect(scope.findIdentifier("test")).toBeNull();
+            });
+        });
+    });
+    
     describe("exposes the lookupVar member", function () {
         it("returns the variable in the parent hierarchy", function () {
             new Scope(function (myScope) {

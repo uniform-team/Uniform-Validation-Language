@@ -56,6 +56,7 @@ export default class Token {
 		if (this.type === constants.TYPE.STRING) return true;
 		if (this.type === constants.TYPE.REGEX) return true;
 		if (this.type === constants.TYPE.VARIABLE) return true;
+		if (this.type === constants.TYPE.SELECTOR) return true;
 		if (this.value === constants.THIS) return true;
 		if (this.isState()) return true;
 		

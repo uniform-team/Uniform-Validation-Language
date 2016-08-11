@@ -1,4 +1,4 @@
-import constants from "./constants.js";
+import Scope from "./scope.js";
 
 export class Variable {
     constructor(name, line, col) {
@@ -9,14 +9,14 @@ export class Variable {
 }
 
 export class BlockVariable extends Variable {
-    constructor(name, scope, line, col) {
+    constructor(name, line, col, cb) {
         super(name, line, col);
-        this.scope = scope;
+        this.scope = new Scope(cb);
     }
 }
 
 export class ExpressionVariable extends Variable {
-    constructor(name, expression, line, col) {
+    constructor(name, line, col, expression) {
         super(name, line, col);
         this.expression = expression;
     }

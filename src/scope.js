@@ -1,21 +1,23 @@
-import constants from "./constants.js";
 import {Variable} from "./variable.js";
 import {DuplicateDeclarationError, AssertionError} from "./errors.js"
 import Tag from "./tag.js";
+import Identifier from "./identifier.js";
 
 let currentScope = null;
 
 export default class Scope {
-
     constructor(callback){
         this.variables = {};
         this.tags = {};
+        this.identifiers = {};
+        
         this.parentScope = currentScope; //open scope
         currentScope = this;
         if (callback)
             callback(this);
         currentScope = this.parentScope; //close scope
     }
+    
     static reset() {
         currentScope = null;
     }
@@ -27,15 +29,20 @@ export default class Scope {
     insert(item) {
         if (item instanceof Variable) {
             if (this.findVar(item.name))
-                throw new DuplicateDeclarationError("Redeclared variable \"" + item.name + "\" in same scope", item.line, item.col);
+                throw new DuplicateDeclarationError("Redeclared Variable \"" + item.name + "\" in same scope", item.line, item.col);
             this.variables[item.name] = item;
         }
         else if (item instanceof Tag) {
             if (this.findTag(item.name))
-                throw new DuplicateDeclarationError("Redeclared tag \"" + item.name + "\" in same scope", item.line, item.col);
+                throw new DuplicateDeclarationError("Redeclared Tag \"" + item.name + "\" in same scope", item.line, item.col);
             this.tags[item.name] = item;
         }
-        else throw new AssertionError("Inserted an item of type \"" + typeof item + "\" expected Variable or Tag");
+        else if (item instanceof Identifier) {
+        	if (this.findIdentifier(item.name))
+        		throw new DuplicateDeclarationError("Redeclared Identifier \"" + item.name + "\" in same scope", item.line, item.col);
+			this.identifiers[item.name] = item;
+		}
+        else throw new AssertionError("Inserted an item of type \"" + typeof item + "\" expected Variable, Tag, or Identifier");
     }
 
     //checks to see if name exists in variable table
@@ -47,6 +54,10 @@ export default class Scope {
     findTag(name) {
         return this.tags[name] || null;
     }
+    
+    findIdentifier(name) {
+    	return this.identifiers[name] || null;
+	}
 
     //checks to see if name exists in any scope and returns it
     //returns null if not found
@@ -65,5 +76,13 @@ export default class Scope {
         else
             return this.parentScope && this.parentScope.lookupTag(name);
     }
+    
+    lookupIdentifier(name) {
+    	let identifier = this.findIdentifier(name);
+		if (identifier)
+			return identifier;
+		else
+			return this.parentScope && this.parentScope.lookupIdentifier(name);
+	}
 }
 

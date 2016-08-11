@@ -251,6 +251,13 @@ describe("The parser module", function () {
 				});
 			});
 			
+			it("selectors", function () {
+				expect(parser.parse("$(\"test\")")()).toEqualToken({
+					value: "test",
+					type: constants.TYPE.SELECTOR
+				});
+			});
+			
 			it("states", function () {
 				expect(parser.parse("string")()).toEqualToken({
 					value: "string",

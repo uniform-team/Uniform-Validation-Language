@@ -1,8 +1,11 @@
 import constants from "./constants.js";
 import { ParsingError as ParsingErrorClass, AssertionError as AssertionErrorClass } from "./errors.js";
 import tokenizer from "./lexer.js";
-import Scope from "./scope.js";
+import Identifier from "./identifier.js";
+import { BlockVariable, ExpressionVariable } from "./variable.js";
+import Tag from "./tag.js";
 import * as evaluator from "./evaluator.js";
+import Scope from "./scope.js";
 
 export default {
 	_testExpr: false,
@@ -44,7 +47,7 @@ export default {
 			}
 		}
 		
-		// Wrap the AssertionErro class with one which automatically inserts the current line number and column
+		// Wrap the AssertionError class with one which automatically inserts the current line number and column
 		class AssertionError extends AssertionErrorClass {
 			constructor(msgOrError) {
 				super(msgOrError, currentToken.lineNumber, currentToken.colNumber);
@@ -85,7 +88,9 @@ export default {
 			// If testing expressions, then directly invoke and return expression()
 			if (self._testExpr) return expression();
 			
-			blockOrStatements();
+			new Scope(function () {
+				blockOrStatements();
+			});
 			
 			if (currentToken.type !== constants.ENDOFFILE) {
 				throw new ParsingError("Expected an identifier or variable, got " + currentToken.value);
@@ -122,19 +127,37 @@ export default {
 		
 		// <block> -> <identifier> | <variable> { <blockOrStatements> }
 		function block() {
-			match();
+			let token = match();
 			matchValue(constants.OPERATOR.LBRACE);
-			new Scope(function () {
-				blockOrStatements();
-			});
+			
+			if (token.type === constants.TYPE.IDENTIFIER) {
+				Scope.thisScope().insert(new Identifier(token.name, token.line, token.col, function () {
+					blockOrStatements();
+				}));
+			} else if (token.type === constants.TYPE.VARIABLE) {
+				Scope.thisScope().insert(new BlockVariable(token.name, token.line, token.col, function() {
+					blockOrStatements();
+				}));
+			} else {
+				throw new AssertionError("Expected token identifier or variable, but got " + token.value);
+			}
+			
 			matchValue(constants.OPERATOR.RBRACE);
 		}
 		
 		// <statement> -> <variable> | <tag> : <expression> ;
 		function statement() {
-			match();
+			let token = match();
 			matchValue(constants.OPERATOR.COLON);
-			expression();
+			
+			if (token.type === constants.TYPE.VARIABLE) {
+				Scope.thisScope().insert(new ExpressionVariable(token.value, token.line, token.col, expression()));
+			} else if (token.isTag()) {
+				Scope.thisScope().insert(new Tag(token.value, token.line, token.col, expression()));
+			} else {
+				throw new AssertionError("Expected ExpressionVariable or Tag, got " + token.value);
+			}
+			
 			matchValue(constants.OPERATOR.SEMICOLON);
 		}
 		

@@ -157,6 +157,10 @@ describe("The Token class", function () {
 				expect(assertOperand("test", constants.TYPE.VARIABLE)).toBe(true);
 			});
 			
+			it("selectors", function () {
+				expect(assertOperand("$(\"test\")", constants.TYPE.SELECTOR)).toBe(true);
+			});
+			
 			it("states", function () {
 				expect(assertOperand(constants.STATE.STRING, constants.TYPE.KEYWORD)).toBe(true);
 				expect(assertOperand(constants.STATE.NUMBER, constants.TYPE.KEYWORD)).toBe(true);

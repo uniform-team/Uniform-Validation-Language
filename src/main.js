@@ -8,19 +8,21 @@ import * as evaluator from "./evaluator.js";
 import Scope from "./scope.js";
 import {Variable, BlockVariable, ExpressionVariable} from "./variable.js";
 import Tag from "./tag.js";
+import Identifier from "./identifier.js";
 
 // Create global Uniform object
 window.uniform = {
-	constants: constants,
-	errors: errors,
-	Token: Token,
-	tokenizer: tokenizer,
-	parser: parser,
-	coerce: coerce,
-	evaluator: evaluator,
-	Scope: Scope,
-	Variable: Variable,
-	BlockVariable: BlockVariable,
-	ExpressionVariable: ExpressionVariable,
-	Tag: Tag
+	constants,
+	errors,
+	Token,
+	tokenizer,
+	parser,
+	coerce,
+	evaluator,
+	Scope,
+	Variable,
+	BlockVariable,
+	ExpressionVariable,
+	Tag,
+	Identifier
 };
