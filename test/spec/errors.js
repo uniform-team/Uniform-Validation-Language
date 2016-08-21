@@ -17,8 +17,8 @@ describe("The errors module", function () {
 				let error = new UfmError("test", 0, 1);
 				
 				expect(error.name).toBe("UfmError");
-				expect(error.lineNumber).toBe(0);
-				expect(error.colNumber).toBe(1);
+				expect(error.line).toBe(0);
+				expect(error.col).toBe(1);
 				expect(error.innerError).toBe(null);
 			});
 			
@@ -27,8 +27,8 @@ describe("The errors module", function () {
 				let error = new UfmError(innerErr, 0, 1);
 				
 				expect(error.name).toBe("UfmError");
-				expect(error.lineNumber).toBe(0);
-				expect(error.colNumber).toBe(1);
+				expect(error.line).toBe(0);
+				expect(error.col).toBe(1);
 				expect(error.innerError).toBe(innerErr);
 			});
 		});
@@ -55,6 +55,18 @@ describe("The errors module", function () {
 	describe("exposes the \"TypeError\" member", function () {
 		it("as a class extending UfmError", function () {
 			expect(errors.TypeError).toExtend(errors.UfmError);
+		});
+	});
+	
+	describe("exposes the \"UndeclaredError\" member", function () {
+		it("as a class extending UfmError", function () {
+			expect(errors.UndeclaredError).toExtend(errors.UfmError);
+		});
+	});
+	
+	describe("exposes the \"NotImplementedError\" member", function () {
+		it("as a class extending UfmError", function () {
+			expect(errors.NotImplementedError).toExtend(errors.UfmError);
 		});
 	});
 });

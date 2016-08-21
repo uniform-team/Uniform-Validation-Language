@@ -40,6 +40,16 @@ describe("The Token class", function () {
 		});
 	});
 	
+	describe("exposes the \"getSelector\" member", function () {
+		it("as a function", function () {
+			expect(Token.prototype.getSelector).toEqual(jasmine.any(Function));
+		});
+		
+		it("which returns this Token's jQuery selector", function () {
+			expect(new Token("make", constants.TYPE.IDENTIFIER).getSelector()).toBe("[name=\"make\"]");
+		});
+	});
+	
 	describe("exposes the \"isTag\" member", function () {
 		it("as a function", function () {
 			expect(Token.prototype.isTag).toEqual(jasmine.any(Function));

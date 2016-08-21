@@ -25,8 +25,8 @@ export class UfmError extends ExtendableError {
 		this.name = this.constructor.name;
 		if (line !== undefined) this.message = this.name + " (line " + line + ", col " + col + "): " + msg;
 		else this.message = this.name + ": " + msg;
-		this.lineNumber = line;
-		this.colNumber = col;
+		this.line = line;
+		this.col = col;
 		this.innerError = err;
 	}
 }
@@ -37,3 +37,5 @@ export class ParsingError extends UfmError { }
 export class AssertionError extends UfmError { }
 export class TypeError extends UfmError { }
 export class DuplicateDeclarationError extends UfmError { }
+export class UndeclaredError extends UfmError { }
+export class NotImplementedError extends UfmError { }

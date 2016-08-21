@@ -4,11 +4,9 @@ describe("The evaluator module", function () {
 	it("is exposed globally as an object", function () {
 		expect(uniform.evaluator).toEqual(jasmine.any(Object));
 	});
-	
-	let evaluator = uniform.evaluator;
-	let constants = uniform.constants;
-	let Token = uniform.Token;
-	let TypeError = uniform.errors.TypeError;
+
+    let { evaluator, constants, Token, Identifier } = uniform;
+    let { TypeError, UndeclaredError } = uniform.errors;
 	
 	describe("exposes the \"and\" member", function () {
 		it("as a function", function () {
@@ -449,24 +447,59 @@ describe("The evaluator module", function () {
 		});
 	});
 	
-	describe("exposes the \"dot\" member", function () {
+	describe("exposes the \"dotObject\" member", function () {
 		it("as a function", function () {
-			expect(evaluator.dot).toEqual(jasmine.any(Function));
+			expect(evaluator.dotObject).toEqual(jasmine.any(Function));
 		});
 		
-		let dotOp = function (leftValue, leftType, rightValue, rightType) {
-			return evaluator.dot(() => new Token(leftValue, leftType), () => new Token(rightValue, rightType));
+		let dotObjectOp = function (leftValue, leftType, rightValue, rightType) {
+			return evaluator.dotObject(() => new Token(leftValue, leftType), new Token(rightValue, rightType));
 		};
 		
-		it("which performs the DOT operation on two input expressions", function () {
-			expect(dotOp({ "test": () => new Token(1, constants.TYPE.NUMBER) }, constants.TYPE.OBJECT, "test", constants.TYPE.IDENTIFIER)()).toEqualToken({
+		it("which performs the DOT operation for objects on the two inputs", function () {
+			expect(dotObjectOp({ "test": () => new Token(1, constants.TYPE.NUMBER) }, constants.TYPE.OBJECT, "test", constants.TYPE.IDENTIFIER)()).toEqualToken({
 				value: 1,
 				type: constants.TYPE.NUMBER
 			});
 		});
 		
 		it("which throws a TypeError when given invalid types", function () {
-			expect(dotOp(false, constants.TYPE.BOOL)).toThrowUfmError(TypeError);
+			expect(dotObjectOp(false, constants.TYPE.BOOL, "test", constants.TYPE.IDENTIFIER)).toThrowUfmError(TypeError);
+			expect(dotObjectOp({ }, constants.TYPE.OBJECT, false, constants.TYPE.BOOL)).toThrowUfmError(TypeError);
 		});
+	});
+
+	describe("exposes the \"dotTag\" member", function () {
+		it("as a function", function () {
+			expect(evaluator.dotTag).toEqual(jasmine.any(Function));
+		});
+
+        it("which performs the DOT operation on a identifier and its tag", function () {
+            let tag = { value: new Token(true, constants.TYPE.BOOL) };
+            let identifier = { getTag: jasmine.createSpy("getTag").and.returnValue(tag) };
+            spyOn(Identifier, "find").and.returnValue(identifier);
+
+            expect(evaluator.dotTag(new Token("test", constants.TYPE.IDENTIFIER), new Token("valid", constants.TYPE.KEYWORD))()).toEqualToken({
+                value: true,
+                type: constants.TYPE.BOOL
+            });
+
+            expect(Identifier.find).toHaveBeenCalledWith("test");
+            expect(identifier.getTag).toHaveBeenCalledWith("valid");
+        });
+
+        it("which throws an UndeclaredError when given an undeclared identifier", function () {
+        	spyOn(Identifier, "find").and.returnValue(null);
+
+            expect(evaluator.dotTag(new Token("test", constants.TYPE.IDENTIFIER), new Token("valid", constants.TYPE.KEYWORD))).toThrowUfmError(UndeclaredError);
+        });
+
+        it("which throws an UndeclaredError when given an undeclared tag", function () {
+            spyOn(Identifier, "find").and.returnValue({
+                getTag: jasmine.createSpy("getTag").and.returnValue(null)
+            });
+
+            expect(evaluator.dotTag(new Token("test", constants.TYPE.IDENTIFIER), new Token("valid", constants.TYPE.KEYWORD))).toThrowUfmError(UndeclaredError);
+        });
 	});
 });

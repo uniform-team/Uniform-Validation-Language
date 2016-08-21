@@ -135,4 +135,22 @@ describe("The coerce module", function () {
 			expect(() => toIdentifier(new Token(false, constants.TYPE.BOOL))).toThrowUfmError(TypeError);
 		});
 	});
+	
+	describe("exposes the \"toTag\" member", function () {
+		it("as a function", function () {
+			expect(coerce.toTag).toEqual(jasmine.any(Function));
+		});
+		
+		let toTag = coerce.toTag;
+		it("which passes tag tokens through unchanged", function () {
+			expect(toTag(new Token(constants.TAG.VALID, constants.TYPE.KEYWORD))).toEqualToken({
+				value: constants.TAG.VALID,
+				type: constants.TYPE.KEYWORD
+			});
+		});
+		
+		it("which throws a TypeError when given non-tag inputs", function () {
+			expect(() => toTag(new Token(false, constants.TYPE.BOOL))).toThrowUfmError(TypeError);
+		});
+	});
 });

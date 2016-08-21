@@ -4,7 +4,7 @@ import { TypeError as TypeErrorClass } from "./errors.js";
 // Wrap TypeError into a subclass which standardizes the text output and adds the line number and index more conveniently
 class TypeError extends TypeErrorClass {
 	constructor(givenType, desiredType, token) {
-		super("Cannot convert " + givenType + " to a(n) " + desiredType, token.lineNumber, token.colNumber);
+		super("Cannot convert " + givenType + " to a(n) " + desiredType, token.line, token.col);
 	}
 }
 
@@ -65,6 +65,15 @@ export function toObject(token) {
 // Coerce the given token to an identifier or throw a TypeError if unsuccessful
 export function toIdentifier(token) {
 	if (token.type !== constants.TYPE.IDENTIFIER) {
+		throw new TypeError(token.type, constants.TYPE.IDENTIFIER, token);
+	}
+	
+	return token;
+}
+
+// Coerce the given token to a tag or throw a TypeError if unsuccessful
+export function toTag(token) {
+	if (!token.isTag()) {
 		throw new TypeError(token.type, constants.TYPE.IDENTIFIER, token);
 	}
 	

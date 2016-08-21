@@ -6,9 +6,10 @@ import parser from "./parser.js";
 import * as coerce from "./coerce.js";
 import * as evaluator from "./evaluator.js";
 import Scope from "./scope.js";
-import {Variable, BlockVariable, ExpressionVariable} from "./variable.js";
+import { Variable, BlockVariable, ExpressionVariable } from "./variable.js";
 import Tag from "./tag.js";
-import Identifier from "./identifier.js";
+import { Identifier, BlockIdentifier, ExpressionIdentifier } from "./identifier.js";
+import dependable from "./dependable.js";
 
 // Create global Uniform object
 window.uniform = {
@@ -24,5 +25,8 @@ window.uniform = {
 	BlockVariable,
 	ExpressionVariable,
 	Tag,
-	Identifier
+	Identifier,
+	BlockIdentifier,
+	ExpressionIdentifier,
+	dependable
 };

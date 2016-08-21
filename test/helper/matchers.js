@@ -1,23 +1,19 @@
 beforeEach(function () {
-	var Token = window.uniform.Token;
-	var UfmError = window.uniform.errors.UfmError;
-	
+    // Spy on Jasmine's expect(...) in order to count how many times it is called in a particular test
+    spyOn(window, "expect").and.callThrough();
+    
+    // Return the number of expectations that were done in the current test
+    window.expectationCount = function () {
+        return expect.calls.count();
+    };
+    
+    var UfmError = window.uniform.errors.UfmError;
+    
 	jasmine.addMatchers({
 		// Tests if two Tokens are equivalent
 		toEqualToken: function (util, customEqualityTesters) {
 			return {
 				compare: function (actual, expected) {
-					// Check that actual is a Token
-					if (!(actual instanceof Token)) {
-						return {
-							pass: false,
-							message: "Expected actual value (" + actual + ") to be a Token."
-						};
-					} else if (!(expected instanceof Token)) {
-						// Create a token out of expected if it is not already for convenience
-						expected = new Token(expected.value, expected.type);
-					}
-					
 					// Check that the Tokens are equal
 					var result = {
 						pass: util.equals(actual.value, expected.value, customEqualityTesters)
@@ -25,10 +21,10 @@ beforeEach(function () {
 					};
 					if (result.pass) {
 						// Error message when .not.toEqualToken() fails
-						result.message = "Expected token " + actual + " not to equal " + expected;
+						result.message = "Expected token " + actual + " not to equal " + JSON.stringify(expected);
 					} else {
 						// Error message when .toEqualToken() fails
-						result.message = "Expected token " + actual + " to equal " + expected;
+						result.message = "Expected token " + actual + " to equal " + JSON.stringify(expected);
 					}
 					
 					return result;

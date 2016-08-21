@@ -1,5 +1,7 @@
 import constants from "./constants.js";
 import * as coerce from "./coerce.js";
+import { Identifier } from "./identifier.js";
+import { UndeclaredError } from "./errors.js";
 
 // Export boolean AND operation
 export function and(leftExpr, rightExpr) {
@@ -160,15 +162,31 @@ export function neg(expr) {
 	};
 }
 
-// Export DOT operation
-export function dot(leftExpr, rightExpr) {
+// Export DOT operation for objects
+export function dotObject(leftExpr, rightVal) {
 	return function () {
 		let left = coerce.toObject(leftExpr());
-		let right = coerce.toIdentifier(rightExpr());
+		let right = coerce.toIdentifier(rightVal);
 		
 		let expr = left.value[right.value];
 		let result = expr();
 		
 		return left.clone({ value: result.value, type: result.type });
+	};
+}
+
+// Export DOT operation for tags
+export function dotTag(leftVal, rightVal) {
+	let left = coerce.toIdentifier(leftVal);
+	let right = coerce.toTag(rightVal);
+	
+	return function () {
+		let identifier = Identifier.find(left.value);
+		if (!identifier) throw new UndeclaredError("Identifier " + left.value + " was not declared.", left.line, left.col);
+		
+		let tag = identifier.getTag(right.value);
+		if (!tag) throw new UndeclaredError("Tag " + left.value + "." + right.value + " was not declared.", left.line, left.col);
+        
+        return tag.value;
 	};
 }

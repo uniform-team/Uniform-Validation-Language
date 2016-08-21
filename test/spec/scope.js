@@ -4,119 +4,209 @@ describe("The Scope class", function () {
     it ("is exposed globally", function() {
         expect(uniform.Scope).toEqual(jasmine.any(Function));
     });
-
-    let Scope = uniform.Scope;
-    let Variable = uniform.Variable;
-    let Tag = uniform.Tag;
-	let Identifier = uniform.Identifier;
-    let DuplicateDeclarationError = uniform.errors.DuplicateDeclarationError;
-
-    it("creates new scopes with inheriting parent scopes", function () {
-        let childScope = null;
-        let innerScope = null;
-		Scope.reset();
-        let parentScope = new Scope(function (myScope) {
-            innerScope = myScope;
-            childScope = new Scope();
+    
+    let { Scope, Variable, Tag, Identifier, Token, constants } = uniform;
+    let { DuplicateDeclarationError } = uniform.errors;
+    
+    it("constructs while setting the parent scope to the current scope", function () {
+    	let parentScope = {};
+        spyOn(Scope, "thisScope").and.returnValue(parentScope);
+        
+        expect(new Scope().parentScope).toBe(parentScope);
+    });
+    
+    describe("exposes the \"thisScope\" member", function () {
+    	it("as a static function", function () {
+    		expect(Scope.thisScope).toEqual(jasmine.any(Function));
+    	});
+        
+        it("which returns the current scope", function () {
+        	let scope = {};
+        	Scope._currentScope = scope;
+            
+            expect(Scope.thisScope()).toBe(scope);
         });
-        expect(innerScope).toBe(parentScope);
-        expect(parentScope.parentScope).toBeNull();
-        expect(childScope.parentScope).toBe(parentScope);
+    });
+    
+    describe("exposes the \"reset\" member", function () {
+    	it("as a static function", function () {
+    		expect(Scope.reset).toEqual(jasmine.any(Function));
+    	});
+        
+        it("which clears the scope hierarchy", function () {
+        	Scope._currentScope = { };
+        	
+        	Scope.reset();
+            
+            expect(Scope._currentScope).toBeNull();
+        });
+    });
+    
+    describe("exposes the \"push\" member", function () {
+    	it("as a function", function () {
+    		expect(Scope.prototype.push).toEqual(jasmine.any(Function));
+    	});
+        
+        it("which pushes the current scope onto the stack to set it as the current scope", function () {
+            expect(Scope.thisScope()).toBeNull();
+            
+            let firstScope = new Scope();
+            firstScope.push(function () {
+        	    expect(Scope.thisScope()).toBe(firstScope);
+                
+                let secondScope = new Scope();
+                secondScope.push(function () {
+                    expect(Scope.thisScope()).toBe(secondScope);
+                });
+                
+                expect(Scope.thisScope()).toBe(firstScope);
+            });
+            
+            expect(Scope.thisScope()).toBeNull();
+            
+            expect(expectationCount()).toBe(5);
+        });
     });
 
-    describe("exposes the insert member", function () {
-        it("which inserts a variable", function () {
-            new Scope(function (scope) {
-            	let testVar = new Variable("test", 1, 2);
-                scope.insert(testVar);
-                expect(scope.variables["test"]).toBe(testVar);
-            });
+    describe("exposes the \"insert\" member", function () {
+        it("as a function", function () {
+        	expect(Scope.prototype.insert).toEqual(jasmine.any(Function));
         });
+        
+        it("which inserts a variable", function () {
+            let testVar = new Variable("test", 1, 2);
+            
+            let scope = new Scope();
+            scope.insert(testVar);
+            
+            expect(scope.variables["test"]).toBe(testVar);
+        });
+        
+        it("which inserts a variable shadowing one belonging to a parent with the same name", function () {
+        	let testVar = new Variable("test", 1, 2);
+            let testVar2 = new Variable("test", 3, 4);
+            
+            let scope = new Scope();
+            scope.insert(testVar);
+            scope.push(function () {
+                let scope2 = new Scope();
+                expect(() => scope2.insert(testVar2)).not.toThrow();
+            });
+            
+            expect(expectationCount()).toBe(1);
+        });
+        
         it("throws an error on duplicate insertions", function () {
             let testVar = new Variable("test", 1, 2);
             let testVar2 = new Variable("test", 3, 4);
-            new Scope(function (scope) {
-                scope.insert(testVar);
-                expect(() => scope.insert(testVar2)).toThrowUfmError(DuplicateDeclarationError);
-            });
+            
+            let scope = new Scope();
+            scope.insert(testVar);
+            
+            expect(() => scope.insert(testVar2)).toThrowUfmError(DuplicateDeclarationError);
         });
     });
 
-    describe("exposes the findVar member", function () {
+    describe("exposes the \"findVar\" member", function () {
+        it("as a function", function () {
+        	expect(Scope.prototype.findVar).toEqual(jasmine.any(Function));
+        });
+        
         it("which returns the variable if found", function () {
-            new Scope(function (scope) {
-                let testVar = new Variable("test", 1, 2);
-                scope.variables["test"] = testVar;
-                expect(scope.findVar("test")).toBe(testVar);
-            });
+            let testVar = new Variable("test", 1, 2);
+            
+            let scope = new Scope();
+            scope.variables["test"] = testVar;
+            
+            expect(scope.findVar("test")).toBe(testVar);
         });
+        
         it("which returns null if not found", function () {
-            new Scope(function (scope) {
-                expect(scope.findVar("test")).toBeNull();
-            });
+            expect(new Scope().findVar("test")).toBeNull();
         });
     });
 
-    describe("exposes the findTag member", function () {
+    describe("exposes the \"findTag\" member", function () {
+        it("as a function", function () {
+            expect(Scope.prototype.findTag).toEqual(jasmine.any(Function));
+        });
+        
         it("which returns the tag if found", function () {
-            new Scope(function (scope) {
-                let testTag = new Tag("valid", null, 1, 2);
-                scope.tags["valid"] = testTag;
-                expect(scope.findTag("valid")).toBe(testTag);
-            });
+            let testTag = new Tag("valid", null, 1, 2);
+            
+            let scope = new Scope();
+            scope.tags["valid"] = testTag;
+            
+            expect(scope.findTag("valid")).toBe(testTag);
         });
+        
         it("which returns null if not found", function () {
-            new Scope(function (scope) {
-                expect(scope.findTag("valid")).toBeNull();
-            });
+            expect(new Scope().findTag("valid")).toBeNull();
         });
     });
     
-    describe("exposes the findIdentifier member", function () {
+    describe("exposes the \"findIdentifier\" member", function () {
+        it("as a function", function () {
+            expect(Scope.prototype.findIdentifier).toEqual(jasmine.any(Function));
+        });
+        
         it("which returns the identifier if found", function () {
-            new Scope(function (scope) {
-                let testIdentifier = new Identifier("test", 1, 2);
-                scope.identifiers["test"] = testIdentifier;
-                expect(scope.findIdentifier("test")).toBe(testIdentifier);
-            });
+            let testIdentifier = new Identifier("test", 1, 2);
+            let scope = new Scope();
+            
+            scope.identifiers["test"] = testIdentifier;
+            expect(scope.findIdentifier("test")).toBe(testIdentifier);
         });
+        
         it("which returns null if not found", function () {
-            new Scope(function (scope) {
-                expect(scope.findIdentifier("test")).toBeNull();
-            });
+            expect(new Scope().findIdentifier("test")).toBeNull();
         });
     });
     
-    describe("exposes the lookupVar member", function () {
+    describe("exposes the \"lookupVar\" member", function () {
+        it("as a function", function () {
+            expect(Scope.prototype.lookupVar).toEqual(jasmine.any(Function));
+        });
+        
         it("returns the variable in the parent hierarchy", function () {
-            new Scope(function (myScope) {
-                let testVar = new Variable("test", 1, 2);
-                myScope.insert(testVar);
-                let childScope = new Scope();
-                expect(childScope.lookupVar("test")).toBe(testVar);
+            let testVar = new Variable("test", 1, 2);
+            let scope = new Scope();
+            scope.insert(testVar);
+            
+            scope.push(function () {
+                expect(new Scope().lookupVar("test")).toBe(testVar);
             });
         });
+        
         it("returns null if not found in this scope or parent scopes", function () {
-            new Scope(function () {
-                let childScope = new Scope();
-                expect(childScope.lookupVar("test")).toBeNull();
+            let scope = new Scope();
+            
+            scope.push(function () {
+                expect(new Scope().lookupVar("test")).toBeNull();
             });
         });
     });
 
-    describe("exposes the lookupTag member", function () {
+    describe("exposes the \"lookupTag\" member", function () {
+        it("as a function", function () {
+            expect(Scope.prototype.lookupTag).toEqual(jasmine.any(Function));
+        });
+        
         it("returns the tag in the parent hierarchy", function () {
-            new Scope(function (myScope) {
-                let testTag = new Tag("valid", null, 1, 2);
-                myScope.insert(testTag);
-                let childScope = new Scope();
-                expect(childScope.lookupTag("valid")).toBe(testTag);
+            let tag = new Tag(new Token("valid", constants.TYPE.KEYWORD, 1, 2), () => null);
+            let scope = new Scope();
+            scope.insert(tag);
+            
+            scope.push(function () {
+                expect(new Scope().lookupTag("valid")).toBe(tag);
             });
         });
+        
         it("returns null if not found in this scope or parent scopes", function () {
-            new Scope(function () {
-                let childScope = new Scope();
-                expect(childScope.lookupTag("valid")).toBeNull();
+            let scope = new Scope();
+            
+            scope.push(function () {
+                expect(new Scope().lookupTag("valid")).toBeNull();
             });
         });
     });

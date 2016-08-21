@@ -1,7 +1,7 @@
 import constants from "./constants.js";
-import { ParsingError as ParsingErrorClass, AssertionError as AssertionErrorClass } from "./errors.js";
+import { ParsingError as ParsingErrorClass, AssertionError as AssertionErrorClass, NotImplementedError } from "./errors.js";
 import tokenizer from "./lexer.js";
-import Identifier from "./identifier.js";
+import { Identifier, BlockIdentifier, ExpressionIdentifier } from "./identifier.js";
 import { BlockVariable, ExpressionVariable } from "./variable.js";
 import Tag from "./tag.js";
 import * as evaluator from "./evaluator.js";
@@ -10,7 +10,7 @@ import Scope from "./scope.js";
 export default {
 	_testExpr: false,
 	
-	parse: function (input) {
+	parse: function (input, spy) {
 		let self = this;
 		
 		// Stack for holding tokens retrieved via lookahead()
@@ -43,14 +43,14 @@ export default {
 		// Wrap the ParsingError class with one which automatically inserts the current line number and column
 		class ParsingError extends ParsingErrorClass {
 			constructor(msgOrError) {
-				super(msgOrError, currentToken.lineNumber, currentToken.colNumber);
+				super(msgOrError, currentToken.line, currentToken.col);
 			}
 		}
 		
 		// Wrap the AssertionError class with one which automatically inserts the current line number and column
 		class AssertionError extends AssertionErrorClass {
 			constructor(msgOrError) {
-				super(msgOrError, currentToken.lineNumber, currentToken.colNumber);
+				super(msgOrError, currentToken.line, currentToken.col);
 			}
 		}
 		
@@ -83,18 +83,27 @@ export default {
 			return tempCurrentToken;
 		}
 		
+		// Defer the given function to be invoked after the entire file is parsed
+		let deferred = [];
+		function defer(cb) {
+			deferred.push(cb);
+		}
+		
 		// <file> -> <blockOrStatements>
-		function file() {
+		function file(spy) {
 			// If testing expressions, then directly invoke and return expression()
-			if (self._testExpr) return expression();
+			if (self._testExpr) return expression(spy);
 			
-			new Scope(function () {
+			new Scope().push(function () {
 				blockOrStatements();
 			});
 			
 			if (currentToken.type !== constants.ENDOFFILE) {
 				throw new ParsingError("Expected an identifier or variable, got " + currentToken.value);
 			}
+			
+			// File has been parsed, executed deferred actions
+			for (let cb of deferred) cb();
 		}
 		
 		// <blockOrStatements> -> <blockOrStatement> <blockOrStatements> | ø
@@ -131,9 +140,12 @@ export default {
 			matchValue(constants.OPERATOR.LBRACE);
 			
 			if (token.type === constants.TYPE.IDENTIFIER) {
-				Scope.thisScope().insert(new Identifier(token.name, token.line, token.col, function () {
-					blockOrStatements();
-				}));
+                let identifier = new BlockIdentifier(token);
+                
+                Identifier.insert(identifier);
+                identifier.scope.push(function () {
+                    blockOrStatements();
+                });
 			} else if (token.type === constants.TYPE.VARIABLE) {
 				Scope.thisScope().insert(new BlockVariable(token.name, token.line, token.col, function() {
 					blockOrStatements();
@@ -147,13 +159,17 @@ export default {
 		
 		// <statement> -> <variable> | <tag> : <expression> ;
 		function statement() {
-			let token = match();
+			let token = match(); // <variable> | <tag>
 			matchValue(constants.OPERATOR.COLON);
 			
 			if (token.type === constants.TYPE.VARIABLE) {
 				Scope.thisScope().insert(new ExpressionVariable(token.value, token.line, token.col, expression()));
 			} else if (token.isTag()) {
-				Scope.thisScope().insert(new Tag(token.value, token.line, token.col, expression()));
+				let tag = new Tag(token);
+				
+				Scope.thisScope().insert(tag);
+				tag.setExpression(expression(tag));
+                defer(() => tag.update());
 			} else {
 				throw new AssertionError("Expected ExpressionVariable or Tag, got " + token.value);
 			}
@@ -162,19 +178,22 @@ export default {
 		}
 		
 		// <expression> -> <andOr>
-		function expression() {
-			return expressionAndOr();
+        // Owner is the Tag or ExpressionVariable which owns the expression being parsed.
+        // valid: <expression> ; // valid tag owns the expression
+        // @test: <expression> ; // @test var owns the expression
+		function expression(owner) {
+			return expressionAndOr(owner);
 		}
 		
 		// <andOr> -> <not> <andOr_>
 		// <andOr_> -> and | or <not> <andOr_>
-		function expressionAndOr() {
-			let leftExpr = expressionNot();
+		function expressionAndOr(owner) {
+			let leftExpr = expressionNot(owner);
 			
 			while (currentToken.value === constants.OPERATOR.AND
 					|| currentToken.value === constants.OPERATOR.OR) {
 				let operator = match();
-				let rightExpr = expressionNot();
+				let rightExpr = expressionNot(owner);
 				
 				switch (operator.value) {
 					case constants.OPERATOR.AND:
@@ -193,16 +212,16 @@ export default {
 		}
 		
 		// <not> -> not <not> | <comparator>
-		function expressionNot() {
+		function expressionNot(owner) {
 			let negations = 0;
 			
 			// Count chained not tokens
 			while (currentToken.value === constants.OPERATOR.NOT) {
-				match();
+				match(); // -
 				++negations;
 			}
 			
-			let expr = expressionComparator();
+			let expr = expressionComparator(owner);
 			
 			// Not the expression if there was an odd number of negations
 			if (negations % 2 === 1) return evaluator.not(expr);
@@ -211,12 +230,12 @@ export default {
 		
 		// <comparator> -> <addSub> <comparator_>
 		// <comparator_> -> equals | matches | is | < | > | <= | >= <addSub> <comparator_>
-		function expressionComparator() {
-			let leftExpr = expressionAddSub();
+		function expressionComparator(owner) {
+			let leftExpr = expressionAddSub(owner);
 			
 			while (currentToken.isComparator()) {
 				let operator = match();
-				let rightExpr = expressionAddSub();
+				let rightExpr = expressionAddSub(owner);
 				
 				switch (operator.value) {
 					case constants.OPERATOR.EQUALS:
@@ -250,13 +269,13 @@ export default {
 		
 		// <addSub> -> <mulDivMod> <addSub_>
 		// <addSub_> -> + | - <mulDivMod> <addSub_>
-		function expressionAddSub() {
-			let leftExpr = expressionMulDivMod();
+		function expressionAddSub(owner) {
+			let leftExpr = expressionMulDivMod(owner);
 			
 			while (currentToken.value === constants.OPERATOR.ADD
 					|| currentToken.value === constants.OPERATOR.SUB) {
 				let operator = match();
-				let rightExpr = expressionMulDivMod();
+				let rightExpr = expressionMulDivMod(owner);
 				
 				switch (operator.value) {
 					case constants.OPERATOR.ADD:
@@ -276,14 +295,14 @@ export default {
 		
 		// <mulDivMod> -> <neg> <mulDivMod_>
 		// <mulDivMod_> -> * | / | % <neg> <mulDivMod_>
-		function expressionMulDivMod() {
-			let leftExpr = expressionNeg();
+		function expressionMulDivMod(owner) {
+			let leftExpr = expressionNeg(owner);
 			
 			while (currentToken.value === constants.OPERATOR.MUL
 					|| currentToken.value === constants.OPERATOR.DIV
 					|| currentToken.value === constants.OPERATOR.MOD) {
 				let operator = match();
-				let rightExpr = expressionNeg();
+				let rightExpr = expressionNeg(owner);
 				
 				switch (operator.value) {
 					case constants.OPERATOR.MUL:
@@ -305,16 +324,16 @@ export default {
 		}
 		
 		// <neg> -> - <neg> | <anyAll>
-		function expressionNeg() {
+		function expressionNeg(owner) {
 			let negations = 0;
 			
 			// Count chained negations
 			while (currentToken.value === constants.OPERATOR.SUB) {
-				match();
+				match(); // -
 				++negations;
 			}
 			
-			let expr = expressionAnyAll();
+			let expr = expressionAnyAll(owner);
 			
 			// Negate the expression if there was an odd number of negations
 			if (negations % 2 === 1) return evaluator.neg(expr);
@@ -322,49 +341,90 @@ export default {
 		}
 		
 		// <anyAll> -> any | all | ø <dot>
-		function expressionAnyAll() {
+		function expressionAnyAll(owner) {
 			if (currentToken.value === constants.OPERATOR.ANY
 					|| currentToken.value === constants.OPERATOR.ALL) {
-				match();
+				match(); // any | all
 			}
 			
-			return expressionDot();
+			return expressionDot(owner);
 		}
 		
 		// <dot> -> <paren> <dot_>
 		// <dot_> -> . <identifier> <dot_>
-		function expressionDot() {
-			let leftExpr = paren();
+		function expressionDot(owner) {
+			let leftExpr = expressionParen(owner);
 			while (currentToken.value === constants.OPERATOR.DOT) {
-				match();
+				match(); // .
 				let right = matchType(constants.TYPE.IDENTIFIER);
-				let rightExpr = () => right;
 				
-				leftExpr = evaluator.dot(leftExpr, rightExpr);
+				leftExpr = evaluator.dotObject(leftExpr, right);
 			}
 			
 			return leftExpr;
 		}
 		
 		// <paren> -> ( <expression> ) | <operand>
-		function paren() {
+		function expressionParen(owner) {
 			let result;
 			
 			if (currentToken.value === constants.OPERATOR.LPAREN) {
-				match();
-				result = expression();
+				match(); // (
+				result = expression(owner);
 				matchValue(constants.OPERATOR.RPAREN);
 			} else {
-				result = operand();
+				result = operand(owner);
 			}
 			
 			return result;
 		}
 		
-		// <operand> -> <number> | <string> | <variable> | <selector> | <state> | true | false | this | <object>
-		function operand() {
-			if (currentToken.isOperand()) { // Check for single-token operands
+		// <operand> -> <identifier> | <number> | <string> | <variable> | <selector> | <state> | true | false | this | <object>
+		function operand(owner) {
+			if (currentToken.type === constants.TYPE.IDENTIFIER) { // Check for identifier
+				let identifierToken = match();
+				
+				if (currentToken.value !== constants.OPERATOR.DOT) {
+				    // Usage of just the identifier, meaning the owner is dependent on it directly
+					// ex. valid: make;
+                    
+                    // Create an ExpressionIdentifier object from the token
+					let identifierObj = new ExpressionIdentifier(identifierToken);
+                    
+                    // Set the owner as dependent on the identifier
+					identifierObj.addDependent(owner);
+                    
+                    // Return the value of the identifier as the result
+					return () => identifierObj.value;
+				}
+				
+				// Dependent on a tag from an identifier
+				// ex. valid: make.enabled;
+				match(); // .
+				if (!currentToken.isTag()) {
+					throw new ParsingError("Expected identifier.tag, but got " + identifierToken.value + "." + currentToken.value);
+				}
+				let tag = match(); // <tag>
+                
+                // Defer adding the dependency until AFTER the entire file is parsed
+                // In case the identifier / tag have not been parsed yet
+				defer(function () {
+				    // Get the identifier referenced
+					let identifierObj = Identifier.find(identifierToken.value);
+					if (!identifierObj) throw new NotImplementedError();
+					
+                    // Get the tag from the identifier
+					let tagObj = identifierObj.getTag(tag.value);
+					if (!tagObj) throw new NotImplementedError();
+					
+                    // Set the owner as dependent on the found tag
+					tagObj.addDependent(owner);
+				});
+				
+				return evaluator.dotTag(identifierToken, tag);
+			} else if (currentToken.isOperand()) { // Check for single-token operands
 				let operand = match();
+				
 				return () => operand;
 			} else if (currentToken.value === constants.OPERATOR.LBRACE) { // Check for object operand
 				return object();
@@ -406,6 +466,6 @@ export default {
 		}
 		
 		// Loaded all functions into the closure, parse the given input as a file
-		return file(); // Return for _testExpr === true case used in testing
+		return file(spy); // Return for _testExpr === true case used in testing
 	}
 };

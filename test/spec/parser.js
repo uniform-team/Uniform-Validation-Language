@@ -5,12 +5,8 @@ describe("The parser module", function () {
 		expect(uniform.parser).toEqual(jasmine.any(Object));
 	});
 	
-	let parser = uniform.parser;
-	let constants = uniform.constants;
-	let ParsingError = uniform.errors.ParsingError;
-	let parseExpr = function (expr) {
-		parser.parse("valid: " + expr + ";");
-	};
+    let { parser, constants, Token, evaluator, Identifier, Tag } = uniform;
+    let { ParsingError } = uniform.errors;
 	
 	describe("parses valid inputs such as", function () {
 		it("identifier blocks", function () {
@@ -26,7 +22,11 @@ describe("The parser module", function () {
 		});
 		
 		it("tag statements", function () {
+		    spyOn(Tag.prototype, "update");
+            
 			expect(() => parser.parse("valid: true;")).not.toThrow();
+            
+            expect(Tag.prototype.update).toHaveBeenCalled();
 		});
 		
 		it("variable statements", function () {
@@ -188,7 +188,7 @@ describe("The parser module", function () {
 				expect(parser.parse("all @array")).not.toThrow();
 			});
 			
-			it("dot", function () {
+			it("dotObject", function () {
 				expect(parser.parse("{ foo: \"bar\"; }.foo")()).toEqualToken({
 					value: "bar",
 					type: constants.TYPE.STRING
@@ -205,10 +205,15 @@ describe("The parser module", function () {
 		
 		describe("with operands such as", function () {
 			it("identifiers", function () {
-				expect(parser.parse("test")()).toEqualToken({
-					value: "test",
-					type: constants.TYPE.IDENTIFIER
+				spyOn($.prototype, "val").and.returnValue("data");
+				spyOn(Identifier.prototype, "addDependent");
+                
+				let owner = {};
+				expect(parser.parse("test", owner)()).toEqualToken({
+					value: "data",
+					type: constants.TYPE.STRING
 				});
+                expect(Identifier.prototype.addDependent).toHaveBeenCalledWith(owner);
 			});
 			
 			it("booleans", function () {
@@ -334,6 +339,186 @@ describe("The parser module", function () {
 		});
 	});
 	
+	describe("parses valid inputs while setting up dependencies", function () {
+		let callbacks = [];
+		let data = {};
+		
+		// Spy on jQuery functions to provide helper functions
+		beforeEach(function () {
+			spyOn($, "on").and.callFake(function (evt, sel, cb) {
+				callbacks.push({ sel, cb });
+			});
+			
+			spyOn($.prototype, "val").and.callFake(function () {
+				// Read the value of this selector from the data table
+				let value = data[this.sel];
+				if (!value) throw new Error("Unknown jQuery selector: " + this.sel);
+				return value;
+			});
+            
+            // Clear identifier mapping to ensure state does not bleed through tests
+            Identifier._map = { };
+		});
+		
+		afterEach(function () {
+			callbacks = [];
+			data = {};
+		});
+		
+		// Set a virtual <input /> tag with the given name as having the given value and trigger necessary jQuery events
+		let setValue = function (name, value) {
+			// Se the data table with the value for its selector
+			let selector = "[name=\"" + name + "\"]";
+			data[selector] = value;
+			
+			// Trigger all functions which listened to $.on(...)
+			for (let { sel, cb } of callbacks) {
+				if (selector === sel) cb();
+			}
+		};
+		
+        it("such as a single identifier dependency", function () {
+            spyOn(evaluator, "equals").and.callFake(function (leftExpr, rightExpr) {
+                return () => new Token(leftExpr().value === rightExpr().value, constants.TYPE.BOOL)
+            });
+            
+            setValue("inner", "foo");
+            
+            parser.parse("outer { valid: inner equals \"bar\"; }");
+            
+            expect(Identifier.find("outer").getTag("valid").value).toEqualToken({
+                value: false,
+                type: constants.TYPE.BOOL
+            });
+            
+            setValue("inner", "bar");
+            expect(Identifier.find("outer").getTag("valid").value).toEqualToken({
+                value: true,
+                type: constants.TYPE.BOOL
+            });
+        });
+        
+        it("such as multiple identifier dependencies", function () {
+            spyOn(evaluator, "equals").and.callFake(function (leftExpr, rightExpr) {
+                return () => new Token(leftExpr().value === rightExpr().value, constants.TYPE.BOOL)
+            });
+            spyOn(evaluator, "and").and.callFake(function (leftExpr, rightExpr) {
+                return () => new Token(leftExpr().value && rightExpr().value, constants.TYPE.BOOL);
+            });
+            
+            setValue("inner1", "bar");
+            setValue("inner2", "bar");
+            
+            parser.parse("outer { valid: inner1 equals \"foo\" and inner2 equals \"bar\"; }");
+            
+            expect(Identifier.find("outer").getTag("valid").value).toEqualToken({
+                value: false,
+                type: constants.TYPE.BOOL
+            });
+            
+            setValue("inner1", "foo");
+            expect(Identifier.find("outer").getTag("valid").value).toEqualToken({
+                value: true,
+                type: constants.TYPE.BOOL
+            });
+            
+            setValue("inner2", "foo");
+            expect(Identifier.find("outer").getTag("valid").value).toEqualToken({
+                value: false,
+                type: constants.TYPE.BOOL
+            });
+        });
+        
+        it("such as a single tag dependency", function () {
+        	parser.parse(
+        	    "inner { valid: true; }"
+                + "outer { valid: inner.valid; }"
+            );
+            
+            expect(Identifier.find("outer").getTag("valid").value).toEqualToken({
+                value: true,
+                type: constants.TYPE.BOOL
+            });
+        });
+        
+        it("such as a single tag dependency on top an identifier dependency", function () {
+            spyOn(evaluator, "equals").and.callFake(function (leftExpr, rightExpr) {
+                return () => new Token(leftExpr().value === rightExpr().value, constants.TYPE.BOOL)
+            });
+            
+            setValue("test", "foo");
+            
+        	parser.parse(
+        	    "inner { valid: test equals \"bar\"; }"
+                + "outer { valid: inner.valid; }"
+            );
+            
+            expect(Identifier.find("outer").getTag("valid").value).toEqualToken({
+                value: false,
+                type: constants.TYPE.BOOL
+            });
+            
+            setValue("test", "bar");
+            expect(Identifier.find("outer").getTag("valid").value).toEqualToken({
+                value: true,
+                type: constants.TYPE.BOOL
+            });
+        });
+        
+        it("such as multiple tag dependencies on top of identifier dependencies", function () {
+            spyOn(evaluator, "equals").and.callFake(function (leftExpr, rightExpr) {
+                return () => new Token(leftExpr().value === rightExpr().value, constants.TYPE.BOOL)
+            });
+            spyOn(evaluator, "and").and.callFake(function (leftExpr, rightExpr) {
+                return () => new Token(leftExpr().value && rightExpr().value, constants.TYPE.BOOL);
+            });
+    
+            setValue("inner1", "bar");
+            setValue("inner2", "bar");
+            
+            parser.parse(
+                "outer1 { valid: inner1 equals \"foo\"; }"
+                + "outer2 { valid: inner2 equals \"bar\"; }"
+                + "final { valid: outer1.valid and outer2.valid; }"
+            );
+    
+            expect(Identifier.find("final").getTag("valid").value).toEqualToken({
+                value: false,
+                type: constants.TYPE.BOOL
+            });
+    
+            setValue("inner1", "foo");
+            expect(Identifier.find("final").getTag("valid").value).toEqualToken({
+                value: true,
+                type: constants.TYPE.BOOL
+            });
+            
+            setValue("inner2", "foo");
+            expect(Identifier.find("final").getTag("valid").value).toEqualToken({
+                value: false,
+                type: constants.TYPE.BOOL
+            });
+        });
+        
+        it("such as a tag dependency declared later in the file", function () {
+            spyOn(evaluator, "equals").and.callFake(function (leftExpr, rightExpr) {
+                return () => new Token(leftExpr().value === rightExpr().value, constants.TYPE.BOOL)
+            });
+    
+            setValue("inner", "foo");
+    
+            parser.parse(
+                "outer { valid: inner.valid; }"
+                + "inner { valid: true; }"
+            );
+            
+            expect(Identifier.find("outer").getTag("valid").value).toEqualToken({
+                value: true,
+                type: constants.TYPE.BOOL
+            });
+        });
+	});
+	
 	describe("throws an error when given invalid expressions such as", function () {
 		it("following a block with a non-block and non-statement", function () {
 			expect(() => parser.parse("test { } true")).toThrowUfmError(ParsingError);
@@ -348,11 +533,11 @@ describe("The parser module", function () {
 		});
 		
 		it("chaining and / all", function () {
-			expect(() => parseExpr("any all @array")).toThrowUfmError(ParsingError);
+			expect(() => parser.parse("result: any all @array;")).toThrowUfmError(ParsingError);
 		});
 		
 		it("using a non-operand as an operand", function () {
-			expect(() => parseExpr("any :")).toThrowUfmError(ParsingError);
+			expect(() => parser.parse("result: any valid;")).toThrowUfmError(ParsingError);
 		});
 	});
 });

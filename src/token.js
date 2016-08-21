@@ -19,6 +19,11 @@ export default class Token {
 	clone({ value = this.value, type = this.type, line = this.line, col = this.col } = {}) {
 		return new Token(value, type, line, col);
 	}
+    
+	// Return the jQuery selector for this Token
+	getSelector() {
+		return "[name=\"" + this.value + "\"]";
+	}
 
 	// Return whether or not this token is a tag
 	isTag() {

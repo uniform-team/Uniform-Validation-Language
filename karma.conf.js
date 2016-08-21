@@ -2,16 +2,15 @@
 module.exports = function (config) {
 	config.set({
 		// base path that will be used to resolve all patterns (eg. files, exclude)
-		basePath: "",
+		basePath: "./",
 
 		// frameworks to use
 		// available frameworks: https://npmjs.org/browse/keyword/karma-adapter
 		frameworks: [ "jasmine" ],
 
-		plugins: [ "karma-phantomjs-launcher", "karma-jasmine", "karma-babel-preprocessor" ],
-
 		// list of files / patterns to load in the browser
 		files: [
+			"node_modules/babel-polyfill/dist/polyfill.js",
 			"test/helper/**/*.js",
 			"build/uniform.js",
 			"test/spec/**/*.js"
@@ -20,7 +19,8 @@ module.exports = function (config) {
 		// preprocess matching files before serving them to the browser
 		// available preprocessors: https://npmjs.org/browse/keyword/karma-preprocessor
 		preprocessors: {
-			"test/spec/**/*.js": [ "babel" ]
+			"test/spec/**/*.js": [ "babel" ],
+			"test/helper/**/*.js": [ "babel" ]
 		},
 		
 		babelPreprocessor: {
