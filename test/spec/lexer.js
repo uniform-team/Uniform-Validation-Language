@@ -8,7 +8,7 @@ describe("The lexer module", function () {
 	let assertToken = function (input, value, type) {
 		let tokenize = tokenizer(input);
 		let token = tokenize();
-		
+
 		expect(token.value).toEqual(value);
 		expect(token.type).toBe(type);
 	};
@@ -49,19 +49,48 @@ describe("The lexer module", function () {
 		it("false literal", function () {
 			assertToken("false", false, constants.TYPE.BOOL);
 		});
-		
-		it("single-line comments", function () {
-			assertToken("// comment\ntest", "test", constants.TYPE.IDENTIFIER);
+
+		describe("comments like ", function () {
+			it("single-line comments", function () {
+				assertToken("// comment\ntest", "test", constants.TYPE.IDENTIFIER);
+			});
+
+			it("multi-line comments", function () {
+				assertToken("/* comment */test", "test", constants.TYPE.IDENTIFIER);
+			});
+
+			it("multi-line comments with new lines", function () {
+				assertToken("/* comment\n \n more comment \n */test", "test", constants.TYPE.IDENTIFIER);
+			});
+
+			it("tricky multi-line comments", function () {
+				assertToken("/* ****** comment\n //should be comment still /*\n more comment \n */test", "test", constants.TYPE.IDENTIFIER);
+			});
 		});
-		
-		it("multi-line comments", function () {
-			assertToken("/* comment */test", "test", constants.TYPE.IDENTIFIER);
+
+
+		describe("end-of-file on", function () {
+			it("empty files", function () {
+				assertToken("", constants.ENDOFFILE, constants.ENDOFFILE);
+			});
+
+			it("on full programs", function () {
+				let testStr = "@variable: \"test\";";
+				let tokenize = tokenizer(testStr);
+				let i = 0;
+				let token = tokenize();
+				while (token.value != constants.ENDOFFILE) {
+					token = tokenize();
+					i = i + 1;
+					if (i > 6)
+						break;
+				}
+				expect(token.value).toEqual(constants.ENDOFFILE);
+				expect(token.type).toBe(constants.ENDOFFILE);
+
+			});
 		});
-		
-		it("end-of-file", function () {
-			assertToken("", constants.ENDOFFILE, constants.ENDOFFILE);
-		});
-		
+
 		describe("keywords like", function () {
 			it("is", function () {
 				assertToken("is", constants.OPERATOR.IS, constants.TYPE.KEYWORD);
