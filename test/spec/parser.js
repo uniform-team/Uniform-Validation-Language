@@ -345,7 +345,7 @@ describe("The parser module", function () {
 		
 		// Spy on jQuery functions to provide helper functions
 		beforeEach(function () {
-			spyOn($, "on").and.callFake(function (evt, sel, cb) {
+			spyOn($.prototype, "on").and.callFake(function (evt, sel, cb) {
 				callbacks.push({ sel, cb });
 			});
 			

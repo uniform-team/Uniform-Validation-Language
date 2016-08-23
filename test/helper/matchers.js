@@ -1,12 +1,4 @@
 beforeEach(function () {
-    // Spy on Jasmine's expect(...) in order to count how many times it is called in a particular test
-    spyOn(window, "expect").and.callThrough();
-    
-    // Return the number of expectations that were done in the current test
-    window.expectationCount = function () {
-        return expect.calls.count();
-    };
-    
     var UfmError = window.uniform.errors.UfmError;
     
 	jasmine.addMatchers({

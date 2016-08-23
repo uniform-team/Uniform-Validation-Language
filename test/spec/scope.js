@@ -9,22 +9,50 @@ describe("The Scope class", function () {
     let { DuplicateDeclarationError } = uniform.errors;
     
     it("constructs while setting the parent scope to the current scope", function () {
-    	let parentScope = {};
-        spyOn(Scope, "thisScope").and.returnValue(parentScope);
+    	Scope._currentScope = {};
         
-        expect(new Scope().parentScope).toBe(parentScope);
+        expect(new Scope().parentScope).toBe(Scope._currentScope);
     });
     
-    describe("exposes the \"thisScope\" member", function () {
-    	it("as a static function", function () {
-    		expect(Scope.thisScope).toEqual(jasmine.any(Function));
+    beforeEach(function () {
+        Scope.reset();
+    });
+    
+    describe("exposes the static \"thisScope\" property", function () {
+    	describe("with a getter", function () {
+            it("defined as a function", function () {
+                expect(Object.getOwnPropertyDescriptor(Scope, "thisScope").get).toEqual(jasmine.any(Function));
+            });
+        
+            it("which returns the current scope", function () {
+                let scope = { };
+                Scope._currentScope = scope;
+            
+                expect(Scope.thisScope).toBe(scope);
+            });
     	});
         
-        it("which returns the current scope", function () {
-        	let scope = {};
-        	Scope._currentScope = scope;
+        it("withOUT a setter", function () {
+        	expect(Object.getOwnPropertyDescriptor(Scope, "thisScope").set).toBeUndefined();
+        });
+    });
+    
+    describe("exposes the static \"rootScope\" property", function () {
+    	describe("with a getter", function () {
+    		it("defined as a function", function () {
+    			expect(Object.getOwnPropertyDescriptor(Scope, "rootScope").get).toEqual(jasmine.any(Function));
+    		});
             
-            expect(Scope.thisScope()).toBe(scope);
+            it("which returns the root scope", function () {
+            	let scope = { };
+            	Scope._rootScope = scope;
+                
+                expect(Scope.rootScope).toBe(scope);
+            });
+    	});
+        
+        it("withOUT a setter", function () {
+        	expect(Object.getOwnPropertyDescriptor(Scope, "rootScope").set).toBeUndefined();
         });
     });
     
@@ -34,11 +62,20 @@ describe("The Scope class", function () {
     	});
         
         it("which clears the scope hierarchy", function () {
-        	Scope._currentScope = { };
-        	
-        	Scope.reset();
+            let scope = {};
+            let ScopeClass = {
+                prototype: {
+                    constructor: jasmine.createSpy("Scope").and.returnValue(scope)
+                }
+            };
             
-            expect(Scope._currentScope).toBeNull();
+            Scope._rootScope = { };
+            Scope._currentScope = { };
+        	
+        	Scope.reset.apply(ScopeClass);
+            
+            expect(Scope._rootScope).toBe(scope);
+            expect(Scope._currentScope).toBe(scope);
         });
     });
     
@@ -48,23 +85,24 @@ describe("The Scope class", function () {
     	});
         
         it("which pushes the current scope onto the stack to set it as the current scope", function () {
-            expect(Scope.thisScope()).toBeNull();
+            let baseScope = { };
+            Scope._currentScope = baseScope;
             
             let firstScope = new Scope();
             firstScope.push(function () {
-        	    expect(Scope.thisScope()).toBe(firstScope);
+        	    expect(Scope._currentScope).toBe(firstScope);
                 
                 let secondScope = new Scope();
                 secondScope.push(function () {
-                    expect(Scope.thisScope()).toBe(secondScope);
+                    expect(Scope._currentScope).toBe(secondScope);
                 });
                 
-                expect(Scope.thisScope()).toBe(firstScope);
+                expect(Scope._currentScope).toBe(firstScope);
             });
             
-            expect(Scope.thisScope()).toBeNull();
+            expect(Scope._currentScope).toBe(baseScope);
             
-            expect(expectationCount()).toBe(5);
+            expect(jasmineUtil.expectationCount).toBe(4);
         });
     });
 
@@ -93,7 +131,7 @@ describe("The Scope class", function () {
                 expect(() => scope2.insert(testVar2)).not.toThrow();
             });
             
-            expect(expectationCount()).toBe(1);
+            expect(jasmineUtil.expectationCount).toBe(1);
         });
         
         it("throws an error on duplicate insertions", function () {

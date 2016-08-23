@@ -94,9 +94,7 @@ export default {
 			// If testing expressions, then directly invoke and return expression()
 			if (self._testExpr) return expression(spy);
 			
-			new Scope().push(function () {
-				blockOrStatements();
-			});
+			blockOrStatements();
 			
 			if (currentToken.type !== constants.ENDOFFILE) {
 				throw new ParsingError("Expected an identifier or variable, got " + currentToken.value);
@@ -147,7 +145,7 @@ export default {
                     blockOrStatements();
                 });
 			} else if (token.type === constants.TYPE.VARIABLE) {
-				Scope.thisScope().insert(new BlockVariable(token.name, token.line, token.col, function() {
+				Scope.thisScope.insert(new BlockVariable(token.name, token.line, token.col, function() {
 					blockOrStatements();
 				}));
 			} else {
@@ -163,11 +161,11 @@ export default {
 			matchValue(constants.OPERATOR.COLON);
 			
 			if (token.type === constants.TYPE.VARIABLE) {
-				Scope.thisScope().insert(new ExpressionVariable(token.value, token.line, token.col, expression()));
+				Scope.thisScope.insert(new ExpressionVariable(token.value, token.line, token.col, expression()));
 			} else if (token.isTag()) {
 				let tag = new Tag(token);
 				
-				Scope.thisScope().insert(tag);
+				Scope.thisScope.insert(tag);
 				tag.setExpression(expression(tag));
                 defer(() => tag.update());
 			} else {

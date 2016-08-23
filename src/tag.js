@@ -1,4 +1,5 @@
 import dependable from "./dependable.js";
+import Scope from "./scope.js";
 
 /**
  * Class representing a Tag which contains an expression.
@@ -19,4 +20,13 @@ export default dependable(class Tag {
     setExpression(expression) {
         this.initDependable(expression);
 	}
+	
+	update() {
+	    super.update();
+        
+        if (Scope.rootScope.tags[this.name] === this) {
+            // This tag is a root-level tag, trigger a jQuery update event for user-code
+            $(document).trigger("ufm:update", [ this.name, this.value ]);
+        }
+    }
 });

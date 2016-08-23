@@ -3,6 +3,7 @@ import {DuplicateDeclarationError, AssertionError} from "./errors.js"
 import Tag from "./tag.js";
 import { Identifier } from "./identifier.js";
 
+let rootScope = null;
 let currentScope = null;
 
 /**
@@ -42,7 +43,7 @@ export default class Scope {
         this.variables = {};
         this.tags = {};
         this.identifiers = {};
-        this.parentScope = Scope.thisScope();
+        this.parentScope = currentScope;
     }
     
     // Static getter for the current scope used for testing / debugging purposes
@@ -55,14 +56,31 @@ export default class Scope {
         currentScope = scope;
     }
     
+    // Static getter for the root scope used for testing / debugging purposes
+    static get _rootScope() {
+        return rootScope;
+    }
+    
+    // Static setter for the root scope used for testing / debugging purposes
+    static set _rootScope(scope) {
+        rootScope = scope;
+    }
+    
     // Reset the scope hierarchy to default
     static reset() {
         currentScope = null;
+        rootScope = new this.prototype.constructor(); // Create a new Scope using this.prototype so it can be mocked in testing
+        currentScope = rootScope;
     }
     
     // Get the lowest level scope currently pushed
-    static thisScope() {
+    static get thisScope() {
         return currentScope;
+    }
+    
+    // Get the root-level scope
+    static get rootScope() {
+        return rootScope;
     }
     
     // Push this scope onto the hierarchy stack and invoke the callback
@@ -141,3 +159,4 @@ export default class Scope {
 	}
 }
 
+Scope.reset();

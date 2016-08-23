@@ -80,6 +80,6 @@ export let ExpressionIdentifier = dependable(class extends Identifier {
         this.update();
 		
         // When the DOM element changes, update this identifier
-		$.on("change", selector, () => this.update());
+		$(document).on("change", selector, () => this.update());
 	}
 });

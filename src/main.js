@@ -10,6 +10,9 @@ import { Variable, BlockVariable, ExpressionVariable } from "./variable.js";
 import Tag from "./tag.js";
 import { Identifier, BlockIdentifier, ExpressionIdentifier } from "./identifier.js";
 import dependable from "./dependable.js";
+import * as options from "./options.js";
+import submit from "./submit.js";
+import getRoot from "./root.js";
 
 // Create global Uniform object
 window.uniform = {
@@ -28,5 +31,10 @@ window.uniform = {
 	Identifier,
 	BlockIdentifier,
 	ExpressionIdentifier,
-	dependable
+	dependable,
+	options,
+    submit,
+    get root() { return getRoot() }
 };
+
+submit.init();

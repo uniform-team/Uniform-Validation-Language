@@ -1,18 +1,13 @@
-@filled: /"."/;
-@integer: /"^[0-9]{4}$"/;
-
-$("#rootForm") {
-	valid: $("#subForm") is valid;
+make {
+    valid: make matches /"."/;
 }
 
-$("#subForm") {
-    valid: not $("#hasCar") or (
-    	$("#make") matches @filled and
-	    $("#model") matches @filled and
-	    $("#year") matches @integer
-	) and any $(".test") matches @filled;
+model {
+    valid: model matches /"."/;
 }
 
-$("#subForm input") {
-    enabled: $("#hasCar") equals true;
+year {
+    valid: year matches /"^[0-9]{4}$"/;
 }
+
+valid: make.valid and model.valid and year.valid;

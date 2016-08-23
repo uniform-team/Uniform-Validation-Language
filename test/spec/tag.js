@@ -5,7 +5,7 @@ describe("The Tag class", function () {
 		expect(uniform.Tag).toEqual(jasmine.any(Function));
 	});
 	
-	let { Tag, Token, constants, dependable } = uniform;
+	let { Tag, Token, constants, dependable, Scope } = uniform;
 	
 	it("constructs from a token", function () {
 		expect(() => new Tag(new Token("valid", constants.TYPE.KEYWORD))).not.toThrow();
@@ -32,6 +32,52 @@ describe("The Tag class", function () {
             tag.setExpression(expr);
             
             expect(tag.initDependable).toHaveBeenCalledWith(expr);
+        });
+    });
+    
+    describe("overrides the dependable \"update\" member", function () {
+    	it("as a function", function () {
+    		expect(Tag.prototype.update).toEqual(jasmine.any(Function));
+    	});
+        
+        it("which only updates itself if it is not a root-level tag", function () {
+            let tag = new Tag(new Token("valid", constants.TYPE.KEYWORD));
+            
+            jasmineUtil.spyOnProp(Scope, "rootScope", "get", function (spy) {
+                spy.and.returnValue({
+                    tags: {
+                        valid: { } // Some other object
+                    }
+                });
+                spyOn(dependable.prototype, "update");
+                spyOn($.prototype, "trigger");
+    
+                tag.update();
+    
+                expect(dependable.prototype.update).toHaveBeenCalled(); // Expect super.update() call
+                expect($.prototype.trigger).not.toHaveBeenCalled();
+            });
+        });
+        
+        it("which updates itself and triggers a \"ufm:update\" event if it is a root-level tag", function () {
+            let tag = new Tag(new Token("valid", constants.TYPE.KEYWORD));
+            let token = new Token(true, constants.TYPE.BOOL);
+            tag.setExpression(() => token);
+    
+            jasmineUtil.spyOnProp(Scope, "rootScope", "get", function (spy) {
+                spy.and.returnValue({
+                    tags: {
+                        valid: tag // Same tag object
+                    }
+                });
+                spyOn(dependable.prototype, "update").and.callThrough();
+                spyOn($.prototype, "trigger");
+        
+                tag.update();
+        
+                expect(dependable.prototype.update).toHaveBeenCalled(); // Expect super.update() call
+                expect($.prototype.trigger).toHaveBeenCalledWith("ufm:update", [ "valid", token ]);
+            });
         });
     });
 });

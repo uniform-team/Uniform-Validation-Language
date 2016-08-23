@@ -9,8 +9,9 @@ window.$ = jasmine.createSpy("jQuery").and.callFake(function (sel) {
 // jQuery member functions
 window.$.prototype = {
 	val: () => { },
-	on: () => { }
+	on: () => { },
+    trigger: () => { }
 };
 
 // jQuery static functions
-window.$.on = () => { };
+window.$.ajax = () => { };

@@ -92,7 +92,7 @@ describe("The ExpressionIdentifier class", function () {
         
         // Store callback given to $.on(...) for an assertion later
         let onChange = null;
-        spyOn($, "on").and.callFake((evt, sel, cb) => onChange = cb);
+        spyOn($.prototype, "on").and.callFake((evt, sel, cb) => onChange = cb);
         
         spyOn($.prototype, "val").and.returnValue("foo");
         
@@ -101,7 +101,7 @@ describe("The ExpressionIdentifier class", function () {
         // Test that external functions were called correctly
         expect(ExpressionIdentifier.prototype.initDependable).toHaveBeenCalledWith(jasmine.any(Function));
         expect(identifier.update).toHaveBeenCalled();
-        expect($.on).toHaveBeenCalledWith("change", selector, jasmine.any(Function));
+        expect($.prototype.on).toHaveBeenCalledWith("change", selector, jasmine.any(Function));
         
         // Test that initDependable(...) was called with the correct expression callback which gets the identifier's value from jQuery
         expect(expression()).toEqualToken({

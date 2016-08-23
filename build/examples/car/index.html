@@ -4,36 +4,40 @@
 		<title>Car Form</title>
 		<script src="/lib/jquery/dist/jquery.js"></script>
 		<script src="/uniform.js"></script>
+		<script>uniform.options.href("car.ufm");</script>
 	</head>
 	<body>
 		<h2>Car form</h2>
 		<form id="rootForm" method="POST" action="submit">
-			<input id="hasCar" type="checkbox" />I have a car
+            <input name="hasCar" id="hasCarId" type="checkbox" /><label for="hasCarId">I have a car</label>
 			<br /><br />
-
+            
 			<div id="subForm">
-				Make:<input id="make" type="text" value="a"/> <br>
-				Model:<input id="model" type="text"/> <br>
-				Year:<input id="year" type="text"/> <br>
+				<label for="makeId">Make:</label><input name="make" id="makeId" type="text"/><br />
+				<label for="modelId">Model:</label><input name="model" id="modelId" type="text"/><br />
+                <label for="yearId">Year:</label><input name="year" id="yearId" type="text"/><br />
 			</div>
 			<br />
+
 			<div id="testForm">
-				Test 1:<input id="test1" class="test" type="text"/> <br>
-				Test 2:<input id="test2" class="test" type="text"/> <br>
-				Test 3:<input id="test3" class="test" type="text"/> <br>
+				<label for="test1Id">Test 1:</label><input name="test1" id="test1Id" class="test" type="text"/><br />
+                <label for="test2Id">Test 2:</label><input name="test2" id="test2Id" class="test" type="text"/><br />
+                <label for="test3Id">Test 3:</label><input name="test3" id="test3Id" class="test" type="text"/><br />
 			</div>
-			<br/>
+			<br />
 
 			<input type="submit" value="Submit" />
 		</form>
-		<hr/>
-		<input id="isValid" type="checkbox" disabled="disabled" /> Valid?
+		<hr />
+		<input id="isValid" type="checkbox" disabled="disabled" /><label for="isValid">Valid?</label>
 	</body>
 	<script>
-		var $rootForm = $("#rootForm");
-
-		$rootForm.on("ufm:validate", function () {
-			$("#isValid").prop("checked", $rootForm.ufm().valid());
-		});
+        // Listen for Uniform to issue an update
+		$(document).on("ufm:update", function (evt, tag, token) {
+		    // If the valid tag triggered, update the displayed check box
+		    if (tag === "valid") {
+		        $("#isValid").prop("checked", token.value);
+            }
+        });
 	</script>
 </html>
