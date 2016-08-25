@@ -1,0 +1,3 @@
+<component name="DependencyValidationManager">
+  <scope name="server-src" pattern="file[Uniform Validation Language]:src/validator//*||file[Uniform Validation Language]:test/spec/validator//*||file[Uniform Validation Language]:test/helper//*" />
+</component>

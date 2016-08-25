@@ -1,5 +1,5 @@
 // jQuery function
-window.$ = jasmine.createSpy("jQuery").and.callFake(function (sel) {
+globalObj.$ = jasmine.createSpy("jQuery").and.callFake(function (sel) {
 	return {
 		sel: sel,
 		__proto__: window.$.prototype
@@ -7,11 +7,11 @@ window.$ = jasmine.createSpy("jQuery").and.callFake(function (sel) {
 });
 
 // jQuery member functions
-window.$.prototype = {
+globalObj.$.prototype = {
 	val: () => { },
 	on: () => { },
     trigger: () => { }
 };
 
 // jQuery static functions
-window.$.ajax = () => { };
+globalObj.$.ajax = () => { };

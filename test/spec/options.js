@@ -29,4 +29,10 @@ describe("The options module", function () {
             expect(jasmineUtil.expectationCount).toBe(3);
         });
     });
+    
+    describe("exposes the \"validateClient\" member", function () {
+    	it("as a boolean defaulting to true", function () {
+    		expect(options.validateClient).toBe(true);
+    	});
+    });
 });

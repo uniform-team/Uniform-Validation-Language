@@ -1,14 +1,16 @@
 var express = require("express");
 var app = express();
 
-var bodyParser = require("body-parser").urlencoded({ extended: false });
+var validator = require("../");
 
 // Use build directory to serve static files
 app.use(express.static("build"));
 
-// On car submission, parse body and echo the data as JSON
-app.post("/examples/car/submit", bodyParser, function (req, res) {
-    res.status(200).end(JSON.stringify(req.body, null, 4));
+// On car submission, validate and return whether or not it is valid
+app.post("/examples/car/submit", validator("build/examples/car/car.ufm"), function (req, res) {
+    res.status(200).end("Valid data!");
+}, function (err, req, res, next) {
+    res.status(400).end("Invalid data!");
 });
 
 // Listen on port given by environment

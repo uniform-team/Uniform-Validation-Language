@@ -1,0 +1,15 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Test Server" type="js.build_tools.npm" factoryName="npm">
+    <package-json value="$PROJECT_DIR$/package.json" />
+    <command value="run-script" />
+    <scripts>
+      <script value="test-server" />
+    </scripts>
+    <node-interpreter value="project" />
+    <node-options value="--debug" />
+    <envs />
+    <method>
+      <option name="FwBeforeLaunchTask" enabled="true" />
+    </method>
+  </configuration>
+</component>

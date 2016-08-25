@@ -56,6 +56,20 @@ describe("The Scope class", function () {
         });
     });
     
+    describe("exposes the \"init\" member", function () {
+    	it("as a static function", function () {
+            expect(Scope.init).toEqual(jasmine.any(Function));
+    	});
+        
+        it("which initializes the Scope class by resetting it", function () {
+        	spyOn(Scope, "reset");
+            
+            Scope.init();
+            
+            expect(Scope.reset).toHaveBeenCalled();
+        });
+    });
+    
     describe("exposes the \"reset\" member", function () {
     	it("as a static function", function () {
     		expect(Scope.reset).toEqual(jasmine.any(Function));

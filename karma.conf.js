@@ -11,9 +11,15 @@ module.exports = function (config) {
 		// list of files / patterns to load in the browser
 		files: [
 			"node_modules/babel-polyfill/dist/polyfill.js",
+            "test/helper/global.js",
 			"test/helper/**/*.js",
 			"build/uniform.js",
 			"test/spec/**/*.js"
+		],
+		
+		exclude: [
+			"test/spec/validator/**/*.js",
+            "test/spec/validator.es5/**/*.js"
 		],
 
 		// preprocess matching files before serving them to the browser

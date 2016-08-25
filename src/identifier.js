@@ -1,3 +1,4 @@
+import { document, $ } from "./env.js";
 import constants from "./constants.js";
 import Token from "./token.js";
 import Scope from "./scope.js";

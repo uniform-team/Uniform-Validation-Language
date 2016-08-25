@@ -1,0 +1,12 @@
+{
+  "spec_dir": "test",
+  "spec_files": [
+    "spec/validator.es5/**/*.js"
+  ],
+  "helpers": [
+    "helper.es5/global.js",
+    "helper.es5/**/*.js"
+  ],
+  "stopSpecOnExpectationFailure": false,
+  "random": false
+}

@@ -4,7 +4,9 @@ module.exports = {
 	entry: "./src/main.js",
 	output: {
 		path: path.join(__dirname, "build"),
-		filename: "uniform.js"
+		filename: "uniform.js",
+		library: "uniform",
+        libraryTarget: "umd"
 	},
 	module: {
 		loaders: [

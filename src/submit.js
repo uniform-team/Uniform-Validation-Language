@@ -1,3 +1,5 @@
+import { document, $ } from "./env.js";
+import { validateClient } from "./options.js";
 import root from "./root.js";
 
 let getRoot = root;
@@ -22,7 +24,7 @@ export default {
             
             // Check if the form is valid
             let valid = validToken.value;
-            if (!valid) {
+            if (validateClient && !valid) {
                 evt.preventDefault();
                 alert("Form is not valid!");
             }

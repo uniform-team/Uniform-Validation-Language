@@ -37,3 +37,4 @@ build/lib
 # Ignore built files
 build/uniform.js
 build/uniform.min.js
+*.es5

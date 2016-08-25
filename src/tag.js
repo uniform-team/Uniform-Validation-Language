@@ -1,3 +1,4 @@
+import { document, $ } from "./env.js";
 import dependable from "./dependable.js";
 import Scope from "./scope.js";
 

@@ -1,5 +1,5 @@
-import {Variable} from "./variable.js";
-import {DuplicateDeclarationError, AssertionError} from "./errors.js"
+import { Variable } from "./variable.js";
+import { DuplicateDeclarationError, AssertionError } from "./errors.js"
 import Tag from "./tag.js";
 import { Identifier } from "./identifier.js";
 
@@ -64,6 +64,11 @@ export default class Scope {
     // Static setter for the root scope used for testing / debugging purposes
     static set _rootScope(scope) {
         rootScope = scope;
+    }
+    
+    // Initialize the scope module
+    static init() {
+        Scope.reset();
     }
     
     // Reset the scope hierarchy to default
@@ -158,5 +163,3 @@ export default class Scope {
 		else return this.parentScope && this.parentScope.lookupIdentifier(name); // Not found, check parent recursively
 	}
 }
-
-Scope.reset();

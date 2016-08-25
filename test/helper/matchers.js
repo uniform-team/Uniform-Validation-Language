@@ -1,6 +1,4 @@
 beforeEach(function () {
-    var UfmError = window.uniform.errors.UfmError;
-    
 	jasmine.addMatchers({
 		// Tests if two Tokens are equivalent
 		toEqualToken: function (util, customEqualityTesters) {
@@ -28,7 +26,9 @@ beforeEach(function () {
 		toThrowUfmError: function () {
 			return {
 				compare: function (actual, expected) {
-					// Check that actual is a function
+                    var UfmError = window.uniform.errors.UfmError;
+                                        
+                    // Check that actual is a function
 					if (typeof actual !== "function") {
 						return {
 							pass: false,
