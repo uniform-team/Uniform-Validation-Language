@@ -1,11 +1,6 @@
+import * as errors from "../../src.es5/errors.js";
+
 describe("The errors module", function () {
-	let uniform = window.uniform;
-	
-	it("is defined as an object", function () {
-		expect(uniform.errors).toEqual(jasmine.any(Object));
-	});
-	
-	let errors = uniform.errors;
 	describe("exposes the \"UfmError\" member", function () {
 		it("as a class extending Error", function () {
 			expect(errors.UfmError).toExtend(Error);

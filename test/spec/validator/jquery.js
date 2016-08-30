@@ -1,4 +1,4 @@
-import jQueryEnv from "../../../src/validator.es5/jquery.js";
+import jQueryEnv from "../../../src.es5/validator/jquery.js";
 
 describe("The jQuery module", function () {
 	it("is exposed as a function", function () {

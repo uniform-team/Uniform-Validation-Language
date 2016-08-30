@@ -1,12 +1,6 @@
+import dependable from "../../src.es5/dependable.js";
+
 describe("The dependable module", function () {
-	let uniform = window.uniform;
-    
-    it("is exposed as a function", function () {
-		expect(uniform.dependable).toEqual(jasmine.any(Function));
-	});
-    
-    let dependable = uniform.dependable;
-    
     it("which adds the dependable interface to the given class without error when there is no conflict", function () {
         expect(() => dependable(class { })).not.toThrowError();
     });

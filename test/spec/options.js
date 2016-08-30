@@ -1,12 +1,8 @@
+import * as options from "../../src.es5/options.js";
+
+import parser from "../../src.es5/parser.js";
+
 describe("The options module", function () {
-	let uniform = window.uniform;
-    
-    it("is exposed as an object", function () {
-		expect(uniform.options).toEqual(jasmine.any(Object));
-	});
-    
-    let { options, parser } = uniform;
-    
     describe("exposes the \"href\" member", function () {
     	it("as a function", function () {
     		expect(options.href).toEqual(jasmine.any(Function));

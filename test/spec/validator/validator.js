@@ -5,12 +5,12 @@ let denodeify = (module) => module;
 let bodyParser, jQueryEnv, uniform;
 
 // Load validator while injecting dependencies
-let validator = proxyquire.noCallThru().load("../../../", {
+let validator = proxyquire.noCallThru().load("../../../src.es5/validator/validator.js", {
     fs: fs,
     denodeify: denodeify,
     "body-parser": { urlencoded: () => (req, res, next) => bodyParser(req, res, next) },
     "./jquery.js": (data) => jQueryEnv(data),
-    "../../build/uniform.js": (document, $) => uniform(document, $)
+    "../main.js": (document, $) => uniform(document, $)
 });
 
 describe("The validator module", function () {

@@ -1,3 +1,5 @@
+import { UfmError } from "../../src.es5/errors.js";
+
 beforeEach(function () {
 	jasmine.addMatchers({
 		// Tests if two Tokens are equivalent
@@ -26,8 +28,6 @@ beforeEach(function () {
 		toThrowUfmError: function () {
 			return {
 				compare: function (actual, expected) {
-                    var UfmError = window.uniform.errors.UfmError;
-                                        
                     // Check that actual is a function
 					if (typeof actual !== "function") {
 						return {

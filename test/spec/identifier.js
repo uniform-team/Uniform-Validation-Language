@@ -1,13 +1,11 @@
-var uniform = window.uniform;
-let { dependable, Token, constants, Scope, } = uniform;
+import { Identifier, BlockIdentifier, ExpressionIdentifier } from "../../src.es5/identifier.js";
+
+import dependable from "../../src.es5/dependable.js";
+import Token from "../../src.es5/token.js";
+import constants from "../../src.es5/constants.js";
+import Scope from "../../src.es5/scope.js";
 
 describe("The Identifier class", function () {
-	it("is exposed as a function", function () {
-		expect(uniform.Identifier).toEqual(jasmine.any(Function));
-	});
-    
-    let { Identifier } = uniform;
-    
     beforeEach(() => Identifier._map = { });
     
     describe("exposes the \"insert\" member", function () {
@@ -44,12 +42,6 @@ describe("The Identifier class", function () {
 });
 
 describe("The BlockIdentifier class", function () {
-	it("is exposed as a function", function () {
-		expect(uniform.BlockIdentifier).toEqual(jasmine.any(Function));
-	});
-    
-    let { BlockIdentifier } = uniform;
-    
     it("constructs an instance from a token", function () {
     	expect(() => new BlockIdentifier(new Token("test", constants.TYPE.IDENTIFIER))).not.toThrow();
     });
@@ -75,12 +67,6 @@ describe("The BlockIdentifier class", function () {
 });
 
 describe("The ExpressionIdentifier class", function () {
-	it("is exposed as a function", function () {
-		expect(uniform.ExpressionIdentifier).toEqual(jasmine.any(Function));
-	});
-	
-    let { ExpressionIdentifier } = uniform;
-    
     it("constructs an instance and initializes it", function () {
         let selector = "[name=\"test\"]";
         spyOn(Token.prototype, "getSelector").and.returnValue(selector);

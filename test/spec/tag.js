@@ -1,12 +1,11 @@
+import Tag from "../../src.es5/tag.js";
+
+import constants from "../../src.es5/constants.js";
+import Token from "../../src.es5/token.js";
+import Scope from "../../src.es5/scope.js";
+import dependable from "../../src.es5/dependable.js";
+
 describe("The Tag class", function () {
-	let uniform = window.uniform;
-	
-	it("is exposed as a function", function () {
-		expect(uniform.Tag).toEqual(jasmine.any(Function));
-	});
-	
-	let { Tag, Token, constants, dependable, Scope } = uniform;
-	
 	it("constructs from a token", function () {
 		expect(() => new Tag(new Token("valid", constants.TYPE.KEYWORD))).not.toThrow();
 	});

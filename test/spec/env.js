@@ -1,14 +1,6 @@
+import * as env from "../../src.es5/env.js";
+
 describe("The env module", function () {
-    let uniform = window.uniform;
-    
-    it("is exposed as an object", function () {
-    	expect(uniform.env).toEqual(jasmine.any(Object));
-    });
-    
-    let { env } = uniform;
-    
-    
-    
 	describe("exposes the \"init\" member", function () {
 		it("as a function", function () {
 			expect(env.init).toEqual(jasmine.any(Function));

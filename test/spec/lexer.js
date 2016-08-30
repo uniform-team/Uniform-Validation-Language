@@ -1,10 +1,9 @@
+import tokenizer from "../../src.es5/lexer.js";
+
+import constants from "../../src.es5/constants.js";
+import { SyntaxError } from "../../src.es5/errors.js";
+
 describe("The lexer module", function () {
-	let uniform = window.uniform;
-	
-	it("is exposed globally", function () {
-		expect(uniform.tokenizer).toEqual(jasmine.any(Function));
-	});
-	
 	let assertToken = function (input, value, type) {
 		let tokenize = tokenizer(input);
 		let token = tokenize();
@@ -12,10 +11,6 @@ describe("The lexer module", function () {
 		expect(token.value).toEqual(value);
 		expect(token.type).toBe(type);
 	};
-	
-	let tokenizer = uniform.tokenizer;
-	let constants = uniform.constants;
-	let SyntaxError = uniform.errors.SyntaxError;
 	
 	describe("tokenizes inputs such as", function () {
 		it("identifiers", function () {

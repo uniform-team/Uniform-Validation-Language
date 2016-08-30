@@ -1,19 +1,17 @@
+import submit from "../../src.es5/submit.js";
+
+import constants from "../../src.es5/constants.js";
+import Token from "../../src.es5/token.js";
+import * as options from "../../src.es5/options.js";
+
 describe("The submit module", function () {
-    let uniform = window.uniform;
-    
-    it("is exposed as an object", function () {
-    	expect(uniform.submit).toEqual(jasmine.any(Object));
-    });
-    
-    let { submit, Token, constants } = uniform;
-    
 	describe("exposes the \"init\" member", function () {
 		it("as a function", function () {
 			expect(submit.init).toEqual(jasmine.any(Function));
 		});
         
         afterEach(function () {
-            uniform.options.validateClient = true;
+            options.validateClient = true;
         });
         
         it("which binds a callback to form submission which allows valid submissions", function () {
@@ -63,7 +61,7 @@ describe("The submit module", function () {
                 valid: new Token(false, constants.TYPE.BOOL)
             });
             
-            uniform.options.validateClient = false;
+            options.validateClient = false;
             submit.init();
             
             expect(evt.preventDefault).not.toHaveBeenCalled();

@@ -1,13 +1,13 @@
+import parser from "../../src.es5/parser.js";
+
+import constants from "../../src.es5/constants.js";
+import Token from "../../src.es5/token.js";
+import * as evaluator from "../../src.es5/evaluator.js";
+import { Identifier } from "../../src.es5/identifier.js";
+import Tag from "../../src.es5/tag.js";
+import { ParsingError } from "../../src.es5/errors.js";
+
 describe("The parser module", function () {
-	let uniform = window.uniform;
-	
-	it("is exposed globally", function () {
-		expect(uniform.parser).toEqual(jasmine.any(Object));
-	});
-	
-    let { parser, constants, Token, evaluator, Identifier, Tag } = uniform;
-    let { ParsingError } = uniform.errors;
-	
 	describe("parses valid inputs such as", function () {
 		it("identifier blocks", function () {
 			expect(() => parser.parse("test { }")).not.toThrow();

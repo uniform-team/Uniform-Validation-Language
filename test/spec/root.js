@@ -1,32 +1,24 @@
-describe("The root property", function () {
-	let uniform = window.uniform;
+import root from "../../src.es5/root.js";
+
+import Scope from "../../src.es5/scope.js";
+
+describe("The root getter", function () {
+    it("is exposed as a function", function () {
+        expect(root).toEqual(jasmine.any(Function));
+    });
     
-    let { Scope } = uniform;
-    
-    describe("exposes a getter", function () {
-        it("as a function", function () {
-            expect(Object.getOwnPropertyDescriptor(uniform, "root").get).toEqual(jasmine.any(Function));
-        });
-        
-        it("which returns the root-level tag values", function () {
-            jasmineUtil.spyOnProp(Scope, "rootScope", "get", function (spy) {
-                let validToken = { }, enabledToken =  {};
-                spy.and.returnValue({
-                    tags: {
-                        valid: { value: validToken },
-                        enabled: { value: enabledToken }
-                    }
-                });
-    
-                let root = uniform.root;
-    
-                expect(root.valid).toBe(validToken);
-                expect(root.enabled).toBe(enabledToken);
+    it("returns the root-level tag values", function () {
+        jasmineUtil.spyOnProp(Scope, "rootScope", "get", function (spy) {
+            let validToken = { }, enabledToken =  {};
+            spy.and.returnValue({
+                tags: {
+                    valid: { value: validToken },
+                    enabled: { value: enabledToken }
+                }
             });
+
+            expect(root().valid).toBe(validToken);
+            expect(root().enabled).toBe(enabledToken);
         });
-	});
-    
-    it("does NOT expose a setter", function () {
-        expect(Object.getOwnPropertyDescriptor(uniform, "root").set).toBeUndefined();
     });
 });

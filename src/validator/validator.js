@@ -4,7 +4,7 @@ import denodeify from "denodeify";
 import bodyParserModule from "body-parser";
 
 import jQueryEnv from "./jquery.js";
-import uniform from "../../build/uniform.js";
+import uniform from "../main.js";
 
 let bodyParser = bodyParserModule.urlencoded({ extended: false });
 

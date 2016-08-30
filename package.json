@@ -1,7 +1,7 @@
 {
   "name": "uniform-validation",
-  "main": "src/validator.es5/validator.js",
-  "version": "0.0.7",
+  "main": "src.es5/validator/validator.js",
+  "version": "0.1.6",
   "description": "Uniform: Form Validation Language",
   "dependencies": {
     "body-parser": "^1.15.1",
@@ -16,6 +16,7 @@
     "jasmine": "^2.4.1",
     "karma": "^0.13.16",
     "karma-babel-preprocessor": "^6.0.1",
+    "karma-commonjs": "^1.0.0",
     "karma-jasmine": "^0.3.6",
     "karma-phantomjs-launcher": "^0.2.2",
     "phantomjs": "^1.9.19",
@@ -24,16 +25,19 @@
   },
   "scripts": {
     "start": "node server/server.js",
+    "prepublish": "npm run build",
+    "setup-dev": "bower install && cd server && npm install && cd ..",
+    
     "build": "npm run build-server && npm run build-client",
     "build-client": "webpack",
     "build-server": "npm run build-server-src && npm run build-server-test && npm run build-server-helper",
-    "build-server-src": "babel src/validator --out-dir src/validator.es5 --presets es2015 --source-maps inline",
+    "build-server-src": "babel src --out-dir src.es5 --presets es2015 --source-maps inline",
     "build-server-test": "babel test/spec/validator --out-dir test/spec/validator.es5 --presets es2015 --source-maps inline",
     "build-server-helper": "babel test/helper --out-dir test/helper.es5 --presets es2015 --source-maps inline",
+    
     "test": "npm run test-client && npm run test-server",
     "test-client": "karma start --single-run",
-    "test-server": "jasmine JASMINE_CONFIG_PATH=jasmine.json",
-    "postinstall": "bower install && cd server && npm install && cd .."
+    "test-server": "jasmine JASMINE_CONFIG_PATH=jasmine.json"
   },
   "repository": {
     "type": "git",

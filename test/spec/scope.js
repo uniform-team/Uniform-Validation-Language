@@ -1,13 +1,13 @@
-describe("The Scope class", function () {
-    let uniform = window.uniform;
+import Scope from "../../src.es5/scope.js";
 
-    it ("is exposed globally", function() {
-        expect(uniform.Scope).toEqual(jasmine.any(Function));
-    });
-    
-    let { Scope, Variable, Tag, Identifier, Token, constants } = uniform;
-    let { DuplicateDeclarationError } = uniform.errors;
-    
+import constants from "../../src.es5/constants.js";
+import Token from "../../src.es5/token.js";
+import { Variable } from "../../src.es5/variable.js";
+import Tag from "../../src.es5/tag.js";
+import { Identifier } from "../../src.es5/identifier.js";
+import { DuplicateDeclarationError } from "../../src.es5/errors.js";
+
+describe("The Scope class", function () {
     it("constructs while setting the parent scope to the current scope", function () {
     	Scope._currentScope = {};
         

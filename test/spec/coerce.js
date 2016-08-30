@@ -1,15 +1,10 @@
+import * as coerce from "../../src.es5/coerce.js";
+
+import constants from "../../src.es5/constants.js";
+import Token from "../../src.es5/token.js";
+import { TypeError } from "../../src.es5/errors.js";
+
 describe("The coerce module", function () {
-	let uniform = window.uniform;
-	
-	it("is defined as an object", function () {
-		expect(uniform.coerce).toEqual(jasmine.any(Object));
-	});
-	
-	let coerce = uniform.coerce;
-	let constants = uniform.constants;
-	let Token = uniform.Token;
-	let TypeError = uniform.errors.TypeError;
-	
 	describe("exposes the \"toBool\" member", function () {
 		it("as a function", function () {
 			expect(coerce.toBool).toEqual(jasmine.any(Function));

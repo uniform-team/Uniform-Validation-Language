@@ -1,13 +1,9 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Test Server" type="js.build_tools.npm" factoryName="npm">
-    <package-json value="$PROJECT_DIR$/package.json" />
-    <command value="run-script" />
-    <scripts>
-      <script value="test-server" />
-    </scripts>
-    <node-interpreter value="project" />
-    <node-options value="--debug" />
-    <envs />
+  <configuration default="false" name="Test Server" type="NodeJSConfigurationType" factoryName="Node.js" path-to-node="project" path-to-js-file="node_modules/jasmine/bin/jasmine.js" application-parameters="JASMINE_CONFIG_PATH=jasmine.json" working-dir="$PROJECT_DIR$">
+    <profiling v8-profiler-path="" />
+    <EXTENSION ID="com.jetbrains.nodejs.run.NodeJSProfilingRunConfigurationExtension">
+      <profiling v8-profiler-path="" />
+    </EXTENSION>
     <method>
       <option name="FwBeforeLaunchTask" enabled="true" />
     </method>

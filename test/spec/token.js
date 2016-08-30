@@ -1,12 +1,8 @@
+import Token from "../../src.es5/token.js";
+
+import constants from "../../src.es5/constants.js";
+
 describe("The Token class", function () {
-	let uniform = window.uniform;
-	
-	it("is exposed globally", function () {
-		expect(uniform.Token).toEqual(jasmine.any(Function));
-	});
-	
-	let Token = uniform.Token;
-	let constants = uniform.constants;
 	describe("exposes the \"clone\" member", function () {
 		it("as a function", function () {
 			expect(Token.prototype.clone).toEqual(jasmine.any(Function));

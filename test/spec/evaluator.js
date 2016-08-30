@@ -1,13 +1,11 @@
-describe("The evaluator module", function () {
-	let uniform = window.uniform;
-	
-	it("is exposed globally as an object", function () {
-		expect(uniform.evaluator).toEqual(jasmine.any(Object));
-	});
+import * as evaluator from "../../src.es5/evaluator.js";
 
-    let { evaluator, constants, Token, Identifier } = uniform;
-    let { TypeError, UndeclaredError } = uniform.errors;
-	
+import constants from "../../src.es5/constants.js";
+import Token from "../../src.es5/token.js";
+import { Identifier } from "../../src.es5/identifier.js";
+import { TypeError, UndeclaredError } from "../../src.es5/errors.js";
+
+describe("The evaluator module", function () {
 	describe("exposes the \"and\" member", function () {
 		it("as a function", function () {
 			expect(evaluator.and).toEqual(jasmine.any(Function));
