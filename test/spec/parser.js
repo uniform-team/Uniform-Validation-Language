@@ -2,13 +2,17 @@ import parser from "../../src.es5/parser.js";
 
 import constants from "../../src.es5/constants.js";
 import Token from "../../src.es5/token.js";
+import Scope from "../../src.es5/scope.js";
 import * as evaluator from "../../src.es5/evaluator.js";
-import { Identifier } from "../../src.es5/identifier.js";
+import { ExpressionVariable } from "../../src.es5/variable.js";
+import { Identifier, ExpressionIdentifier } from "../../src.es5/identifier.js";
 import Tag from "../../src.es5/tag.js";
 import { ParsingError } from "../../src.es5/errors.js";
 
 describe("The parser module", function () {
 	describe("parses valid inputs such as", function () {
+		beforeEach(() => Scope.reset());
+		
 		it("identifier blocks", function () {
 			expect(() => parser.parse("test { }")).not.toThrow();
 		});
@@ -180,14 +184,6 @@ describe("The parser module", function () {
 		});
 		
 		describe("with miscellaneous operators such as", function () {
-			it("any", function () {
-				expect(parser.parse("any @array")).not.toThrow();
-			});
-			
-			it("all", function () {
-				expect(parser.parse("all @array")).not.toThrow();
-			});
-			
 			it("dotObject", function () {
 				expect(parser.parse("{ foo: \"bar\"; }.foo")()).toEqualToken({
 					value: "bar",
@@ -206,14 +202,17 @@ describe("The parser module", function () {
 		describe("with operands such as", function () {
 			it("identifiers", function () {
 				spyOn($.prototype, "val").and.returnValue("data");
-				spyOn(Identifier.prototype, "addDependent");
+				spyOn(ExpressionIdentifier.prototype, "addDependent");
                 
-				let owner = {};
+				let owner = {
+				    addDependee: jasmine.createSpy("addDependee")
+                };
 				expect(parser.parse("test", owner)()).toEqualToken({
 					value: "data",
 					type: constants.TYPE.STRING
 				});
-                expect(Identifier.prototype.addDependent).toHaveBeenCalledWith(owner);
+                expect(ExpressionIdentifier.prototype.addDependent).toHaveBeenCalledWith(owner);
+                expect(owner.addDependee).toHaveBeenCalledWith(jasmine.any(ExpressionIdentifier));
 			});
 			
 			it("booleans", function () {
@@ -250,10 +249,23 @@ describe("The parser module", function () {
 			});
 			
 			it("variables", function () {
-				expect(parser.parse("@test")()).toEqualToken({
-					value: "test",
-					type: constants.TYPE.VARIABLE
+			    let variable = new ExpressionVariable(new Token("test", constants.TYPE.VARIABLE));
+                variable.initDependable(() => new Token(true, constants.TYPE.BOOL));
+                variable.update();
+                
+			    spyOn(Scope.prototype, "lookupVar").and.returnValue(variable);
+                spyOn(ExpressionVariable.prototype, "addDependent");
+			    
+                let owner = {
+                    addDependee: jasmine.createSpy("addDependee")
+                };
+				expect(parser.parse("@test", owner)()).toEqualToken({
+					value: true,
+					type: constants.TYPE.BOOL
 				});
+                
+                expect(ExpressionVariable.prototype.addDependent).toHaveBeenCalledWith(owner);
+                expect(owner.addDependee).toHaveBeenCalledWith(variable);
 			});
 			
 			it("selectors", function () {
@@ -358,6 +370,9 @@ describe("The parser module", function () {
             
             // Clear identifier mapping to ensure state does not bleed through tests
             Identifier._map = { };
+            
+            // Clear scopes to prevent redeclaration errors
+            Scope.reset();
 		});
 		
 		afterEach(function () {
@@ -513,6 +528,89 @@ describe("The parser module", function () {
             );
             
             expect(Identifier.find("outer").getTag("valid").value).toEqualToken({
+                value: true,
+                type: constants.TYPE.BOOL
+            });
+        });
+        
+        it("such as a single variable dependency", function () {
+        	parser.parse(
+        	    "@test: true;"
+                + "final { valid: @test; }"
+            );
+            
+            expect(Identifier.find("final").getTag("valid").value).toEqualToken({
+                value: true,
+                type: constants.TYPE.BOOL
+            });
+        });
+        
+        it("such as a single variable dependency on top of an identifier dependency", function () {
+            spyOn(evaluator, "equals").and.callFake(function (leftExpr, rightExpr) {
+                return () => new Token(leftExpr().value === rightExpr().value, constants.TYPE.BOOL)
+            });
+    
+            setValue("inner", "foo");
+            
+        	parser.parse(
+        	    "@test: inner equals \"bar\";"
+                + "final { valid: @test; }"
+            );
+            
+            expect(Identifier.find("final").getTag("valid").value).toEqualToken({
+                value: false,
+                type: constants.TYPE.BOOL
+            });
+            
+            setValue("inner", "bar");
+            expect(Identifier.find("final").getTag("valid").value).toEqualToken({
+                value: true,
+                type: constants.TYPE.BOOL
+            });
+        });
+        
+        it("such as multiple variable dependencies on top of identifier dependencies", function () {
+            spyOn(evaluator, "equals").and.callFake(function (leftExpr, rightExpr) {
+                return () => new Token(leftExpr().value === rightExpr().value, constants.TYPE.BOOL)
+            });
+            spyOn(evaluator, "and").and.callFake(function (leftExpr, rightExpr) {
+                return () => new Token(leftExpr().value && rightExpr().value, constants.TYPE.BOOL);
+            });
+    
+            setValue("inner1", "foo");
+            setValue("inner2", "foo");
+            
+            parser.parse(
+                "@outer1: inner1 equals \"bar\";"
+                + "@outer2: inner2 equals \"foo\";"
+                + "final { valid: @outer1 and @outer2; }"
+            );
+    
+            expect(Identifier.find("final").getTag("valid").value).toEqualToken({
+                value: false,
+                type: constants.TYPE.BOOL
+            });
+    
+            setValue("inner1", "bar");
+            expect(Identifier.find("final").getTag("valid").value).toEqualToken({
+                value: true,
+                type: constants.TYPE.BOOL
+            });
+    
+            setValue("inner2", "bar");
+            expect(Identifier.find("final").getTag("valid").value).toEqualToken({
+                value: false,
+                type: constants.TYPE.BOOL
+            });
+        });
+        
+        it("such as a variable dependency declared later in the file", function () {
+            parser.parse(
+                "final { valid: @test; }"
+                + "@test: true;"
+            );
+    
+            expect(Identifier.find("final").getTag("valid").value).toEqualToken({
                 value: true,
                 type: constants.TYPE.BOOL
             });

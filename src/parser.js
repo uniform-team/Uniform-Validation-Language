@@ -1,5 +1,5 @@
 import constants from "./constants.js";
-import { ParsingError as ParsingErrorClass, AssertionError as AssertionErrorClass, NotImplementedError } from "./errors.js";
+import { ParsingError as ParsingErrorClass, AssertionError as AssertionErrorClass, UndeclaredError as UndeclaredErrorClass, NotImplementedError } from "./errors.js";
 import tokenizer from "./lexer.js";
 import { Identifier, BlockIdentifier, ExpressionIdentifier } from "./identifier.js";
 import { BlockVariable, ExpressionVariable } from "./variable.js";
@@ -54,6 +54,12 @@ export default {
 			}
 		}
 		
+		class UndeclaredError extends UndeclaredErrorClass {
+		    constructor(msgOrError) {
+		        super(msgOrError, currentToken.line, currentToken.col);
+            }
+        }
+		
 		// Checks the expected type against the currentToken type
 		// If they match, the next token is loaded into the currentToken and the matched token is returned
 		// If they do not match, a ParsingError is thrown
@@ -91,8 +97,10 @@ export default {
 		
 		// <file> -> <blockOrStatements>
 		function file(spy) {
+		    let result;
+		    
 			// If testing expressions, then directly invoke and return expression()
-			if (self._testExpr) return expression(spy);
+			if (self._testExpr) result = expression(spy);
 			
 			blockOrStatements();
 			
@@ -102,6 +110,8 @@ export default {
 			
 			// File has been parsed, executed deferred actions
 			for (let cb of deferred) cb();
+            
+            return result;
 		}
 		
 		// <blockOrStatements> -> <blockOrStatement> <blockOrStatements> | ø
@@ -145,7 +155,7 @@ export default {
                     blockOrStatements();
                 });
 			} else if (token.type === constants.TYPE.VARIABLE) {
-				Scope.thisScope.insert(new BlockVariable(token.name, token.line, token.col, function() {
+				Scope.thisScope.insert(new BlockVariable(token, function() {
 					blockOrStatements();
 				}));
 			} else {
@@ -161,13 +171,17 @@ export default {
 			matchValue(constants.OPERATOR.COLON);
 			
 			if (token.type === constants.TYPE.VARIABLE) {
-				Scope.thisScope.insert(new ExpressionVariable(token.value, token.line, token.col, expression()));
+				let variable = new ExpressionVariable(token);
+                
+                Scope.thisScope.insert(variable);
+				variable.initDependable(expression(variable));
+                defer(() => variable.update()); // Don't update until file is parsed and everything is declared
 			} else if (token.isTag()) {
 				let tag = new Tag(token);
 				
 				Scope.thisScope.insert(tag);
-				tag.setExpression(expression(tag));
-                defer(() => tag.update());
+				tag.initDependable(expression(tag));
+                defer(() => tag.update()); // Don't update until file is parsed and everything is declared
 			} else {
 				throw new AssertionError("Expected ExpressionVariable or Tag, got " + token.value);
 			}
@@ -379,48 +393,11 @@ export default {
 		
 		// <operand> -> <identifier> | <number> | <string> | <variable> | <selector> | <state> | true | false | this | <object>
 		function operand(owner) {
-			if (currentToken.type === constants.TYPE.IDENTIFIER) { // Check for identifier
-				let identifierToken = match();
-				
-				if (currentToken.value !== constants.OPERATOR.DOT) {
-				    // Usage of just the identifier, meaning the owner is dependent on it directly
-					// ex. valid: make;
-                    
-                    // Create an ExpressionIdentifier object from the token
-					let identifierObj = new ExpressionIdentifier(identifierToken);
-                    
-                    // Set the owner as dependent on the identifier
-					identifierObj.addDependent(owner);
-                    
-                    // Return the value of the identifier as the result
-					return () => identifierObj.value;
-				}
-				
-				// Dependent on a tag from an identifier
-				// ex. valid: make.enabled;
-				match(); // .
-				if (!currentToken.isTag()) {
-					throw new ParsingError("Expected identifier.tag, but got " + identifierToken.value + "." + currentToken.value);
-				}
-				let tag = match(); // <tag>
-                
-                // Defer adding the dependency until AFTER the entire file is parsed
-                // In case the identifier / tag have not been parsed yet
-				defer(function () {
-				    // Get the identifier referenced
-					let identifierObj = Identifier.find(identifierToken.value);
-					if (!identifierObj) throw new NotImplementedError();
-					
-                    // Get the tag from the identifier
-					let tagObj = identifierObj.getTag(tag.value);
-					if (!tagObj) throw new NotImplementedError();
-					
-                    // Set the owner as dependent on the found tag
-					tagObj.addDependent(owner);
-				});
-				
-				return evaluator.dotTag(identifierToken, tag);
-			} else if (currentToken.isOperand()) { // Check for single-token operands
+			if (currentToken.type === constants.TYPE.IDENTIFIER) { // Check for identifier usage
+				return identifier(owner);
+			} else if (currentToken.type === constants.TYPE.VARIABLE) { // Check for variable usage
+			    return variable(owner);
+            } else if (currentToken.isOperand()) { // Check for single-token operands
 				let operand = match();
 				
 				return () => operand;
@@ -430,6 +407,71 @@ export default {
 				throw new ParsingError("Expected an operand, got " + currentToken.value);
 			}
 		}
+		
+		// <identifier>
+		function identifier(owner) {
+            let identifierToken = match();
+            
+            if (currentToken.value !== constants.OPERATOR.DOT) {
+                // Usage of just the identifier, meaning the owner is dependent on it directly
+                // ex. valid: make;
+                
+                // Create an ExpressionIdentifier object from the token
+                let identifierObj = new ExpressionIdentifier(identifierToken);
+                
+                // Set the owner as dependent on the identifier
+                identifierObj.addDependent(owner);
+                owner.addDependee(identifierObj);
+                
+                // Return the value of the identifier as the result
+                return () => identifierObj.value;
+            }
+            
+            // Dependent on a tag from an identifier
+            // ex. valid: make.enabled;
+            match(); // .
+            if (!currentToken.isTag()) {
+                throw new ParsingError("Expected identifier.tag, but got " + identifierToken.value + "." + currentToken.value);
+            }
+            let tag = match(); // <tag>
+            
+            // Defer adding the dependency until AFTER the entire file is parsed
+            // In case the identifier / tag have not been parsed yet
+            defer(function () {
+                // Get the identifier referenced
+                let identifierObj = Identifier.find(identifierToken.value);
+                if (!identifierObj) throw new NotImplementedError();
+                
+                // Get the tag from the identifier
+                let tagObj = identifierObj.getTag(tag.value);
+                if (!tagObj) throw new NotImplementedError();
+                
+                // Set the owner as dependent on the found tag
+                tagObj.addDependent(owner);
+                owner.addDependee(tagObj);
+            });
+            
+            return evaluator.dotTag(identifierToken, tag);
+        }
+        
+        // <variable>
+        function variable(owner) {
+            let varToken = match();
+            let scope = Scope.thisScope;
+            let varObj;
+            
+            defer(function () {
+                varObj = scope.lookupVar(varToken.value);
+                if (!varObj) throw new UndeclaredError("Variable " + varToken.value + " was not declared.");
+    
+                // Set the owner as dependent on the variable
+                varObj.addDependent(owner);
+                owner.addDependee(varObj);
+            });
+            
+            // Return the value of the variable as the result
+            return () => varObj.value;
+        }
 		
 		// <object> -> { <keyValuePairs> }
 		function object() {

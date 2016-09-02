@@ -2,7 +2,7 @@ import { document, $ } from "./env.js";
 import constants from "./constants.js";
 import Token from "./token.js";
 import Scope from "./scope.js";
-import dependable from "./dependable.js";
+import Dependable from "./dependable.js";
 
 // Global map storing all identifiers by name for later lookup
 let identifierMap = {};
@@ -65,12 +65,12 @@ export class BlockIdentifier extends Identifier {
 
 /**
  * Class representing an expression identifier, one used in an expression.
- * Implements the dependable interface.
+ * Mixes in Dependable.
  *
  * Ex.
  * valid: myIdentifier equals true;
  */
-export let ExpressionIdentifier = dependable(class extends Identifier {
+export class ExpressionIdentifier extends Dependable(Identifier) {
     // Construct an ExpressionIdentifier, initializing its dependency system
 	constructor(token) {
 		super(token);
@@ -83,4 +83,4 @@ export let ExpressionIdentifier = dependable(class extends Identifier {
         // When the DOM element changes, update this identifier
 		$(document).on("change", selector, () => this.update());
 	}
-});
+}

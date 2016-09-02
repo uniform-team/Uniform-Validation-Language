@@ -1,13 +1,20 @@
+@filled: /"."/;
+@year: /"^[0-9]{4}$"/;
+
+@makeValid: make matches @filled;
 make {
-    valid: make matches /"."/;
+    valid: @makeValid;
 }
 
+@modelValid: model matches @filled;
 model {
-    valid: model matches /"."/;
+    valid: @modelValid;
 }
 
+@yearValid: year matches @year;
 year {
-    valid: year matches /"^[0-9]{4}$"/;
+    valid: @yearValid;
 }
 
-valid: make.valid and model.valid and year.valid;
+valid: @formValid;
+@formValid: @makeValid and @modelValid and @yearValid;

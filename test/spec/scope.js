@@ -2,7 +2,7 @@ import Scope from "../../src.es5/scope.js";
 
 import constants from "../../src.es5/constants.js";
 import Token from "../../src.es5/token.js";
-import { Variable } from "../../src.es5/variable.js";
+import { ExpressionVariable } from "../../src.es5/variable.js";
 import Tag from "../../src.es5/tag.js";
 import { Identifier } from "../../src.es5/identifier.js";
 import { DuplicateDeclarationError } from "../../src.es5/errors.js";
@@ -126,7 +126,7 @@ describe("The Scope class", function () {
         });
         
         it("which inserts a variable", function () {
-            let testVar = new Variable("test", 1, 2);
+            let testVar = new ExpressionVariable(new Token("test", constants.TYPE.VARIABLE, 1, 2));
             
             let scope = new Scope();
             scope.insert(testVar);
@@ -135,8 +135,8 @@ describe("The Scope class", function () {
         });
         
         it("which inserts a variable shadowing one belonging to a parent with the same name", function () {
-        	let testVar = new Variable("test", 1, 2);
-            let testVar2 = new Variable("test", 3, 4);
+        	let testVar = new ExpressionVariable(new Token("test", constants.TYPE.VARIABLE, 1, 2));
+            let testVar2 = new ExpressionVariable(new Token("test", constants.TYPE.VARIABLE, 3, 4));
             
             let scope = new Scope();
             scope.insert(testVar);
@@ -149,8 +149,8 @@ describe("The Scope class", function () {
         });
         
         it("throws an error on duplicate insertions", function () {
-            let testVar = new Variable("test", 1, 2);
-            let testVar2 = new Variable("test", 3, 4);
+            let testVar = new ExpressionVariable(new Token("test", constants.TYPE.VARIABLE, 1, 2));
+            let testVar2 = new ExpressionVariable(new Token("test", constants.TYPE.VARIABLE, 3, 4));
             
             let scope = new Scope();
             scope.insert(testVar);
@@ -165,7 +165,7 @@ describe("The Scope class", function () {
         });
         
         it("which returns the variable if found", function () {
-            let testVar = new Variable("test", 1, 2);
+            let testVar = new ExpressionVariable(new Token("test", constants.TYPE.VARIABLE, 1, 2));
             
             let scope = new Scope();
             scope.variables["test"] = testVar;
@@ -221,7 +221,7 @@ describe("The Scope class", function () {
         });
         
         it("returns the variable in the parent hierarchy", function () {
-            let testVar = new Variable("test", 1, 2);
+            let testVar = new ExpressionVariable(new Token("test", constants.TYPE.VARIABLE, 1, 2));
             let scope = new Scope();
             scope.insert(testVar);
             

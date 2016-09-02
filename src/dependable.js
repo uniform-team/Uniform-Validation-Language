@@ -1,56 +1,65 @@
+let initialized = Symbol("initialized");
 let dependableSymbol = Symbol("dependable");
 let dependents = Symbol("dependents");
+let dependees = Symbol("dependees");
 let expression = Symbol("expression");
 
-// Pseudo-constructor which implements the dependable interface onto the class given
-let dependable = function (clazz) {
-    // Inject the dependable prototype into the class prototype chain, directly before the Object prototype
-    let lastPrototype = clazz.prototype;
-
-    // Loop through the class' prototype chain, until it reaches Object
-    while (lastPrototype.__proto__ !== Object.prototype) lastPrototype = lastPrototype.__proto__;
-
-    // Found the last (meaningful) prototype, add dependable after it
-    lastPrototype.__proto__ = dependable.prototype;
-    
-    return clazz;
-};
-
-// Pseudo-prototype which holds member functions for dependable classes
-dependable.prototype = {
-    // Initialize this dependable with the given expression
-    initDependable: function (expr) {
+// Factory which creates a new class that extends the one given with the Dependable functionality mixed in
+let Dependable = (Clazz = class { }) => class extends Clazz {
+    constructor(...args) {
+        super(...args);
+        
         this[dependableSymbol] = true;
-        this[dependents] = [];
+        this[initialized] = false;
+        this[dependents] = []; // Objects dependent on this item
+        this[dependees] = []; // Objects which this item is dependent on
+    }
+    
+    // Initialize this Dependable with the given expression
+    initDependable(expr) {
         this[expression] = expr;
-    },
+    }
     
     // Add the given object as dependent on this object
-    addDependent: function (dependent) {
+    addDependent(dependent) {
         this[dependents].push(dependent);
-    },
+    }
+    
+    // Make this object dependent on the one given
+    addDependee(dependee) {
+        this[dependees].push(dependee);
+    }
     
     // Notify dependents that this object's value has changed
-    trigger: function () {
+    trigger() {
         for (let dependent of this[dependents]) {
             dependent.update();
         }
-    },
-
+    }
+    
     // Update this object's value
-    update: function () {
+    update() {
+        for (let dependee of this[dependees]) {
+            if (!dependee[initialized]) {
+                return; // Don't update unless all dependees are initialized
+            }
+        }
+        
+        this[initialized] = true;
         this.value = this[expression]();
         this.trigger();
     }
 };
 
 // Expose internal symbols for testing / debugging purposes
-dependable._dependentsSymbol = dependents;
-dependable._expressionSymbol = expression;
+Dependable._initializedSymbol = initialized;
+Dependable._dependentsSymbol = dependents;
+Dependable._dependeesSymbol = dependees;
+Dependable._expressionSymbol = expression;
 
-// Determine if the given object is dependable (only works after its initDependable(...) has been called)
-dependable.instanceof = function (obj) {
+// Determine if the given object is Dependable
+Dependable.instanceof = function (obj) {
     return obj[dependableSymbol] === true;
 };
 
-export default dependable;
+export default Dependable;

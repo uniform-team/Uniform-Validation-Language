@@ -1,6 +1,6 @@
 import { Identifier, BlockIdentifier, ExpressionIdentifier } from "../../src.es5/identifier.js";
 
-import dependable from "../../src.es5/dependable.js";
+import Dependable from "../../src.es5/dependable.js";
 import Token from "../../src.es5/token.js";
 import constants from "../../src.es5/constants.js";
 import Scope from "../../src.es5/scope.js";
@@ -101,9 +101,9 @@ describe("The ExpressionIdentifier class", function () {
         expect(identifier.update).toHaveBeenCalled();
     });
     
-	it("implements the dependable interface", function () {
+	it("mixes in Dependable", function () {
 		spyOn($.prototype, "val").and.returnValue("foo");
 		
-		expect(dependable.instanceof(new ExpressionIdentifier(new Token("test", constants.TYPE.IDENTIFIER)))).toBe(true);
+		expect(Dependable.instanceof(new ExpressionIdentifier(new Token("test", constants.TYPE.IDENTIFIER)))).toBe(true);
 	});
 });
