@@ -131,6 +131,24 @@ describe("The coerce module", function () {
 		});
 	});
 	
+	describe("exposes the \"toVariable\" member", function () {
+		it("as a function", function () {
+			expect(coerce.toVariable).toEqual(jasmine.any(Function));
+		});
+        
+        let toVariable = coerce.toVariable;
+        it("which passes variable tokens through unchanged", function () {
+        	expect(toVariable(new Token("test", constants.TYPE.VARIABLE))).toEqualToken({
+        	    value: "test",
+                type: constants.TYPE.VARIABLE
+            });
+        });
+        
+        it("which throws a TypeError when given non-variable inputs", function () {
+        	expect(() => toVariable(new Token(false, constants.TYPE.BOOL))).toThrowUfmError(TypeError);
+        });
+	});
+	
 	describe("exposes the \"toTag\" member", function () {
 		it("as a function", function () {
 			expect(coerce.toTag).toEqual(jasmine.any(Function));

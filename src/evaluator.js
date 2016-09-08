@@ -1,7 +1,9 @@
 import constants from "./constants.js";
 import * as coerce from "./coerce.js";
+import Scope from "./scope.js";
 import { Identifier } from "./identifier.js";
-import { UndeclaredError } from "./errors.js";
+import { BlockVariable } from "./variable.js";
+import { TypeError, UndeclaredError, AssertionError } from "./errors.js";
 
 // Export boolean AND operation
 export function and(leftExpr, rightExpr) {
@@ -175,18 +177,48 @@ export function dotObject(leftExpr, rightVal) {
 	};
 }
 
-// Export DOT operation for tags
-export function dotTag(leftVal, rightVal) {
-	let left = coerce.toIdentifier(leftVal);
-	let right = coerce.toTag(rightVal);
-	
-	return function () {
-		let identifier = Identifier.find(left.value);
-		if (!identifier) throw new UndeclaredError("Identifier " + left.value + " was not declared.", left.line, left.col);
-		
-		let tag = identifier.getTag(right.value);
-		if (!tag) throw new UndeclaredError("Tag " + left.value + "." + right.value + " was not declared.", left.line, left.col);
+// DOT operation for identifier.tag
+function dotTagIdentifier(leftVal, rightVal) {
+    let left = coerce.toIdentifier(leftVal);
+    let right = coerce.toTag(rightVal);
+    
+    return function () {
+        let identifier = Identifier.find(left.value);
+        if (!identifier) throw new UndeclaredError("Identifier " + left.value + " was not declared.", left.line, left.col);
+        
+        let tag = identifier.getTag(right.value);
+        if (!tag) throw new UndeclaredError("Tag " + left.value + "." + right.value + " was not declared.", left.line, left.col);
         
         return tag.value;
-	};
+    };
+}
+
+// DOT operation for @variable.tag
+function dotTagVariable(leftVal, rightVal) {
+    let left = coerce.toVariable(leftVal);
+    let right = coerce.toTag(rightVal);
+    let scope = Scope.thisScope;
+    
+    return function () {
+        let variable = scope.lookupVar(left.value);
+        if (!variable) throw new UndeclaredError("Variable @" + left.value + " was not declared", left.line, left.col);
+        if (!(variable instanceof BlockVariable)) throw new TypeError("Variable @" + left.value + " is an expression and not a block", left.line, left.col);
+        
+        let tag = variable.getTag(right.value);
+        if (!tag) throw new UndeclaredError("Tag @" + left.value + "." + right.value + " was not declared", left.line, left.col);
+        
+        return tag.value;
+    };
+}
+
+// Export DOT operation for tags
+export function dotTag(leftVal, rightVal) {
+    // Determine whether to perform an identifier or variable DOT operation
+    if (leftVal.type === constants.TYPE.IDENTIFIER) {
+        return dotTagIdentifier(leftVal, rightVal);
+    } else if (leftVal.type === constants.TYPE.VARIABLE) {
+        return dotTagVariable(leftVal, rightVal);
+    } else {
+        throw new AssertionError("Unable to perform a DOT operation on a " + leftVal.type + ", expected an identifier or variable.", leftVal.line, leftVal.col);
+    }
 }

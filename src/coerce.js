@@ -71,6 +71,15 @@ export function toIdentifier(token) {
 	return token;
 }
 
+// Coerce the given token to a variable or throw a TypeError if unsuccessful
+export function toVariable(token) {
+	if (token.type !== constants.TYPE.VARIABLE) {
+	    throw new TypeError(token.type, constants.TYPE.VARIABLE, token);
+    }
+    
+    return token;
+}
+
 // Coerce the given token to a tag or throw a TypeError if unsuccessful
 export function toTag(token) {
 	if (!token.isTag()) {

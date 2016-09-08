@@ -58,6 +58,7 @@ describe("The BlockIdentifier class", function () {
         	let identifier = new BlockIdentifier(new Token("test", constants.TYPE.IDENTIFIER));
             
             expect(identifier.getTag("valid")).toBe(tag);
+            expect(Scope.prototype.findTag).toHaveBeenCalledWith("valid");
         });
         
         it("which returns null if the requested tag is not in its scope", function () {

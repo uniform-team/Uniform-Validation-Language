@@ -3,11 +3,11 @@ import parser from "../../src.es5/parser.js";
 import constants from "../../src.es5/constants.js";
 import Token from "../../src.es5/token.js";
 import Scope from "../../src.es5/scope.js";
-import * as evaluator from "../../src.es5/evaluator.js";
+import root from "../../src.es5/root.js";
 import { ExpressionVariable } from "../../src.es5/variable.js";
 import { Identifier, ExpressionIdentifier } from "../../src.es5/identifier.js";
 import Tag from "../../src.es5/tag.js";
-import { ParsingError } from "../../src.es5/errors.js";
+import { ParsingError, TypeError } from "../../src.es5/errors.js";
 
 describe("The parser module", function () {
 	describe("parses valid inputs such as", function () {
@@ -393,52 +393,41 @@ describe("The parser module", function () {
 		};
 		
         it("such as a single identifier dependency", function () {
-            spyOn(evaluator, "equals").and.callFake(function (leftExpr, rightExpr) {
-                return () => new Token(leftExpr().value === rightExpr().value, constants.TYPE.BOOL)
-            });
-            
             setValue("inner", "foo");
             
-            parser.parse("outer { valid: inner equals \"bar\"; }");
+            parser.parse("valid: inner equals \"bar\";");
             
-            expect(Identifier.find("outer").getTag("valid").value).toEqualToken({
+            expect(root().valid).toEqualToken({
                 value: false,
                 type: constants.TYPE.BOOL
             });
             
             setValue("inner", "bar");
-            expect(Identifier.find("outer").getTag("valid").value).toEqualToken({
+            expect(root().valid).toEqualToken({
                 value: true,
                 type: constants.TYPE.BOOL
             });
         });
         
         it("such as multiple identifier dependencies", function () {
-            spyOn(evaluator, "equals").and.callFake(function (leftExpr, rightExpr) {
-                return () => new Token(leftExpr().value === rightExpr().value, constants.TYPE.BOOL)
-            });
-            spyOn(evaluator, "and").and.callFake(function (leftExpr, rightExpr) {
-                return () => new Token(leftExpr().value && rightExpr().value, constants.TYPE.BOOL);
-            });
-            
             setValue("inner1", "bar");
             setValue("inner2", "bar");
             
-            parser.parse("outer { valid: inner1 equals \"foo\" and inner2 equals \"bar\"; }");
+            parser.parse("valid: inner1 equals \"foo\" and inner2 equals \"bar\";");
             
-            expect(Identifier.find("outer").getTag("valid").value).toEqualToken({
+            expect(root().valid).toEqualToken({
                 value: false,
                 type: constants.TYPE.BOOL
             });
             
             setValue("inner1", "foo");
-            expect(Identifier.find("outer").getTag("valid").value).toEqualToken({
+            expect(root().valid).toEqualToken({
                 value: true,
                 type: constants.TYPE.BOOL
             });
             
             setValue("inner2", "foo");
-            expect(Identifier.find("outer").getTag("valid").value).toEqualToken({
+            expect(root().valid).toEqualToken({
                 value: false,
                 type: constants.TYPE.BOOL
             });
@@ -447,170 +436,279 @@ describe("The parser module", function () {
         it("such as a single tag dependency", function () {
         	parser.parse(
         	    "inner { valid: true; }"
-                + "outer { valid: inner.valid; }"
+                + "valid: inner.valid;"
             );
             
-            expect(Identifier.find("outer").getTag("valid").value).toEqualToken({
+            expect(root().valid).toEqualToken({
                 value: true,
                 type: constants.TYPE.BOOL
             });
         });
         
         it("such as a single tag dependency on top an identifier dependency", function () {
-            spyOn(evaluator, "equals").and.callFake(function (leftExpr, rightExpr) {
-                return () => new Token(leftExpr().value === rightExpr().value, constants.TYPE.BOOL)
-            });
-            
             setValue("test", "foo");
             
         	parser.parse(
         	    "inner { valid: test equals \"bar\"; }"
-                + "outer { valid: inner.valid; }"
+                + "valid: inner.valid;"
             );
             
-            expect(Identifier.find("outer").getTag("valid").value).toEqualToken({
+            expect(root().valid).toEqualToken({
                 value: false,
                 type: constants.TYPE.BOOL
             });
             
             setValue("test", "bar");
-            expect(Identifier.find("outer").getTag("valid").value).toEqualToken({
+            expect(root().valid).toEqualToken({
                 value: true,
                 type: constants.TYPE.BOOL
             });
         });
         
         it("such as multiple tag dependencies on top of identifier dependencies", function () {
-            spyOn(evaluator, "equals").and.callFake(function (leftExpr, rightExpr) {
-                return () => new Token(leftExpr().value === rightExpr().value, constants.TYPE.BOOL)
-            });
-            spyOn(evaluator, "and").and.callFake(function (leftExpr, rightExpr) {
-                return () => new Token(leftExpr().value && rightExpr().value, constants.TYPE.BOOL);
-            });
-    
             setValue("inner1", "bar");
             setValue("inner2", "bar");
             
             parser.parse(
                 "outer1 { valid: inner1 equals \"foo\"; }"
                 + "outer2 { valid: inner2 equals \"bar\"; }"
-                + "final { valid: outer1.valid and outer2.valid; }"
+                + "valid: outer1.valid and outer2.valid;"
             );
     
-            expect(Identifier.find("final").getTag("valid").value).toEqualToken({
+            expect(root().valid).toEqualToken({
                 value: false,
                 type: constants.TYPE.BOOL
             });
     
             setValue("inner1", "foo");
-            expect(Identifier.find("final").getTag("valid").value).toEqualToken({
+            expect(root().valid).toEqualToken({
                 value: true,
                 type: constants.TYPE.BOOL
             });
             
             setValue("inner2", "foo");
-            expect(Identifier.find("final").getTag("valid").value).toEqualToken({
+            expect(root().valid).toEqualToken({
                 value: false,
+                type: constants.TYPE.BOOL
+            });
+        });
+        
+        it("such as a nested tag dependency", function () {
+        	setValue("test", "foo");
+            
+            parser.parse(
+        	    "inner { valid: test equals \"bar\"; }"
+                + "outer { valid: inner.valid; }"
+                + "valid: outer.valid;"
+            );
+            
+            expect(root().valid).toEqualToken({
+                value: false,
+                type: constants.TYPE.BOOL
+            });
+            
+            setValue("test", "bar");
+            expect(root().valid).toEqualToken({
+                value: true,
                 type: constants.TYPE.BOOL
             });
         });
         
         it("such as a tag dependency declared later in the file", function () {
-            spyOn(evaluator, "equals").and.callFake(function (leftExpr, rightExpr) {
-                return () => new Token(leftExpr().value === rightExpr().value, constants.TYPE.BOOL)
-            });
-    
             setValue("inner", "foo");
     
             parser.parse(
-                "outer { valid: inner.valid; }"
+                "valid: inner.valid;"
                 + "inner { valid: true; }"
             );
             
-            expect(Identifier.find("outer").getTag("valid").value).toEqualToken({
+            expect(root().valid).toEqualToken({
                 value: true,
                 type: constants.TYPE.BOOL
             });
         });
         
-        it("such as a single variable dependency", function () {
+        it("such as a single expression variable dependency", function () {
         	parser.parse(
         	    "@test: true;"
-                + "final { valid: @test; }"
+                + "valid: @test;"
             );
             
-            expect(Identifier.find("final").getTag("valid").value).toEqualToken({
+            expect(root().valid).toEqualToken({
                 value: true,
                 type: constants.TYPE.BOOL
             });
         });
         
-        it("such as a single variable dependency on top of an identifier dependency", function () {
-            spyOn(evaluator, "equals").and.callFake(function (leftExpr, rightExpr) {
-                return () => new Token(leftExpr().value === rightExpr().value, constants.TYPE.BOOL)
-            });
-    
+        it("such as a single expression variable dependency on top of an identifier dependency", function () {
             setValue("inner", "foo");
             
         	parser.parse(
         	    "@test: inner equals \"bar\";"
-                + "final { valid: @test; }"
+                + "valid: @test;"
             );
             
-            expect(Identifier.find("final").getTag("valid").value).toEqualToken({
+            expect(root().valid).toEqualToken({
                 value: false,
                 type: constants.TYPE.BOOL
             });
             
             setValue("inner", "bar");
-            expect(Identifier.find("final").getTag("valid").value).toEqualToken({
+            expect(root().valid).toEqualToken({
                 value: true,
                 type: constants.TYPE.BOOL
             });
         });
         
-        it("such as multiple variable dependencies on top of identifier dependencies", function () {
-            spyOn(evaluator, "equals").and.callFake(function (leftExpr, rightExpr) {
-                return () => new Token(leftExpr().value === rightExpr().value, constants.TYPE.BOOL)
-            });
-            spyOn(evaluator, "and").and.callFake(function (leftExpr, rightExpr) {
-                return () => new Token(leftExpr().value && rightExpr().value, constants.TYPE.BOOL);
-            });
-    
+        it("such as multiple expression variable dependencies on top of identifier dependencies", function () {
             setValue("inner1", "foo");
             setValue("inner2", "foo");
             
             parser.parse(
                 "@outer1: inner1 equals \"bar\";"
                 + "@outer2: inner2 equals \"foo\";"
-                + "final { valid: @outer1 and @outer2; }"
+                + "valid: @outer1 and @outer2;"
             );
     
-            expect(Identifier.find("final").getTag("valid").value).toEqualToken({
+            expect(root().valid).toEqualToken({
                 value: false,
                 type: constants.TYPE.BOOL
             });
     
             setValue("inner1", "bar");
-            expect(Identifier.find("final").getTag("valid").value).toEqualToken({
+            expect(root().valid).toEqualToken({
                 value: true,
                 type: constants.TYPE.BOOL
             });
     
             setValue("inner2", "bar");
-            expect(Identifier.find("final").getTag("valid").value).toEqualToken({
+            expect(root().valid).toEqualToken({
                 value: false,
                 type: constants.TYPE.BOOL
             });
         });
         
-        it("such as a variable dependency declared later in the file", function () {
+        it("such as a nested expression variable dependency", function () {
+            setValue("test", "foo");
+            
+        	parser.parse(
+        	    "@inner: test equals \"bar\";"
+                + "@outer: @inner;"
+                + "valid: @outer;"
+            );
+            
+            expect(root().valid).toEqualToken({
+                value: false,
+                type: constants.TYPE.BOOL
+            });
+            
+            setValue("test", "bar");
+            expect(root().valid).toEqualToken({
+                value: true,
+                type: constants.TYPE.BOOL
+            });
+        });
+        
+        it("such as an expression variable dependency declared later in the file", function () {
             parser.parse(
-                "final { valid: @test; }"
+                "valid: @test;"
                 + "@test: true;"
             );
     
-            expect(Identifier.find("final").getTag("valid").value).toEqualToken({
+            expect(root().valid).toEqualToken({
+                value: true,
+                type: constants.TYPE.BOOL
+            });
+        });
+		
+		it("such as a single block variable dependency", function () {
+			parser.parse(
+			    "@test { valid: true; }"
+                + "valid: @test.valid;"
+            );
+            
+            expect(root().valid).toEqualToken({
+                value: true,
+                type: constants.TYPE.BOOL
+            });
+		});
+        
+        it("such as a single block variable dependency on top of an identifier dependency", function () {
+            setValue("inner", "bar");
+            
+        	parser.parse(
+        	    "@outer { valid: inner equals \"foo\"; }"
+                + "valid: @outer.valid;"
+            );
+            
+            expect(root().valid).toEqualToken({
+                value: false,
+                type: constants.TYPE.BOOL
+            });
+            
+            setValue("inner", "foo");
+            expect(root().valid).toEqualToken({
+                value: true,
+                type: constants.TYPE.BOOL
+            });
+        });
+        
+        it("such as multiple block variable dependencies on top of identifier dependencies", function () {
+            setValue("inner1", "foo");
+            setValue("inner2", "foo");
+    
+            parser.parse(
+                "@outer1 { valid: inner1 equals \"bar\"; }"
+                + "@outer2 { valid: inner2 equals \"foo\"; }"
+                + "valid: @outer1.valid and @outer2.valid;"
+            );
+    
+            expect(root().valid).toEqualToken({
+                value: false,
+                type: constants.TYPE.BOOL
+            });
+    
+            setValue("inner1", "bar");
+            expect(root().valid).toEqualToken({
+                value: true,
+                type: constants.TYPE.BOOL
+            });
+            
+            setValue("inner2", "bar");
+            expect(root().valid).toEqualToken({
+                value: false,
+                type: constants.TYPE.BOOL
+            });
+        });
+        
+        it("such as a nested block variable dependency", function () {
+        	setValue("test", "foo");
+            
+            parser.parse(
+        	    "@inner { valid: test equals \"bar\"; }"
+        	    + "@outer { valid: @inner.valid; }"
+                + "valid: @outer.valid;"
+            );
+            
+            expect(root().valid).toEqualToken({
+                value: false,
+                type: constants.TYPE.BOOL
+            });
+            
+            setValue("test", "bar");
+            expect(root().valid).toEqualToken({
+                value: true,
+                type: constants.TYPE.BOOL
+            });
+        });
+        
+        it("such as a block variable dependency declared later in the file", function () {
+            parser.parse(
+                "valid: @test.valid;"
+                + "@test { valid: true; }"
+            );
+    
+            expect(root().valid).toEqualToken({
                 value: true,
                 type: constants.TYPE.BOOL
             });
@@ -618,6 +716,10 @@ describe("The parser module", function () {
 	});
 	
 	describe("throws an error when given invalid expressions such as", function () {
+	    beforeEach(function () {
+	        Scope.reset();
+        });
+	    
 		it("following a block with a non-block and non-statement", function () {
 			expect(() => parser.parse("test { } true")).toThrowUfmError(ParsingError);
 		});
@@ -637,5 +739,19 @@ describe("The parser module", function () {
 		it("using a non-operand as an operand", function () {
 			expect(() => parser.parse("result: any valid;")).toThrowUfmError(ParsingError);
 		});
+        
+        it("using the DOT operator on an expression variable", function () {
+        	expect(() => parser.parse(
+        	    "@test: \"foo\";"
+                + "valid: @test.valid;"
+            )).toThrowUfmError(TypeError);
+        });
+        
+        it("using a block variable directly", function () {
+        	expect(() => parser.parse(
+        	    "@test { valid: true; }"
+                + "valid: @test;"
+            )).toThrowUfmError(TypeError);
+        });
 	});
 });

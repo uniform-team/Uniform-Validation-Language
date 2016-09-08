@@ -1,5 +1,6 @@
 import constants from "./constants.js";
-import { ParsingError as ParsingErrorClass, AssertionError as AssertionErrorClass, UndeclaredError as UndeclaredErrorClass, NotImplementedError } from "./errors.js";
+import { ParsingError as ParsingErrorClass, AssertionError as AssertionErrorClass, UndeclaredError as UndeclaredErrorClass,
+    TypeError as TypeErrorClass, NotImplementedError } from "./errors.js";
 import tokenizer from "./lexer.js";
 import { Identifier, BlockIdentifier, ExpressionIdentifier } from "./identifier.js";
 import { BlockVariable, ExpressionVariable } from "./variable.js";
@@ -40,23 +41,25 @@ export default {
 		
 		let currentToken = tokenize();
 		
-		// Wrap the ParsingError class with one which automatically inserts the current line number and column
+		// Wrap the error classes to automatically insert the current line number and column
 		class ParsingError extends ParsingErrorClass {
 			constructor(msgOrError) {
 				super(msgOrError, currentToken.line, currentToken.col);
 			}
 		}
-		
-		// Wrap the AssertionError class with one which automatically inserts the current line number and column
 		class AssertionError extends AssertionErrorClass {
 			constructor(msgOrError) {
 				super(msgOrError, currentToken.line, currentToken.col);
 			}
 		}
-		
 		class UndeclaredError extends UndeclaredErrorClass {
 		    constructor(msgOrError) {
 		        super(msgOrError, currentToken.line, currentToken.col);
+            }
+        }
+        class TypeError extends TypeErrorClass {
+            constructor(msgOrError) {
+                super(msgOrError, currentToken.line, currentToken.col);
             }
         }
 		
@@ -155,9 +158,12 @@ export default {
                     blockOrStatements();
                 });
 			} else if (token.type === constants.TYPE.VARIABLE) {
-				Scope.thisScope.insert(new BlockVariable(token, function() {
-					blockOrStatements();
-				}));
+				let variable = new BlockVariable(token);
+				
+                Scope.thisScope.insert(variable);
+				variable.scope.push(function () {
+				    blockOrStatements();
+                });
 			} else {
 				throw new AssertionError("Expected token identifier or variable, but got " + token.value);
 			}
@@ -460,17 +466,52 @@ export default {
             let scope = Scope.thisScope;
             let varObj;
             
-            defer(function () {
-                varObj = scope.lookupVar(varToken.value);
-                if (!varObj) throw new UndeclaredError("Variable " + varToken.value + " was not declared.");
+            if (currentToken.value !== constants.OPERATOR.DOT) {
+                // Usage of an expression variable, meaning the owner is dependent on it directly
+                // ex. valid: @make;
     
-                // Set the owner as dependent on the variable
-                varObj.addDependent(owner);
-                owner.addDependee(varObj);
+                // Defer adding the dependency until AFTER the entire file is parsed
+                // as expression variables are not inserted into the scope until after their expressions are parsed
+                defer(function () {
+                    varObj = scope.lookupVar(varToken.value);
+                    if (!varObj) throw new UndeclaredError("Variable @" + varToken.value + " was not declared");
+                    if (!(varObj instanceof ExpressionVariable)) throw new TypeError("Variable @" + varToken.value + " is a block, not an expression.");
+        
+                    // Set the owner as dependent on the variable
+                    varObj.addDependent(owner);
+                    owner.addDependee(varObj);
+                });
+    
+                // Return the value of the variable as the result
+                return () => varObj.value;
+            }
+            
+            // Usage of a block variable, meaning the owner is dependent on a child tag
+            // ex. valid: @make.valid;
+            match(); // .
+            if (!currentToken.isTag()) {
+                throw new ParsingError("Expected variable.tag, but got @" + varToken.value + "." + currentToken.value);
+            }
+            let tag = match(); // <tag>
+            
+            // Defer adding the dependency until AFTER the entire file is parsed
+            // In case the variable / tag have not been parsed yet
+            defer(function () {
+                // Get the variable referenced
+                let varObj = Scope.thisScope.lookupVar(varToken.value);
+                if (!varObj) throw new UndeclaredError("Variable @" + varToken.value + " was not declared");
+                if (!(varObj instanceof BlockVariable)) throw new TypeError("Variable @" + varToken.value + " is an expression, not a block");
+                
+                // Get the tag from the variable
+                let tagObj = varObj.getTag(tag.value);
+                if (!tagObj) throw new UndeclaredError("Tag @" + varToken.value + "." + tag.value + " was not declared.");
+                
+                // Set the owner as dependent on the found tag
+                tagObj.addDependent(owner);
+                owner.addDependee(tagObj);
             });
             
-            // Return the value of the variable as the result
-            return () => varObj.value;
+            return evaluator.dotTag(varToken, tag);
         }
 		
 		// <object> -> { <keyValuePairs> }

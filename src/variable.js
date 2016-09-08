@@ -25,6 +25,12 @@ export class BlockVariable extends Variable {
         super(token);
         this.scope = new Scope(cb);
     }
+    
+    // Get the tag with the given name under this BlockVariable's scope
+    getTag(tagName) {
+        // Find the tag in the contained scope
+        return this.scope.findTag(tagName);
+    }
 }
 
 /**

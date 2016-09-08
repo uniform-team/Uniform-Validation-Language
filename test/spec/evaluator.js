@@ -2,7 +2,9 @@ import * as evaluator from "../../src.es5/evaluator.js";
 
 import constants from "../../src.es5/constants.js";
 import Token from "../../src.es5/token.js";
+import Scope from "../../src.es5/scope.js";
 import { Identifier } from "../../src.es5/identifier.js";
+import { BlockVariable } from "../../src.es5/variable.js";
 import { TypeError, UndeclaredError } from "../../src.es5/errors.js";
 
 describe("The evaluator module", function () {
@@ -472,7 +474,7 @@ describe("The evaluator module", function () {
 			expect(evaluator.dotTag).toEqual(jasmine.any(Function));
 		});
 
-        it("which performs the DOT operation on a identifier and its tag", function () {
+        it("which performs the DOT operation on an identifier and its tag", function () {
             let tag = { value: new Token(true, constants.TYPE.BOOL) };
             let identifier = { getTag: jasmine.createSpy("getTag").and.returnValue(tag) };
             spyOn(Identifier, "find").and.returnValue(identifier);
@@ -492,12 +494,43 @@ describe("The evaluator module", function () {
             expect(evaluator.dotTag(new Token("test", constants.TYPE.IDENTIFIER), new Token("valid", constants.TYPE.KEYWORD))).toThrowUfmError(UndeclaredError);
         });
 
-        it("which throws an UndeclaredError when given an undeclared tag", function () {
+        it("which throws an UndeclaredError when given an undeclared tag on the given identifier", function () {
             spyOn(Identifier, "find").and.returnValue({
                 getTag: jasmine.createSpy("getTag").and.returnValue(null)
             });
 
             expect(evaluator.dotTag(new Token("test", constants.TYPE.IDENTIFIER), new Token("valid", constants.TYPE.KEYWORD))).toThrowUfmError(UndeclaredError);
+        });
+		
+		it("which performs the DOT operation on a variable and its tag", function () {
+			let tag = { value: new Token(true, constants.TYPE.BOOL) };
+			spyOn(Scope.prototype, "lookupVar").and.returnValue(new BlockVariable(new Token("test", constants.TYPE.VARIABLE)));
+            spyOn(BlockVariable.prototype, "getTag").and.returnValue(tag);
+			
+			expect(evaluator.dotTag(new Token("test", constants.TYPE.VARIABLE), new Token("valid", constants.TYPE.KEYWORD))()).toEqualToken({
+				value: true,
+				type: constants.TYPE.BOOL
+			});
+			
+			expect(Scope.prototype.lookupVar).toHaveBeenCalledWith("test");
+			expect(BlockVariable.prototype.getTag).toHaveBeenCalledWith("valid");
+		});
+		
+		it("which throws an UndeclaredError when given an undeclared variable", function () {
+			spyOn(Scope.prototype, "lookupVar").and.returnValue(null);
+			
+			expect(evaluator.dotTag(new Token("test", constants.TYPE.VARIABLE), new Token("valid", constants.TYPE.KEYWORD))).toThrowUfmError(UndeclaredError);
+		});
+		
+		it("which throws an UndeclaredError when given an undeclared tag on the given variable", function () {
+			spyOn(Scope.prototype, "lookupVar").and.returnValue(new BlockVariable(new Token("test", constants.TYPE.VARIABLE)));
+            spyOn(BlockVariable.prototype, "getTag").and.returnValue(null);
+			
+			expect(evaluator.dotTag(new Token("test", constants.TYPE.VARIABLE), new Token("valid", constants.TYPE.KEYWORD))).toThrowUfmError(UndeclaredError);
+		});
+        
+        it("which throws an AssertionError if not given an identifier or variable", function () {
+        	
         });
 	});
 });
