@@ -8,7 +8,9 @@ globalObj.$ = jasmine.createSpy("jQuery").and.callFake(function (sel) {
 
 // jQuery member functions
 globalObj.$.prototype = {
+	attr: () => { },
 	val: () => { },
+    is: () => { },
 	on: () => { },
     trigger: () => { }
 };

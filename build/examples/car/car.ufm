@@ -1,23 +1,20 @@
 @filled: /"."/;
 @year: /"^[0-9]{4}$"/;
 
-valid: @carForm.valid;
+valid: not hasCar or @carForm.valid;
 
 @carForm {
-    valid: @makeValid and @modelValid and @yearValid;
+    valid: make.valid and model.valid and year.valid;
 
-    @makeValid: make matches @filled;
     make {
-        valid: @makeValid;
+        valid: make matches @filled;
     }
 
-    @modelValid: model matches @filled;
     model {
-        valid: @modelValid;
+        valid: model matches @filled;
     }
 
-    @yearValid: year matches @year;
     year {
-        valid: @yearValid;
+        valid: year matches @year;
     }
 }

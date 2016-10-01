@@ -81,9 +81,13 @@ describe("The ExpressionIdentifier class", function () {
         let onChange = null;
         spyOn($.prototype, "on").and.callFake((evt, sel, cb) => onChange = cb);
         
-        spyOn($.prototype, "val").and.returnValue("foo");
+        let dataToken = new Token("foo", constants.TYPE.STRING);
+        spyOn(ExpressionIdentifier.prototype, "getToken").and.returnValue(dataToken);
         
-    	let identifier = new ExpressionIdentifier(new Token("test", constants.TYPE.IDENTIFIER));
+        let token = new Token("test", constants.TYPE.IDENTIFIER);
+    	let identifier = new ExpressionIdentifier(token);
+        
+        expect(identifier.token).toBe(token);
         
         // Test that external functions were called correctly
         expect(ExpressionIdentifier.prototype.initDependable).toHaveBeenCalledWith(jasmine.any(Function));
@@ -107,4 +111,49 @@ describe("The ExpressionIdentifier class", function () {
 		
 		expect(Dependable.instanceof(new ExpressionIdentifier(new Token("test", constants.TYPE.IDENTIFIER)))).toBe(true);
 	});
+    
+    describe("exposes the \"getToken\" member", function () {
+    	it("as a function", function () {
+    		expect(ExpressionIdentifier.prototype.getToken).toEqual(jasmine.any(Function));
+    	});
+    
+        it("returns the identifier's $(...).is(\":checked\") if it is a checkbox", function () {
+            let identifier = {
+                token: new Token("test", constants.TYPE.IDENTIFIER)
+            };
+            
+            spyOn($.prototype, "attr").and.returnValue("checkbox");
+            spyOn($.prototype, "is").and.returnValue(true);
+            
+            // Execute getToken() using the stub to avoid complications from using constructor
+            let token = ExpressionIdentifier.prototype.getToken.apply(identifier);
+            
+            expect(token).toEqualToken({
+                value: true,
+                type: constants.TYPE.BOOL
+            });
+            
+            expect($.prototype.attr).toHaveBeenCalledWith("type");
+            expect($.prototype.is).toHaveBeenCalledWith(":checked");
+        });
+        
+        it("returns the identifier's $(...).val() if it is not a checkbox", function () {
+            let identifier = {
+                token: new Token("test", constants.TYPE.IDENTIFIER)
+            };
+    
+            spyOn($.prototype, "attr").and.returnValue("text");
+            spyOn($.prototype, "val").and.returnValue("foo");
+    
+            // Execute getToken() using the stub to avoid complications from using constructor
+            let token = ExpressionIdentifier.prototype.getToken.apply(identifier);
+    
+            expect(token).toEqualToken({
+                value: "foo",
+                type: constants.TYPE.STRING
+            });
+    
+            expect($.prototype.attr).toHaveBeenCalledWith("type");
+        });
+    });
 });

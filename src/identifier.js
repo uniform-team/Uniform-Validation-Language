@@ -74,13 +74,26 @@ export class ExpressionIdentifier extends Dependable(Identifier) {
     // Construct an ExpressionIdentifier, initializing its dependency system
 	constructor(token) {
 		super(token);
-		
+        this.token = token;
+        
         // Initialize the dependable with an expression which pulls the identifier's value from the DOM tree
-		let selector = token.getSelector();
-        this.initDependable(() => new Token($(selector).val(), constants.TYPE.STRING, token.line, token.col));
+		let self = this;
+        this.initDependable(() => self.getToken());
         this.update();
 		
         // When the DOM element changes, update this identifier
-		$(document).on("change", selector, () => this.update());
+		$(document).on("change", token.getSelector(), () => this.update());
+	}
+	
+	// Return a token containing this identifier's value and type
+	getToken() {
+		let $el = $(this.token.getSelector());
+	    
+        switch ($el.attr("type")) {
+        case "checkbox":
+            return new Token($el.is(":checked"), constants.TYPE.BOOL, this.line, this.col);
+        default:
+            return new Token($el.val(), constants.TYPE.STRING, this.line, this.col);
+        }
 	}
 }
