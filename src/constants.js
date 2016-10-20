@@ -42,7 +42,11 @@ export default {
 		REGEX: "/",
 		DOT: ".",
 		ALL: "all",
-		ANY: "any"
+		ANY: "any",
+		IF: "if",
+		THEN: "then",
+		ELSE: "else",
+		END: "end"
 	},
 	TAG: {
 		VALID: "valid",

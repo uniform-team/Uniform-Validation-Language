@@ -358,14 +358,47 @@ export default {
 			else return expr;
 		}
 		
-		// <anyAll> -> any | all | ø <dot>
+		// <anyAll> -> any | all | ø <ifBlock>
 		function expressionAnyAll(owner) {
 			if (currentToken.value === constants.OPERATOR.ANY
 					|| currentToken.value === constants.OPERATOR.ALL) {
 				match(); // any | all
 			}
 			
-			return expressionDot(owner);
+			return expressionIfBlock(owner);
+		}
+
+		// <ifBlock> -> if <expr> then <expr> <elseIf> else <expr> end | <dot>
+		// <elseIf> -> else if <expr> then <expr> <elseIf> | ø
+		function expressionIfBlock(owner) {
+			if (currentToken.value === constants.OPERATOR.IF) {
+				let conditionExprs = [ ];
+				let resultExprs = [ ];
+
+				// Parse if expression
+				match(); // if
+				conditionExprs.push(expression(owner));
+				match(constants.OPERATOR.THEN);
+				resultExprs.push(expression(owner));
+
+				// Parse all else-if expressions
+				match(constants.OPERATOR.ELSE);
+				while (currentToken.value === constants.OPERATOR.IF) {
+					match(); // if
+					conditionExprs.push(expression(owner));
+					match(constants.OPERATOR.THEN);
+					resultExprs.push(expression(owner));
+					match(constants.OPERATOR.ELSE);
+				}
+
+				// Parse else expression
+				let elseResultExpr = expression(owner);
+				match(constants.OPERATOR.END);
+
+				return evaluator.ifStmt(conditionExprs, resultExprs, elseResultExpr);
+			} else {
+				return expressionDot(owner);
+			}
 		}
 		
 		// <dot> -> <paren> <dot_>

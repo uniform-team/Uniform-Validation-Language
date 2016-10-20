@@ -184,6 +184,66 @@ describe("The parser module", function () {
 		});
 		
 		describe("with miscellaneous operators such as", function () {
+			describe("if statements", function () {
+                it("satisfying the if condition", function () {
+                    expect(parser.parse(
+                        "if 1 equals 1 then 1"
+                        + "else if 2 equals 3 then 2"
+                        + "else if 3 equals 4 then 3"
+                        + "else 4 end"
+                    )()).toEqualToken({
+                        value: 1,
+                        type: constants.TYPE.NUMBER
+                    });
+                });
+                
+                it("satisfying an else-if condition", function () {
+                    expect(parser.parse(
+                        "if 1 equals 2 then 1"
+                        + "else if 2 equals 3 then 2"
+                        + "else if 3 equals 3 then 3"
+                        + "else 4 end"
+                    )()).toEqualToken({
+                        value: 3,
+                        type: constants.TYPE.NUMBER
+                    });
+                });
+                
+                it("satisfying the else condition", function () {
+                    expect(parser.parse(
+                        "if 1 equals 2 then 1"
+                        + "else if 2 equals 3 then 2"
+                        + "else if 3 equals 4 then 3"
+                        + "else 4 end"
+                    )()).toEqualToken({
+                        value: 4,
+                        type: constants.TYPE.NUMBER
+                    });
+                });
+                
+                describe("with no else-if clauses", function () {
+                    it("satisfying the if condition", function () {
+                        expect(parser.parse(
+                            "if 1 equals 1 then 1"
+                            + "else 2 end"
+                        )()).toEqualToken({
+                            value: 1,
+                            type: constants.TYPE.NUMBER
+                        });
+                    });
+                    
+                    it("satisfying the else condition", function () {
+                        expect(parser.parse(
+                            "if 1 equals 2 then 1"
+                            + "else 2 end"
+                        )()).toEqualToken({
+                            value: 2,
+                            type: constants.TYPE.NUMBER
+                        });
+                    });
+                });
+			});
+			
 			it("dotObject", function () {
 				expect(parser.parse("{ foo: \"bar\"; }.foo")()).toEqualToken({
 					value: "bar",
@@ -735,6 +795,22 @@ describe("The parser module", function () {
 		it("chaining and / all", function () {
 			expect(() => parser.parse("result: any all @array;")).toThrowUfmError(ParsingError);
 		});
+        
+        it("using a non-boolean if condition", function () {
+            expect(() => parser.parse("valid: if 1 then 1 else 2 end;")).toThrowUfmError(TypeError);
+        });
+        
+        it("using an if without an else", function () {
+            expect(() => parser.parse("valid: if true then 1 end;")).toThrowUfmError(ParsingError);
+        });
+        
+        it("using an if with else-ifs but no else", function () {
+            expect(() => parser.parse("valid:"
+                + " if 1 equals 1 then 1"
+                + " else if 2 equals 2 then 2"
+                + "end"
+            + ";")).toThrowUfmError(ParsingError);
+        });
 		
 		it("using a non-operand as an operand", function () {
 			expect(() => parser.parse("result: any valid;")).toThrowUfmError(ParsingError);

@@ -206,6 +206,14 @@ export default function (input) {
 						return new Token(constants.OPERATOR.ALL, constants.TYPE.KEYWORD);
 					case constants.OPERATOR.ANY:
 						return new Token(constants.OPERATOR.ANY, constants.TYPE.KEYWORD);
+					case constants.OPERATOR.IF:
+						return new Token(constants.OPERATOR.IF, constants.TYPE.KEYWORD);
+					case constants.OPERATOR.THEN:
+						return new Token(constants.OPERATOR.THEN, constants.TYPE.KEYWORD);
+					case constants.OPERATOR.ELSE:
+						return new Token(constants.OPERATOR.ELSE, constants.TYPE.KEYWORD);
+					case constants.OPERATOR.END:
+						return new Token(constants.OPERATOR.END, constants.TYPE.KEYWORD);
 					default:
 						return new Token(tokenBuffer, constants.TYPE.IDENTIFIER);
 				}

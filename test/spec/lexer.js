@@ -150,6 +150,22 @@ describe("The lexer module", function () {
 			it("any", function () {
 				assertToken("any", constants.OPERATOR.ANY, constants.TYPE.KEYWORD);
 			});
+
+			it("if", function () {
+				assertToken("if", constants.OPERATOR.IF, constants.TYPE.KEYWORD);
+			});
+
+			it("then", function () {
+			    assertToken("then", constants.OPERATOR.THEN, constants.TYPE.KEYWORD);
+			});
+
+			it("else", function () {
+				assertToken("else", constants.OPERATOR.ELSE, constants.TYPE.KEYWORD);
+			});
+
+			it("end", function () {
+				assertToken("end", constants.OPERATOR.END, constants.TYPE.KEYWORD);
+			});
 		});
 		
 		describe("operators like", function () {

@@ -164,6 +164,25 @@ export function neg(expr) {
 	};
 }
 
+// Export IF-ELSEIF-ELSE operation
+export function ifStmt(conditionExprs, resultExprs, elseResultExpr) {
+	return function () {
+		// Loop over each possibility
+		for (let i = 0; i < conditionExprs.length; ++i) {
+			// Evaluate the condition
+			let condition = coerce.toBool(conditionExprs[i]());
+			
+			// If the condition is true, return its associated result
+			if (condition.value === true) {
+				return resultExprs[i]();
+			}
+		}
+
+		// No condition was true, use the else result
+		return elseResultExpr();
+	};
+}
+
 // Export DOT operation for objects
 export function dotObject(leftExpr, rightVal) {
 	return function () {

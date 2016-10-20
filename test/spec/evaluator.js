@@ -447,6 +447,57 @@ describe("The evaluator module", function () {
 		});
 	});
 	
+	describe("exposes the \"ifStmt\" member", function () {
+	    it("as a function", function () {
+	        expect(evaluator.ifStmt).toEqual(jasmine.any(Function));
+	    });
+        
+        it("which selects the result associated with the first true condition", function () {
+            let result = new Token(0, constants.TYPE.NUMBER);
+            let conditionExprs = [
+                () => new Token(false, constants.TYPE.BOOL),
+                () => new Token(true, constants.TYPE.BOOL),
+                () => new Token(true, constants.TYPE.BOOL)
+            ];
+            let resultExprs = [
+                () => new Token(1, constants.TYPE.NUMBER),
+                () => result,
+                () => new Token(2, constants.TYPE.NUMBER)
+            ];
+            let elseResultExpr = () => new Token(3, constants.TYPE.NUMBER);
+            
+            expect(evaluator.ifStmt(conditionExprs, resultExprs, elseResultExpr)()).toEqualToken(result);
+        });
+        
+        it("which selects the else result if no condition is true", function () {
+            let result = new Token(0, constants.TYPE.NUMBER);
+            let conditionExprs = [
+                // No true condition
+                () => new Token(false, constants.TYPE.BOOL),
+                () => new Token(false, constants.TYPE.BOOL)
+            ];
+            let resultExprs = [
+                () => new Token(1, constants.TYPE.NUMBER),
+                () => new Token(2, constants.TYPE.NUMBER)
+            ];
+            let elseResultExpr = () => result;
+            
+            expect(evaluator.ifStmt(conditionExprs, resultExprs, elseResultExpr)()).toEqualToken(result);
+        });
+        
+        it("which throws a TypeError when given an invalid condition type", function () {
+            let conditionExprs = [
+                () => new Token(1, constants.TYPE.NUMBER) // Not a boolean
+            ];
+            let resultExprs = [
+                () => new Token(2, constants.TYPE.NUMBER)
+            ];
+            let elseResultExpr = () => new Token(3, constants.TYPE.NUMBER);
+            
+            expect(evaluator.ifStmt(conditionExprs, resultExprs, elseResultExpr)).toThrowUfmError(TypeError);
+        });
+	});
+	
 	describe("exposes the \"dotObject\" member", function () {
 		it("as a function", function () {
 			expect(evaluator.dotObject).toEqual(jasmine.any(Function));
