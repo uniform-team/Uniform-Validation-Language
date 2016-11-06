@@ -16,21 +16,19 @@ export default {
 		
 		// Stack for holding tokens retrieved via lookahead()
 		let tokenStack = [];
+        
+        // Load the input and generate a tokenizer
+        let getToken = tokenizer(input);
 		
 		// Wrapper for the tokenize function to allow lookaheads
-		let tokenize = (function () {
-			// Load the input and generate a tokenizer
-			let getToken = tokenizer(input);
-			
-			// Return actual tokenize function
-			return function () {
-				// Check if a token was looked ahead previous and use it
-				if (tokenStack.length > 0) return tokenStack.shift();
-				
-				// No token from previous lookahead, invoke lexer
-				return getToken();
-			};
-		}());
+		let tokenize = function () {
+            // Check if a token was looked ahead previous and use it
+            if (tokenStack.length > 0) return tokenStack.shift();
+            
+            // No token from previous lookahead, invoke lexer
+            return getToken();
+        };
+        tokenize.hadNewlineBeforeLastToken = getToken.hadNewlineBeforeLastToken;
 		
 		// Return the next token without altering the currentToken
 		function lookahead() {
@@ -62,6 +60,11 @@ export default {
                 super(msgOrError, currentToken.line, currentToken.col);
             }
         }
+        
+        // Warn the developer of a possible issue they should be aware of
+        function warn(msg) {
+            console.warn("Warning (line %s, col %s): %s", currentToken.line, currentToken.col, msg);
+        }
 		
 		// Checks the expected type against the currentToken type
 		// If they match, the next token is loaded into the currentToken and the matched token is returned
@@ -86,7 +89,12 @@ export default {
 		}
 		
 		// Match the currentToken unconditionally and return the matched token
-		function match() {
+		function match(unused) {
+            // Easy mistake to accidentally use match() instead of matchValue() or matchType()
+            // Check for this case and throw an error
+            if (unused) throw new AssertionError("Passed unused argument to match(), "
+                    + "did you mean to use matchValue() or matchType()?");
+            
 			let tempCurrentToken = currentToken;
 			currentToken = tokenize();
 			return tempCurrentToken;
@@ -369,7 +377,7 @@ export default {
 		}
 
 		// <ifBlock> -> if <expr> then <expr> <elseIf> else <expr> end | <dot>
-		// <elseIf> -> else if <expr> then <expr> <elseIf> | ø
+		// <elseIf> -> elif <expr> then <expr> <elseIf> | ø
 		function expressionIfBlock(owner) {
 			if (currentToken.value === constants.OPERATOR.IF) {
 				let conditionExprs = [ ];
@@ -378,22 +386,26 @@ export default {
 				// Parse if expression
 				match(); // if
 				conditionExprs.push(expression(owner));
-				match(constants.OPERATOR.THEN);
+				matchValue(constants.OPERATOR.THEN);
 				resultExprs.push(expression(owner));
 
-				// Parse all else-if expressions
-				match(constants.OPERATOR.ELSE);
-				while (currentToken.value === constants.OPERATOR.IF) {
-					match(); // if
+				// Parse all elif expressions
+				while (currentToken.value === constants.OPERATOR.ELIF) {
+					match(); // elif
 					conditionExprs.push(expression(owner));
-					match(constants.OPERATOR.THEN);
+					matchValue(constants.OPERATOR.THEN);
 					resultExprs.push(expression(owner));
-					match(constants.OPERATOR.ELSE);
 				}
 
 				// Parse else expression
+				matchValue(constants.OPERATOR.ELSE);
+                if (currentToken.value === constants.OPERATOR.IF && !tokenize.hadNewlineBeforeLastToken()) {
+                    // Warn developer that they tried to do "else if" rather than "elif"
+                    warn("Used \"else\" and \"if\" on the same line. Did you mean to use \"elif\"?"
+                            + " If not, consider putting the \"if\" on a new line with an indent for clarity.");
+                }
 				let elseResultExpr = expression(owner);
-				match(constants.OPERATOR.END);
+				matchValue(constants.OPERATOR.END);
 
 				return evaluator.ifStmt(conditionExprs, resultExprs, elseResultExpr);
 			} else {

@@ -45,6 +45,7 @@ export default {
 		ANY: "any",
 		IF: "if",
 		THEN: "then",
+		ELIF: "elif",
 		ELSE: "else",
 		END: "end"
 	},

@@ -158,6 +158,10 @@ describe("The lexer module", function () {
 			it("then", function () {
 			    assertToken("then", constants.OPERATOR.THEN, constants.TYPE.KEYWORD);
 			});
+			
+			it("elif", function () {
+			    assertToken("elif", constants.OPERATOR.ELIF, constants.TYPE.KEYWORD);
+			});
 
 			it("else", function () {
 				assertToken("else", constants.OPERATOR.ELSE, constants.TYPE.KEYWORD);
@@ -277,4 +281,29 @@ describe("The lexer module", function () {
 			});
 		});
 	});
+    
+    describe("exposes the \"hadNewlineBeforeLastToken\" member", function () {
+        it("as a function", function () {
+            expect(tokenizer().hadNewlineBeforeLastToken).toEqual(jasmine.any(Function));
+        });
+        
+        it("which returns false if no token has yet been parsed", function () {
+            let tokenize = tokenizer("test");
+            expect(tokenize.hadNewlineBeforeLastToken()).toBe(false);
+        });
+        
+        it("which returns true if the last token returned had a newline before the previous token", function () {
+            let tokenize = tokenizer("else \n if");
+            tokenize(); // else
+            tokenize(); // if
+            expect(tokenize.hadNewlineBeforeLastToken()).toBe(true);
+        });
+        
+        it("which returns false if the last token returned did not have a newline before the previous token", function () {
+            let tokenize = tokenizer("else if");
+            tokenize(); // else
+            tokenize(); // if
+            expect(tokenize.hadNewlineBeforeLastToken()).toBe(false);
+        });
+    });
 });

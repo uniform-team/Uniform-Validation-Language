@@ -187,9 +187,9 @@ describe("The parser module", function () {
 			describe("if statements", function () {
                 it("satisfying the if condition", function () {
                     expect(parser.parse(
-                        "if 1 equals 1 then 1"
-                        + "else if 2 equals 3 then 2"
-                        + "else if 3 equals 4 then 3"
+                        "if 1 equals 1 then 1\n"
+                        + "elif 2 equals 3 then 2\n"
+                        + "elif 3 equals 4 then 3\n"
                         + "else 4 end"
                     )()).toEqualToken({
                         value: 1,
@@ -199,9 +199,9 @@ describe("The parser module", function () {
                 
                 it("satisfying an else-if condition", function () {
                     expect(parser.parse(
-                        "if 1 equals 2 then 1"
-                        + "else if 2 equals 3 then 2"
-                        + "else if 3 equals 3 then 3"
+                        "if 1 equals 2 then 1\n"
+                        + "elif 2 equals 3 then 2\n"
+                        + "elif 3 equals 3 then 3\n"
                         + "else 4 end"
                     )()).toEqualToken({
                         value: 3,
@@ -211,9 +211,9 @@ describe("The parser module", function () {
                 
                 it("satisfying the else condition", function () {
                     expect(parser.parse(
-                        "if 1 equals 2 then 1"
-                        + "else if 2 equals 3 then 2"
-                        + "else if 3 equals 4 then 3"
+                        "if 1 equals 2 then 1\n"
+                        + "elif 2 equals 3 then 2\n"
+                        + "elif 3 equals 4 then 3\n"
                         + "else 4 end"
                     )()).toEqualToken({
                         value: 4,
@@ -224,7 +224,7 @@ describe("The parser module", function () {
                 describe("with no else-if clauses", function () {
                     it("satisfying the if condition", function () {
                         expect(parser.parse(
-                            "if 1 equals 1 then 1"
+                            "if 1 equals 1 then 1\n"
                             + "else 2 end"
                         )()).toEqualToken({
                             value: 1,
@@ -234,12 +234,47 @@ describe("The parser module", function () {
                     
                     it("satisfying the else condition", function () {
                         expect(parser.parse(
-                            "if 1 equals 2 then 1"
+                            "if 1 equals 2 then 1\n"
                             + "else 2 end"
                         )()).toEqualToken({
                             value: 2,
                             type: constants.TYPE.NUMBER
                         });
+                    });
+                });
+                
+                describe("which warns when given suspect code", function () {
+                    it("such as same line else if", function () {
+                        parser.parse(
+                            "if 1 equals 1 then 1\n"
+                            + "else if 2 equals 2 then 2\n"
+                            + "else 3 end end"
+                        );
+                        expect(console.warn).toHaveBeenCalled();
+                    });
+                });
+                
+                describe("which does not warn on non-suspect code", function () {
+                    it("such as valid else-if", function () {
+                        parser.parse(
+                            "if 1 equals 1 then 1\n"
+                            + "elif 2 equals 2 then 2\n"
+                            + "else 3 end"
+                        );
+                        
+                        expect(console.warn).not.toHaveBeenCalled();
+                    });
+                    
+                    it("such as different line else if", function () {
+                        parser.parse(
+                            "if 1 equals 1 then 1\n"
+                            + "else\n"
+                            + "    if 2 equals 2 then 2\n"
+                            + "    else 3 end\n"
+                            + "end"
+                        );
+                        
+                        expect(console.warn).not.toHaveBeenCalled();
                     });
                 });
 			});

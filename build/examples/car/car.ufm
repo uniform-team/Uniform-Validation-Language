@@ -4,7 +4,13 @@
 valid: not hasCar or @carForm.valid;
 
 @carForm {
-    valid: make.valid and model.valid and year.valid;
+    valid: if make.valid then
+        true
+    elif model.valid then
+        true
+    else
+        false
+    end;
 
     make {
         valid: make matches @filled;

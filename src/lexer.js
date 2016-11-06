@@ -14,6 +14,8 @@ export default function (input) {
 	
 	let lexbuffer = "";   //contains a single character to be analyzed
 	let tokenBuffer = ""; //buffer that appends the lexbuffer until a token is built
+    
+    let hadNewlineBeforeLastToken = false;
 	
 	// Wrap the Token class with one which automatically inserts the current line number and index
 	class Token extends TokenClass {
@@ -61,14 +63,19 @@ export default function (input) {
 	
 	function ignoreWhiteSpace() {
 		while (isWhitespace.test(lexbuffer)) {
+            if (lexbuffer === "\n") {
+                hadNewlineBeforeLastToken = true;
+            }
+            
 			skipChar();
 		}
 	}
 	
 	// Create a tokenizer function and return it
-	return function () {
+	let tokenize = function () {
 		try {
 			tokenBuffer = "";
+            hadNewlineBeforeLastToken = false;
 			
 			//When the end of the uniform file is reached, exit
 			if (stringIndex >= input.length) {
@@ -210,6 +217,8 @@ export default function (input) {
 						return new Token(constants.OPERATOR.IF, constants.TYPE.KEYWORD);
 					case constants.OPERATOR.THEN:
 						return new Token(constants.OPERATOR.THEN, constants.TYPE.KEYWORD);
+					case constants.OPERATOR.ELIF:
+						return new Token(constants.OPERATOR.ELIF, constants.TYPE.KEYWORD);
 					case constants.OPERATOR.ELSE:
 						return new Token(constants.OPERATOR.ELSE, constants.TYPE.KEYWORD);
 					case constants.OPERATOR.END:
@@ -299,4 +308,12 @@ export default function (input) {
 			throw new SyntaxError(err);
 		}
 	};
+    
+	// Expose function to check for newline
+    tokenize.hadNewlineBeforeLastToken = function () {
+        return hadNewlineBeforeLastToken;
+    };
+    
+    // Curry function which will return the next token each time it is invoked
+    return tokenize;
 };

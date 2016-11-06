@@ -2,6 +2,9 @@ beforeEach(function () {
     // Spy on global JavaScript APIs to prevent their default behavior
     if (globalObj.alert) spyOn(globalObj, "alert");
     
+    // Spy on console to keep output clean
+    spyOn(globalObj.console, "warn");
+    
     // Spy on Jasmine's expect(...) in order to count how many times it is called in a particular test
     spyOn(globalObj, "expect").and.callThrough();
 });
