@@ -11,6 +11,7 @@ app.post("/examples/car/submit", validator("build/examples/car/car.ufm"), functi
     res.status(200).end("Valid data!");
 }, function (err, req, res, next) {
     res.status(400).end("Invalid data!");
+    console.error(err);
 });
 
 // Listen on port given by environment

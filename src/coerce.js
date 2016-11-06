@@ -44,15 +44,6 @@ export function toRegex(token) {
 	return token;
 }
 
-// Coerce the given token to a state or throw a TypeError if unsuccessful
-export function toState(token) {
-	if (!token.isState()) {
-		throw new TypeError(token.type, constants.TYPE.STATE, token);
-	}
-	
-	return token;
-}
-
 // Coerce the given token to an object or throw a TypeError if unsuccessful
 export function toObject(token) {
 	if (token.type !== constants.TYPE.OBJECT) {

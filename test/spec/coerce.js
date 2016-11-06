@@ -77,24 +77,6 @@ describe("The coerce module", function () {
 		});
 	});
 	
-	describe("exposes the \"toState\" member", function () {
-		it("as a function", function () {
-			expect(coerce.toState).toEqual(jasmine.any(Function));
-		});
-		
-		let toState = coerce.toState;
-		it("which passes state tokens through unchanged", function () {
-			expect(toState(new Token("number", constants.TYPE.STRING))).toEqualToken({
-				value: "number",
-				type: constants.TYPE.STRING
-			});
-		});
-		
-		it("which throws a TypeError when given non-state inputs", function () {
-			expect(() => toState(new Token(false, constants.TYPE.BOOL))).toThrowUfmError(TypeError);
-		});
-	});
-	
 	describe("exposes the \"toObject\" member", function () {
 		it("as a function", function () {
 			expect(coerce.toObject).toEqual(jasmine.any(Function));

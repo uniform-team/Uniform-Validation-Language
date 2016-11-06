@@ -20,15 +20,6 @@ export default function jQueryEnv(data) {
         return {
             sel: sel,
             
-            // Return the type of the input data
-            // See GitHub #36 for bitching about "on"
-            attr: function (attr) {
-                if (attr !== "type") throw new Error("Called the jQuery $(...).attr(\"" + attr + "\"). Only $(...).attr(\"type\") is supported.");
-                
-                let name = getName(this.sel);
-                return data[name] !== undefined && data[name] !== "on" ? "text" : "checkbox";
-            },
-            
             // Get the value of this selector by looking it up in the request data
             val: function () {
                 // Pull the raw input name from the selector
@@ -41,15 +32,17 @@ export default function jQueryEnv(data) {
             // Returns whether or not this selector is checked
             // See GitHub #36 for bitching about "on"
             is: function (query) {
-                if (query !== ":checked") throw new Error("Called the jQuery $(...).is(\"" + query + "\"). Only $(...).is(\":checked\") is supported.");
+                if (query !== ":checked") throw new Error("Called the jQuery $(...).is(\"" + query + "\")."
+                        + " Only $(...).is(\":checked\") is supported.");
                 
-                // Lookup name, and return true if it is the value "on"
+                // Lookup name, and return true if it is the value "on", false if missing or any other value
                 let name = getName(this.sel);
                 return data[name] === "on";
             },
             
             on: () => null,
-            trigger: () => null
+            trigger: () => null,
+            ready: (onReady) => onReady()
         };
     };
     

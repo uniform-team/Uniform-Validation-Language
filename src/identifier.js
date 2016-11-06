@@ -1,23 +1,34 @@
 import { document, $ } from "./env.js";
 import constants from "./constants.js";
+import { AssertionError, RedeclaredError, NotImplementedError } from "./errors.js";
 import Token from "./token.js";
 import Scope from "./scope.js";
 import Dependable from "./dependable.js";
 
 // Global map storing all identifiers by name for later lookup
-let identifierMap = {};
+let identifierMap;
 
 /**
- * Class representing the static Identifier class which
- * manages the various identifiers which are created
- * throughout the lifetime of the library.
+ * Class representing an Identifier which static manages all identifiers created, holds a scope for
+ * child tags, and can be depended on.
  */
-export class Identifier {
+export default class Identifier extends Dependable() {
     // Construct an Identifier by initializing its values from a token
-	constructor(token) {
+	constructor(token, type) {
+        super();
+        
 		this.name = token.value;
-		this.line = token.line;
-		this.col = token.col;
+        this.type = type;
+        this.token = token;
+        this.scope = new Scope();
+        
+        // Initialize the dependable with an expression which pulls the identifier's value from the DOM tree
+        let self = this;
+        this.initDependable(() => self.getToken());
+        this.update();
+        
+        // When the DOM element changes, update this identifier
+        $(document).on("change", token.getSelector(), () => this.update());
 	}
     
 	// Static getter for the global identifier map, used for testing / debugging
@@ -30,8 +41,15 @@ export class Identifier {
         identifierMap = map;
     }
     
-    // Insert the given identifier into the global map
-	static insert(identifier) {
+    // Initialize the identifier map
+    static init() {
+        identifierMap = {};
+    }
+    
+    // Declare an identifier with the given name and type
+    static declare(identifier) {
+        if (identifierMap[identifier.name]) throw new RedeclaredError(identifier.name + " was already declared.",
+                identifier.token.line, identifier.token.col);
 		identifierMap[identifier.name] = identifier;
 	}
     
@@ -39,61 +57,26 @@ export class Identifier {
 	static find(name) {
 		return identifierMap[name] || null;
 	}
-}
-
-/**
- * Class representing a block identifier, one which contains a scope.
- *
- * Ex.
- * myIdentifier {
- *     ...
- * }
- */
-export class BlockIdentifier extends Identifier {
-    // Construct a BlockIdentifier, initializing its internal state
-	constructor(token) {
-		super(token);
-		this.scope = new Scope();
-	}
     
-	// Get the tag with the given name under this BlockIdentifier's scope
-	getTag(tagName) {
-	    // Find the tag in the contained scope
-		return this.scope.findTag(tagName);
-	}
-}
-
-/**
- * Class representing an expression identifier, one used in an expression.
- * Mixes in Dependable.
- *
- * Ex.
- * valid: myIdentifier equals true;
- */
-export class ExpressionIdentifier extends Dependable(Identifier) {
-    // Construct an ExpressionIdentifier, initializing its dependency system
-	constructor(token) {
-		super(token);
-        this.token = token;
+    // Get the tag with the given name under this BlockIdentifier's scope
+    getTag(tagName) {
+        // Find the tag in the contained scope
+        return this.scope.findTag(tagName);
+    }
+    
+    // Return a token containing this identifier's value and type
+    getToken() {
+        let $el = $(this.token.getSelector());
         
-        // Initialize the dependable with an expression which pulls the identifier's value from the DOM tree
-		let self = this;
-        this.initDependable(() => self.getToken());
-        this.update();
-		
-        // When the DOM element changes, update this identifier
-		$(document).on("change", token.getSelector(), () => this.update());
-	}
-	
-	// Return a token containing this identifier's value and type
-	getToken() {
-		let $el = $(this.token.getSelector());
-	    
-        switch ($el.attr("type")) {
-        case "checkbox":
-            return new Token($el.is(":checked"), constants.TYPE.BOOL, this.line, this.col);
-        default:
-            return new Token($el.val(), constants.TYPE.STRING, this.line, this.col);
+        switch (this.type) {
+            case constants.TYPE.STRING:
+                return new Token($el.val() || "", constants.TYPE.STRING, this.line, this.col);
+            case constants.TYPE.BOOL:
+                return new Token($el.is(":checked"), constants.TYPE.BOOL, this.line, this.col);
+            case constants.TYPE.NUMBER:
+                throw new NotImplementedError("The number type is not yet implemented, due to possible parsing errors.");
+            default:
+                throw new AssertionError("Expected " + this.name + " to have a UFM type, but it was of type " + this.type);
         }
-	}
+    }
 }

@@ -1,4 +1,4 @@
-import { $ } from "./env.js";
+import { $, document } from "./env.js";
 import parser from "./parser.js";
 
 // Send a GET request to the given URL and parse the resulting data as a Uniform script
@@ -10,7 +10,10 @@ export function href(url) {
         
         // When script is successfully received, parse it
         success: function (res) {
-            parser.parse(res);
+            // Wait for DOM to load so Uniform can initialize
+            $(document).ready(function () {
+                parser.parse(res);
+            });
         }
     });
 }

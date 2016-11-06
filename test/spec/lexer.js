@@ -87,10 +87,6 @@ describe("The lexer module", function () {
 		});
 
 		describe("keywords like", function () {
-			it("is", function () {
-				assertToken("is", constants.OPERATOR.IS, constants.TYPE.KEYWORD);
-			});
-			
 			it("and", function () {
 				assertToken("and", constants.OPERATOR.AND, constants.TYPE.KEYWORD);
 			});
@@ -132,11 +128,15 @@ describe("The lexer module", function () {
 			});
 
 			it("string", function () {
-				assertToken("string", constants.STATE.STRING, constants.TYPE.KEYWORD);
+				assertToken("string", constants.TYPE.STRING, constants.TYPE.KEYWORD);
+			});
+			
+			it("boolean", function () {
+			    assertToken("boolean", constants.TYPE.BOOL, constants.TYPE.KEYWORD);
 			});
 			
 			it("number", function () {
-				assertToken("number", constants.STATE.NUMBER, constants.TYPE.KEYWORD);
+				assertToken("number", constants.TYPE.NUMBER, constants.TYPE.KEYWORD);
 			});
 			
 			it("this", function () {

@@ -5,7 +5,7 @@ import Token from "../../src.es5/token.js";
 import Scope from "../../src.es5/scope.js";
 import root from "../../src.es5/root.js";
 import { ExpressionVariable } from "../../src.es5/variable.js";
-import { Identifier, ExpressionIdentifier } from "../../src.es5/identifier.js";
+import Identifier from "../../src.es5/identifier.js";
 import Tag from "../../src.es5/tag.js";
 import { ParsingError, TypeError } from "../../src.es5/errors.js";
 
@@ -14,7 +14,10 @@ describe("The parser module", function () {
 		beforeEach(() => Scope.reset());
 		
 		it("identifier blocks", function () {
-			expect(() => parser.parse("test { }")).not.toThrow();
+			expect(() => parser.parse(
+				"string: test;\n"
+			    + "test { }"
+			)).not.toThrow();
 		});
 		
 		it("variable blocks", function () {
@@ -22,7 +25,11 @@ describe("The parser module", function () {
 		});
 		
 		it("nested blocks", function () {
-			expect(() => parser.parse("test1 { test2 { } }")).not.toThrow();
+			expect(() => parser.parse(
+			    "string: test1;\n"
+                + "string: test2;\n"
+			    + "test1 { test2 { } }"
+            )).not.toThrow();
 		});
 		
 		it("tag statements", function () {
@@ -45,6 +52,7 @@ describe("The parser module", function () {
 	describe("parses valid expressions", function () {
 		beforeAll(function () {
 			parser._testExpr = true;
+            Identifier.init();
 		});
 		
 		afterAll(function () {
@@ -91,13 +99,6 @@ describe("The parser module", function () {
 			
 			it("matches", function () {
 				expect(parser.parse("\"test\" matches /\"test\"/")()).toEqualToken({
-					value: true,
-					type: constants.TYPE.BOOL
-				});
-			});
-			
-			it("is", function () {
-				expect(parser.parse("\"test\" is string")()).toEqualToken({
 					value: true,
 					type: constants.TYPE.BOOL
 				});
@@ -297,17 +298,20 @@ describe("The parser module", function () {
 		describe("with operands such as", function () {
 			it("identifiers", function () {
 				spyOn($.prototype, "val").and.returnValue("data");
-				spyOn(ExpressionIdentifier.prototype, "addDependent");
+				spyOn(Identifier.prototype, "addDependent");
                 
 				let owner = {
 				    addDependee: jasmine.createSpy("addDependee")
                 };
-				expect(parser.parse("test", owner)()).toEqualToken({
+				expect(parser.parse(
+				    "string: test;\n"
+                    + "test",
+                owner)()).toEqualToken({
 					value: "data",
 					type: constants.TYPE.STRING
 				});
-                expect(ExpressionIdentifier.prototype.addDependent).toHaveBeenCalledWith(owner);
-                expect(owner.addDependee).toHaveBeenCalledWith(jasmine.any(ExpressionIdentifier));
+                expect(Identifier.prototype.addDependent).toHaveBeenCalledWith(owner);
+                expect(owner.addDependee).toHaveBeenCalledWith(jasmine.any(Identifier));
 			});
 			
 			it("booleans", function () {
@@ -367,18 +371,6 @@ describe("The parser module", function () {
 				expect(parser.parse("$(\"test\")")()).toEqualToken({
 					value: "test",
 					type: constants.TYPE.SELECTOR
-				});
-			});
-			
-			it("states", function () {
-				expect(parser.parse("string")()).toEqualToken({
-					value: "string",
-					type: constants.TYPE.KEYWORD
-				});
-				
-				expect(parser.parse("number")()).toEqualToken({
-					value: "number",
-					type: constants.TYPE.KEYWORD
 				});
 			});
 			
@@ -458,9 +450,7 @@ describe("The parser module", function () {
 			
 			spyOn($.prototype, "val").and.callFake(function () {
 				// Read the value of this selector from the data table
-				let value = data[this.sel];
-				if (!value) throw new Error("Unknown jQuery selector: " + this.sel);
-				return value;
+				return data[this.sel];
 			});
             
             // Clear identifier mapping to ensure state does not bleed through tests
@@ -490,7 +480,10 @@ describe("The parser module", function () {
         it("such as a single identifier dependency", function () {
             setValue("inner", "foo");
             
-            parser.parse("valid: inner equals \"bar\";");
+            parser.parse(
+                "string: inner;\n"
+                + "valid: inner equals \"bar\";"
+            );
             
             expect(root().valid).toEqualToken({
                 value: false,
@@ -508,7 +501,11 @@ describe("The parser module", function () {
             setValue("inner1", "bar");
             setValue("inner2", "bar");
             
-            parser.parse("valid: inner1 equals \"foo\" and inner2 equals \"bar\";");
+            parser.parse(
+                "string: inner1;\n"
+                + "string: inner2;\n"
+                + "valid: inner1 equals \"foo\" and inner2 equals \"bar\";"
+            );
             
             expect(root().valid).toEqualToken({
                 value: false,
@@ -530,7 +527,8 @@ describe("The parser module", function () {
         
         it("such as a single tag dependency", function () {
         	parser.parse(
-        	    "inner { valid: true; }"
+        	    "string: inner;\n"
+        	    + "inner { valid: true; }\n"
                 + "valid: inner.valid;"
             );
             
@@ -544,7 +542,9 @@ describe("The parser module", function () {
             setValue("test", "foo");
             
         	parser.parse(
-        	    "inner { valid: test equals \"bar\"; }"
+        	    "string: inner;\n"
+                + "string: test;\n"
+        	    + "inner { valid: test equals \"bar\"; }\n"
                 + "valid: inner.valid;"
             );
             
@@ -565,8 +565,12 @@ describe("The parser module", function () {
             setValue("inner2", "bar");
             
             parser.parse(
-                "outer1 { valid: inner1 equals \"foo\"; }"
-                + "outer2 { valid: inner2 equals \"bar\"; }"
+                "string: outer1;\n"
+                + "string: outer2;\n"
+                + "string: inner1;\n"
+                + "string: inner2;\n"
+                + "outer1 { valid: inner1 equals \"foo\"; }\n"
+                + "outer2 { valid: inner2 equals \"bar\"; }\n"
                 + "valid: outer1.valid and outer2.valid;"
             );
     
@@ -592,8 +596,11 @@ describe("The parser module", function () {
         	setValue("test", "foo");
             
             parser.parse(
-        	    "inner { valid: test equals \"bar\"; }"
-                + "outer { valid: inner.valid; }"
+                "string: outer;\n"
+                + "string: inner;\n"
+                + "string: test;\n"
+        	    + "inner { valid: test equals \"bar\"; }\n"
+                + "outer { valid: inner.valid; }\n"
                 + "valid: outer.valid;"
             );
             
@@ -613,7 +620,8 @@ describe("The parser module", function () {
             setValue("inner", "foo");
     
             parser.parse(
-                "valid: inner.valid;"
+                "string: inner;\n"
+                + "valid: inner.valid;\n"
                 + "inner { valid: true; }"
             );
             
@@ -625,7 +633,7 @@ describe("The parser module", function () {
         
         it("such as a single expression variable dependency", function () {
         	parser.parse(
-        	    "@test: true;"
+        	    "@test: true;\n"
                 + "valid: @test;"
             );
             
@@ -639,7 +647,8 @@ describe("The parser module", function () {
             setValue("inner", "foo");
             
         	parser.parse(
-        	    "@test: inner equals \"bar\";"
+        	    "string: inner;\n"
+        	    + "@test: inner equals \"bar\";\n"
                 + "valid: @test;"
             );
             
@@ -660,8 +669,10 @@ describe("The parser module", function () {
             setValue("inner2", "foo");
             
             parser.parse(
-                "@outer1: inner1 equals \"bar\";"
-                + "@outer2: inner2 equals \"foo\";"
+                "string: inner1;\n"
+                + "string: inner2;\n"
+                + "@outer1: inner1 equals \"bar\";\n"
+                + "@outer2: inner2 equals \"foo\";\n"
                 + "valid: @outer1 and @outer2;"
             );
     
@@ -687,8 +698,9 @@ describe("The parser module", function () {
             setValue("test", "foo");
             
         	parser.parse(
-        	    "@inner: test equals \"bar\";"
-                + "@outer: @inner;"
+        	    "string: test;\n"
+        	    + "@inner: test equals \"bar\";\n"
+                + "@outer: @inner;\n"
                 + "valid: @outer;"
             );
             
@@ -706,7 +718,7 @@ describe("The parser module", function () {
         
         it("such as an expression variable dependency declared later in the file", function () {
             parser.parse(
-                "valid: @test;"
+                "valid: @test;\n"
                 + "@test: true;"
             );
     
@@ -718,7 +730,7 @@ describe("The parser module", function () {
 		
 		it("such as a single block variable dependency", function () {
 			parser.parse(
-			    "@test { valid: true; }"
+			    "@test { valid: true; }\n"
                 + "valid: @test.valid;"
             );
             
@@ -732,7 +744,8 @@ describe("The parser module", function () {
             setValue("inner", "bar");
             
         	parser.parse(
-        	    "@outer { valid: inner equals \"foo\"; }"
+        	    "string: inner;\n"
+        	    + "@outer { valid: inner equals \"foo\"; }\n"
                 + "valid: @outer.valid;"
             );
             
@@ -753,8 +766,10 @@ describe("The parser module", function () {
             setValue("inner2", "foo");
     
             parser.parse(
-                "@outer1 { valid: inner1 equals \"bar\"; }"
-                + "@outer2 { valid: inner2 equals \"foo\"; }"
+                "string: inner1;\n"
+                + "string: inner2;\n"
+                + "@outer1 { valid: inner1 equals \"bar\"; }\n"
+                + "@outer2 { valid: inner2 equals \"foo\"; }\n"
                 + "valid: @outer1.valid and @outer2.valid;"
             );
     
@@ -780,8 +795,9 @@ describe("The parser module", function () {
         	setValue("test", "foo");
             
             parser.parse(
-        	    "@inner { valid: test equals \"bar\"; }"
-        	    + "@outer { valid: @inner.valid; }"
+                "string: test;\n"
+        	    + "@inner { valid: test equals \"bar\"; }\n"
+        	    + "@outer { valid: @inner.valid; }\n"
                 + "valid: @outer.valid;"
             );
             
@@ -799,7 +815,7 @@ describe("The parser module", function () {
         
         it("such as a block variable dependency declared later in the file", function () {
             parser.parse(
-                "valid: @test.valid;"
+                "valid: @test.valid;\n"
                 + "@test { valid: true; }"
             );
     
@@ -816,7 +832,11 @@ describe("The parser module", function () {
         });
 	    
 		it("following a block with a non-block and non-statement", function () {
-			expect(() => parser.parse("test { } true")).toThrowUfmError(ParsingError);
+			expect(() => parser.parse(
+			    "string: test;\n"
+			    + "test { }\n"
+                + "true"
+            )).toThrowUfmError(ParsingError);
 		});
 		
 		it("using a non-block and non-statement as a block or statement", function () {

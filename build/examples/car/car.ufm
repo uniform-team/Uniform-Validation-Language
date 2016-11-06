@@ -1,16 +1,15 @@
 @filled: /"."/;
 @year: /"^[0-9]{4}$"/;
 
+boolean: hasCar;
+string: make;
+string: model;
+string: year;
+
 valid: not hasCar or @carForm.valid;
 
 @carForm {
-    valid: if make.valid then
-        true
-    elif model.valid then
-        true
-    else
-        false
-    end;
+    valid: make.valid and model.valid and year.valid;
 
     make {
         valid: make matches @filled;

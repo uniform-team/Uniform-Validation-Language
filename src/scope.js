@@ -1,7 +1,7 @@
 import { Variable } from "./variable.js";
 import { DuplicateDeclarationError, AssertionError } from "./errors.js"
 import Tag from "./tag.js";
-import { Identifier } from "./identifier.js";
+import Identifier from "./identifier.js";
 
 let rootScope = null;
 let currentScope = null;

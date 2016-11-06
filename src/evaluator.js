@@ -1,7 +1,7 @@
 import constants from "./constants.js";
 import * as coerce from "./coerce.js";
 import Scope from "./scope.js";
-import { Identifier } from "./identifier.js";
+import Identifier from "./identifier.js";
 import { BlockVariable } from "./variable.js";
 import { TypeError, UndeclaredError, AssertionError } from "./errors.js";
 
@@ -52,16 +52,6 @@ export function matches(leftExpr, rightExpr) {
 		let right = coerce.toRegex(rightExpr());
 		
 		return left.clone({ value: right.value.test(left.value), type: constants.TYPE.BOOL });
-	};
-}
-
-// Export boolean IS operation
-export function is(leftExpr, rightExpr) {
-	return function () {
-		let left = leftExpr();
-		let right = coerce.toState(rightExpr());
-		
-		return left.clone({ value: left.type === right.value, type: constants.TYPE.BOOL });
 	};
 }
 
@@ -203,10 +193,10 @@ function dotTagIdentifier(leftVal, rightVal) {
     
     return function () {
         let identifier = Identifier.find(left.value);
-        if (!identifier) throw new UndeclaredError("Identifier " + left.value + " was not declared.", left.line, left.col);
+        if (!identifier) throw new UndeclaredError("Identifier " + left.value + " was not declared", left.line, left.col);
         
         let tag = identifier.getTag(right.value);
-        if (!tag) throw new UndeclaredError("Tag " + left.value + "." + right.value + " was not declared.", left.line, left.col);
+        if (!tag) throw new UndeclaredError("Tag " + left.value + "." + right.value + " was not declared", left.line, left.col);
         
         return tag.value;
     };

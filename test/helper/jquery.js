@@ -12,7 +12,8 @@ globalObj.$.prototype = {
 	val: () => { },
     is: () => { },
 	on: () => { },
-    trigger: () => { }
+    trigger: () => { },
+	ready: (onReady) => onReady()
 };
 
 // jQuery static functions

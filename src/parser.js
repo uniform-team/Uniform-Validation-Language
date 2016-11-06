@@ -2,7 +2,7 @@ import constants from "./constants.js";
 import { ParsingError as ParsingErrorClass, AssertionError as AssertionErrorClass, UndeclaredError as UndeclaredErrorClass,
     TypeError as TypeErrorClass, NotImplementedError } from "./errors.js";
 import tokenizer from "./lexer.js";
-import { Identifier, BlockIdentifier, ExpressionIdentifier } from "./identifier.js";
+import Identifier from "./identifier.js";
 import { BlockVariable, ExpressionVariable } from "./variable.js";
 import Tag from "./tag.js";
 import * as evaluator from "./evaluator.js";
@@ -106,14 +106,19 @@ export default {
 			deferred.push(cb);
 		}
 		
-		// <file> -> <blockOrStatements>
+		// <file> -> <blockOrStatementOrDecls>
 		function file(spy) {
 		    let result;
 		    
-			// If testing expressions, then directly invoke and return expression()
-			if (self._testExpr) result = expression(spy);
+			// If testing expressions, declare variables then directly invoke and return expression()
+			if (self._testExpr) {
+                while (currentToken.isUfmType()) decl();
+                result = expression(spy);
+            }
 			
-			blockOrStatements();
+            // Parse all blocks, statements, and declarations
+            // Declarations are only allowed at the root scope
+			blockOrStatementOrDecls();
 			
 			if (currentToken.type !== constants.ENDOFFILE) {
 				throw new ParsingError("Expected an identifier or variable, got " + currentToken.value);
@@ -125,9 +130,35 @@ export default {
             return result;
 		}
 		
+		// <blockOrStatementOrDecls> -> <decl> | <blockOrStatements> | ø
+		function blockOrStatementOrDecls() {
+			while (currentToken.isUfmType() || currentToken.type === constants.TYPE.IDENTIFIER
+                    || currentToken.type === constants.TYPE.VARIABLE || currentToken.isTag()) {
+                if (currentToken.isUfmType()) {
+                    decl();
+                } else {
+                    blockOrStatement();
+                }
+            }
+		}
+		
+		// <decl> -> <type> : <identifier> ;
+		function decl() {
+            if (!currentToken.isUfmType()) throw new AssertionError("Expected a UFM Type token.");
+            
+            // Parse declaration
+            let ufmType = match(); // <type>
+            matchValue(constants.OPERATOR.COLON);
+            let identifierToken = matchType(constants.TYPE.IDENTIFIER);
+            matchValue(constants.OPERATOR.SEMICOLON);
+            
+            // Declare identifier
+            Identifier.declare(new Identifier(identifierToken, ufmType.value));
+        }
+		
 		// <blockOrStatements> -> <blockOrStatement> <blockOrStatements> | ø
 		function blockOrStatements() {
-			while (currentToken.type === constants.TYPE.IDENTIFIER || currentToken.type == constants.TYPE.VARIABLE
+			while (currentToken.type === constants.TYPE.IDENTIFIER || currentToken.type === constants.TYPE.VARIABLE
 					|| currentToken.isTag()) {
 				blockOrStatement();
 			}
@@ -159,9 +190,9 @@ export default {
 			matchValue(constants.OPERATOR.LBRACE);
 			
 			if (token.type === constants.TYPE.IDENTIFIER) {
-                let identifier = new BlockIdentifier(token);
+                let identifier = Identifier.find(token.value);
+                if (!identifier) throw new UndeclaredError("Identifier " + token.value + " was not declared");
                 
-                Identifier.insert(identifier);
                 identifier.scope.push(function () {
                     blockOrStatements();
                 });
@@ -255,7 +286,7 @@ export default {
 		}
 		
 		// <comparator> -> <addSub> <comparator_>
-		// <comparator_> -> equals | matches | is | < | > | <= | >= <addSub> <comparator_>
+		// <comparator_> -> equals | matches | < | > | <= | >= <addSub> <comparator_>
 		function expressionComparator(owner) {
 			let leftExpr = expressionAddSub(owner);
 			
@@ -269,9 +300,6 @@ export default {
 						break;
 					case constants.OPERATOR.MATCHES:
 						leftExpr = evaluator.matches(leftExpr, rightExpr);
-						break;
-					case constants.OPERATOR.IS:
-						leftExpr = evaluator.is(leftExpr, rightExpr);
 						break;
 					case constants.OPERATOR.LT:
 						leftExpr = evaluator.lt(leftExpr, rightExpr);
@@ -468,7 +496,8 @@ export default {
                 // ex. valid: make;
                 
                 // Create an ExpressionIdentifier object from the token
-                let identifierObj = new ExpressionIdentifier(identifierToken);
+                let identifierObj = Identifier.find(identifierToken.value);
+                if (!identifierObj) throw new UndeclaredError("Identifier " + identifierToken.value + " was not declared");
                 
                 // Set the owner as dependent on the identifier
                 identifierObj.addDependent(owner);
@@ -549,7 +578,7 @@ export default {
                 
                 // Get the tag from the variable
                 let tagObj = varObj.getTag(tag.value);
-                if (!tagObj) throw new UndeclaredError("Tag @" + varToken.value + "." + tag.value + " was not declared.");
+                if (!tagObj) throw new UndeclaredError("Tag @" + varToken.value + "." + tag.value + " was not declared");
                 
                 // Set the owner as dependent on the found tag
                 tagObj.addDependent(owner);

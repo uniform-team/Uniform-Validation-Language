@@ -177,8 +177,6 @@ export default function (input) {
 				
 				// Check for keywords
 				switch (tokenBuffer) {
-					case constants.OPERATOR.IS:
-						return new Token(constants.OPERATOR.IS, constants.TYPE.KEYWORD);
 					case constants.OPERATOR.AND:
 						return new Token(constants.OPERATOR.AND, constants.TYPE.KEYWORD);
 					case constants.OPERATOR.OR:
@@ -199,10 +197,12 @@ export default function (input) {
 						return new Token(constants.TAG.RETURN, constants.TYPE.KEYWORD);
 					case constants.TAG.SELECTOR:
 						return new Token(constants.TAG.SELECTOR, constants.TYPE.KEYWORD);
-					case constants.STATE.STRING:
-						return new Token(constants.STATE.STRING, constants.TYPE.KEYWORD);
-					case constants.STATE.NUMBER:
-						return new Token(constants.STATE.NUMBER, constants.TYPE.KEYWORD);
+					case constants.TYPE.STRING:
+						return new Token(constants.TYPE.STRING, constants.TYPE.KEYWORD);
+                    case constants.TYPE.NUMBER:
+                        return new Token(constants.TYPE.NUMBER, constants.TYPE.KEYWORD);
+                    case constants.TYPE.BOOL:
+                        return new Token(constants.TYPE.BOOL, constants.TYPE.KEYWORD);
 					case constants.THIS:
 						return new Token(constants.THIS, constants.TYPE.SELECTOR);
 					case constants.VALUE.TRUE:

@@ -38,4 +38,5 @@ export class AssertionError extends UfmError { }
 export class TypeError extends UfmError { }
 export class DuplicateDeclarationError extends UfmError { }
 export class UndeclaredError extends UfmError { }
+export class RedeclaredError extends UfmError { }
 export class NotImplementedError extends UfmError { }

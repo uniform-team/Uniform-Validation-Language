@@ -74,7 +74,7 @@ describe("The Token class", function () {
 		});
 		
 		it("which returns false when this Token is not a tag", function () {
-			expect(assertTag(constants.STATE.STRING, constants.TYPE.KEYWORD)).toBe(false);
+			expect(assertTag(constants.TYPE.STRING, constants.TYPE.KEYWORD)).toBe(false);
 			expect(assertTag(true, constants.TYPE.BOOL)).toBe(false);
 			expect(assertTag(constants.OPERATOR.ADD, constants.TYPE.KEYWORD)).toBe(false);
 			// ...
@@ -99,10 +99,6 @@ describe("The Token class", function () {
 				expect(assertComparator(constants.OPERATOR.MATCHES, constants.TYPE.KEYWORD)).toBe(true);
 			});
 			
-			it("is", function () {
-				expect(assertComparator(constants.OPERATOR.IS, constants.TYPE.KEYWORD)).toBe(true);
-			});
-			
 			it("<", function () {
 				expect(assertComparator(constants.OPERATOR.LT, constants.TYPE.KEYWORD)).toBe(true);
 			});
@@ -121,7 +117,7 @@ describe("The Token class", function () {
 		});
 		
 		it("which returns false when this Token is not a comparator", function () {
-			expect(assertComparator(constants.STATE.STRING, constants.TYPE.KEYWORD)).toBe(false);
+			expect(assertComparator(constants.TYPE.STRING, constants.TYPE.KEYWORD)).toBe(false);
 			expect(assertComparator(true, constants.TYPE.BOOL)).toBe(false);
 			expect(assertComparator(constants.OPERATOR.ADD, constants.TYPE.KEYWORD)).toBe(false);
 			// ...
@@ -167,11 +163,6 @@ describe("The Token class", function () {
 				expect(assertOperand("$(\"test\")", constants.TYPE.SELECTOR)).toBe(true);
 			});
 			
-			it("states", function () {
-				expect(assertOperand(constants.STATE.STRING, constants.TYPE.KEYWORD)).toBe(true);
-				expect(assertOperand(constants.STATE.NUMBER, constants.TYPE.KEYWORD)).toBe(true);
-			});
-			
 			it("this keyword", function () {
 				expect(assertOperand("this", constants.THIS)).toBe(true);
 			});
@@ -185,29 +176,32 @@ describe("The Token class", function () {
 		});
 	});
 	
-	describe("exposes the \"isState\" member", function () {
-		it("as a function", function () {
-			expect(Token.prototype.isState).toEqual(jasmine.any(Function));
-		});
-		
-		let assertState = function (value, type) {
-			return new Token(value, type).isState();
-		};
-		describe("which returns true when this Token is a state, such as", function () {
-			it("string", function () {
-				expect(assertState(constants.STATE.STRING, constants.TYPE.KEYWORD)).toBe(true);
-			});
-			
-			it("number", function () {
-				expect(assertState(constants.STATE.NUMBER, constants.TYPE.KEYWORD)).toBe(true);
-			});
-		});
-		
-		it("which returns false when this Token is not a state", function () {
-			expect(assertState("test", constants.TYPE.IDENTIFIER)).toBe(false);
-			expect(assertState(true, constants.TYPE.BOOL)).toBe(false);
-			expect(assertState(constants.OPERATOR.ADD, constants.TYPE.KEYWORD)).toBe(false);
-			// ...
-		});
+	describe("exposes the \"isUfmType\" member", function () {
+	    it("as a function", function () {
+	        expect(Token.prototype.isUfmType).toEqual(jasmine.any(Function));
+	    });
+        
+        let assertUfmType = function (value, type) {
+            return new Token(value, type).isUfmType();
+        };
+        
+        it("which returns true for the string type", function () {
+            expect(assertUfmType("string", constants.TYPE.KEYWORD)).toBe(true);
+        });
+        
+        it("which returns true for the boolean type", function () {
+            expect(assertUfmType("boolean", constants.TYPE.KEYWORD)).toBe(true);
+        });
+        
+        it("which returns true for the number type", function () {
+            expect(assertUfmType("number", constants.TYPE.KEYWORD)).toBe(true);
+        });
+        
+        it("which returns false when this Token is not a UFM type", function () {
+            expect(assertUfmType(constants.OPERATOR.COLON, constants.TYPE.KEYWORD)).toBe(false);
+            expect(assertUfmType(constants.OPERATOR.LBRACE, constants.TYPE.KEYWORD)).toBe(false);
+            expect(assertUfmType(constants.OPERATOR.ADD, constants.TYPE.KEYWORD)).toBe(false);
+            // ...
+        });
 	});
 });

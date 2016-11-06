@@ -63,23 +63,16 @@ export default class Token {
 		if (this.type === constants.TYPE.VARIABLE) return true;
 		if (this.type === constants.TYPE.SELECTOR) return true;
 		if (this.value === constants.THIS) return true;
-		if (this.isState()) return true;
 		
 		return false;
 	}
 	
-	// Return whether or not this token is a state
-	isState() {
-		// Check each state in constants for this one
-		for (let state in constants.STATE) {
-			if (!constants.STATE.hasOwnProperty(state)) continue;
-			
-			if (this.value === constants.STATE[state]) {
-				return true; // Found this value in constants, must be a state
-			}
-		}
+	// Return whether or not this token is a UFM type (can be declared in Uniform code)
+	isUfmType() {
+		if (this.value === constants.TYPE.STRING) return true;
+		if (this.value === constants.TYPE.BOOL) return true;
+        if (this.value === constants.TYPE.NUMBER) return true;
 		
-		// Could not find this value in constants, must not be a state
 		return false;
 	}
 	

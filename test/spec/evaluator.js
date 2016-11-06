@@ -3,7 +3,7 @@ import * as evaluator from "../../src.es5/evaluator.js";
 import constants from "../../src.es5/constants.js";
 import Token from "../../src.es5/token.js";
 import Scope from "../../src.es5/scope.js";
-import { Identifier } from "../../src.es5/identifier.js";
+import Identifier from "../../src.es5/identifier.js";
 import { BlockVariable } from "../../src.es5/variable.js";
 import { TypeError, UndeclaredError } from "../../src.es5/errors.js";
 
@@ -131,33 +131,6 @@ describe("The evaluator module", function () {
 		
 		it("which throws a TypeError when given invalid types", function () {
 			expect(matchesOp(1, constants.TYPE.NUMBER, /test/, constants.TYPE.REGEX)).toThrowUfmError(TypeError);
-		});
-	});
-	
-	describe("exposes the \"is\" member", function () {
-		it("as a function", function () {
-			expect(evaluator.is).toEqual(jasmine.any(Function));
-		});
-		
-		let isOp = function (leftValue, leftType, rightValue, rightType) {
-			return evaluator.is(() => new Token(leftValue, leftType), () => new Token(rightValue, rightType));
-		};
-		
-		it("which performs the boolean IS operation on two input expressions", function () {
-			expect(isOp(1, constants.TYPE.NUMBER, constants.TYPE.NUMBER, constants.TYPE.STATE)()).toEqualToken({
-				value: true,
-				type: constants.TYPE.BOOL
-			});
-			
-			expect(isOp(1, constants.TYPE.NUMBER, constants.TYPE.STRING, constants.TYPE.STATE)()).toEqualToken({
-				value: false,
-				type: constants.TYPE.BOOL
-			});
-		});
-		
-		it("which throws a TypeError when given an invalid state", function () {
-			// Only check right expression, left accepts any type
-			expect(isOp(1, constants.TYPE.NUMBER, "hello", constants.TYPE.STRING)).toThrowUfmError(TypeError);
 		});
 	});
 	

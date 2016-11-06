@@ -59,6 +59,12 @@ describe("The errors module", function () {
 		});
 	});
 	
+	describe("exposes the \"RedeclaredError\" member", function () {
+	    it("as a class extending UfmError", function () {
+	        expect(errors.RedeclaredError).toExtend(errors.UfmError);
+	    });
+	});
+	
 	describe("exposes the \"NotImplementedError\" member", function () {
 		it("as a class extending UfmError", function () {
 			expect(errors.NotImplementedError).toExtend(errors.UfmError);

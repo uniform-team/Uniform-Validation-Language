@@ -4,7 +4,7 @@ import constants from "../../src.es5/constants.js";
 import Token from "../../src.es5/token.js";
 import { ExpressionVariable } from "../../src.es5/variable.js";
 import Tag from "../../src.es5/tag.js";
-import { Identifier } from "../../src.es5/identifier.js";
+import Identifier from "../../src.es5/identifier.js";
 import { DuplicateDeclarationError } from "../../src.es5/errors.js";
 
 describe("The Scope class", function () {
@@ -203,7 +203,7 @@ describe("The Scope class", function () {
         });
         
         it("which returns the identifier if found", function () {
-            let testIdentifier = new Identifier("test", 1, 2);
+            let testIdentifier = new Identifier(new Token("test", constants.TYPE.IDENTIFIER), constants.TYPE.STRING);
             let scope = new Scope();
             
             scope.identifiers["test"] = testIdentifier;

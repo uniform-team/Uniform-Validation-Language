@@ -6,40 +6,6 @@ describe("The jQuery module", function () {
 	});
     
     describe("returns a jQuery mock object", function () {
-    	describe("which exposes the \"attr\" member", function () {
-    		it("as a function", function () {
-    			let $ = jQueryEnv();
-                
-                expect($("#selector").attr).toEqual(jasmine.any(Function));
-    		});
-            
-            it("which returns \"text\" if this selector is in the request body", function () {
-            	let $ = jQueryEnv({ foo: "bar" });
-                
-                expect($("[name=\"foo\"]").attr("type")).toBe("text");
-            });
-            
-            // See GitHub #36 for bitching
-            it("which returns \"checkbox\" if this selector is not in the request body", function () {
-            	let $ = jQueryEnv({ });
-                
-                expect($("[name=\"foo\"]").attr("type")).toBe("checkbox");
-            });
-            
-            // See GitHub #36 for bitching
-            it("which returns \"checkbox\" if this selector is \"on\" in the request body", function () {
-            	let $ = jQueryEnv({ foo: "on" });
-                
-                expect($("[name=\"foo\"]").attr("type")).toBe("checkbox");
-            });
-            
-            it("which throws an error if not given the input \"type\"", function () {
-            	let $ = jQueryEnv();
-                
-                expect(() => $("[name=\"foo\"]").attr("name")).toThrowError();
-            });
-    	});
-    	
     	describe("which exposes the \"val\" member", function () {
     		it("as a function", function () {
     		    let $ = jQueryEnv();
@@ -96,6 +62,22 @@ describe("The jQuery module", function () {
                 
                 expect($("#selector").trigger).toEqual(jasmine.any(Function));
         	});
+        });
+        
+        describe("which exposes the \"ready\" member", function () {
+            it("as a function", function () {
+                let $ = jQueryEnv();
+                
+                expect($("#selector").ready).toEqual(jasmine.any(Function));
+            });
+            
+            it("which immediately invokes the function it is given", function () {
+                let $ = jQueryEnv();
+                
+                let callback = jasmine.createSpy("callback");
+                $("#selector").ready(callback);
+                expect(callback).toHaveBeenCalled();
+            });
         });
     });
     

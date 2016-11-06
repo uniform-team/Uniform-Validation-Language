@@ -2,6 +2,7 @@ import * as env from "./env.js";
 import constants from "./constants.js";
 import Token from "./token.js";
 import parser from "./parser.js";
+import Identifier from "./identifier.js";
 import * as options from "./options.js";
 import * as errors from "./errors.js";
 import Scope from "./scope.js";
@@ -30,9 +31,13 @@ let uniform = {
 
 // Initialize the Uniform runtime with the given document and jQuery values
 function init(document, $) {
+    // Wait until DOM is loaded before initializing values
     env.init(document, $);
-    Scope.init();
-    submit.init();
+    env.$(env.document).ready(function () {
+        Identifier.init();
+        Scope.init();
+        submit.init();
+    });
     
     return uniform;
 }

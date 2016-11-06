@@ -22,7 +22,6 @@ export default {
 		MUL: "*",
 		DIV: "/",
 		MOD: "%",
-		IS: "is",
 		AND: "and",
 		OR: "or",
 		NOT: "not",
@@ -55,10 +54,6 @@ export default {
 		VISIBLE: "visible",
 		RETURN: "return",
 		SELECTOR: "selector"
-	},
-	STATE: {
-		STRING: "string",
-		NUMBER: "number"
 	},
 	VALUE: {
 		TRUE: "true",
