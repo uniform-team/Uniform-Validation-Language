@@ -130,7 +130,7 @@ export default {
             return result;
 		}
 		
-		// <blockOrStatementOrDecls> -> <decl> | <blockOrStatements> | ø
+		// <blockOrStatementOrDecls> -> ( <decl> | <blockOrStatement> ) <blockOrStatementOrDecls> | ø
 		function blockOrStatementOrDecls() {
 			while (currentToken.isUfmType() || currentToken.type === constants.TYPE.IDENTIFIER
                     || currentToken.type === constants.TYPE.VARIABLE || currentToken.isTag()) {
