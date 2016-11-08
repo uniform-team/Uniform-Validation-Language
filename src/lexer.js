@@ -193,8 +193,8 @@ export default function (input) {
 						return new Token(constants.TAG.ENABLED, constants.TYPE.KEYWORD);
 					case constants.TAG.VISIBLE:
 						return new Token(constants.TAG.VISIBLE, constants.TYPE.KEYWORD);
-					case constants.TAG.RETURN:
-						return new Token(constants.TAG.RETURN, constants.TYPE.KEYWORD);
+					case constants.TAG.RESULT:
+						return new Token(constants.TAG.RESULT, constants.TYPE.KEYWORD);
 					case constants.TAG.SELECTOR:
 						return new Token(constants.TAG.SELECTOR, constants.TYPE.KEYWORD);
 					case constants.TYPE.STRING:

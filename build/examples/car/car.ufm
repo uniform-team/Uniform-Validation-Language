@@ -7,9 +7,18 @@ string: model;
 string: year;
 
 valid: not hasCar or @carForm.valid;
+result: {
+    hasCar: hasCar;
+    car: @carForm.result;
+};
 
 @carForm {
     valid: make.valid and model.valid and year.valid;
+    result: {
+        make: make;
+        model: model;
+        year: year;
+    };
 
     make {
         valid: make matches @filled;

@@ -36,6 +36,26 @@ describe("The Token class", function () {
 		});
 	});
 	
+	describe("exposes the static \"flatten\" member", function () {
+	    it("as a function", function () {
+	        expect(Token.flatten).toEqual(jasmine.any(Function));
+	    });
+        
+        it("which flattens an object of Tokens down to an object of their values", function () {
+            expect(Token.flatten(new Token({
+                foo: new Token("bar", constants.TYPE.STRING),
+                obj: new Token({
+                    bar: new Token("foo", constants.TYPE.STRING)
+                }, constants.TYPE.OBJECT)
+            }, constants.TYPE.OBJECT))).toEqual({
+                foo: "bar",
+                obj: {
+                    bar: "foo"
+                }
+            });
+        });
+	});
+	
 	describe("exposes the \"getSelector\" member", function () {
 		it("as a function", function () {
 			expect(Token.prototype.getSelector).toEqual(jasmine.any(Function));
@@ -68,8 +88,8 @@ describe("The Token class", function () {
 				expect(assertTag("visible", constants.TAG.VISIBLE)).toBe(true);
 			});
 			
-			it("return", function () {
-				expect(assertTag("return", constants.TAG.RETURN)).toBe(true);
+			it("result", function () {
+				expect(assertTag("result", constants.TAG.RESULT)).toBe(true);
 			});
 		});
 		

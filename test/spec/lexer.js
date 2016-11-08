@@ -119,8 +119,8 @@ describe("The lexer module", function () {
 				assertToken("visible", constants.TAG.VISIBLE, constants.TYPE.KEYWORD);
 			});
 			
-			it("return", function () {
-				assertToken("return", constants.TAG.RETURN, constants.TYPE.KEYWORD);
+			it("result", function () {
+				assertToken("result", constants.TAG.RESULT, constants.TYPE.KEYWORD);
 			});
 
 			it("selector", function () {

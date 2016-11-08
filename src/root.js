@@ -1,4 +1,5 @@
 import Scope from "./scope.js";
+import Token from "./token.js";
 
 // Get the root tags and filter them to be more friendly to user-code
 export default function () {
@@ -11,6 +12,9 @@ export default function () {
         
         root[tagName] = tags[tagName].value;
     }
+    
+    // Flatten the result
+    if (root.result) root.result.value = Token.flatten(root.result.value);
     
     return root;
 }

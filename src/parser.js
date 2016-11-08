@@ -481,7 +481,7 @@ export default {
 				
 				return () => operand;
 			} else if (currentToken.value === constants.OPERATOR.LBRACE) { // Check for object operand
-				return object();
+				return object(owner);
 			} else {
 				throw new ParsingError("Expected an operand, got " + currentToken.value);
 			}
@@ -589,35 +589,43 @@ export default {
         }
 		
 		// <object> -> { <keyValuePairs> }
-		function object() {
-			let start = matchValue(constants.OPERATOR.LBRACE);
-			let obj = keyValuePairs();
+		function object(owner) {
+			let startToken = matchValue(constants.OPERATOR.LBRACE);
+			let expr = keyValuePairs(owner, startToken);
 			matchValue(constants.OPERATOR.RBRACE);
 			
-			let token = start.clone({ value: obj, type: constants.TYPE.OBJECT });
-			return () => token;
+			return expr;
 		}
 		
 		// <keyValuePairs> -> <keyValuePair> <keyValuePairs> | ø
-		function keyValuePairs() {
-			let obj = {};
+		function keyValuePairs(owner, startToken) {
+			let pairs = [];
 			
+            // Parse all key-value expressions
 			while (currentToken.type === constants.TYPE.IDENTIFIER) {
-				let pair = keyValuePair();
-				obj[pair.key] = pair.value;
+				pairs.push(keyValuePair(owner));
 			}
 			
-			return obj;
+			// Create a new object after evaluating each pair
+			return function () {
+                let obj = {};
+                
+				for (let pair of pairs) {
+                    obj[pair.key] = pair.expr();
+                }
+                
+                return startToken.clone({ value: obj, type: constants.TYPE.OBJECT });
+			};
 		}
 		
 		// <identifier> : <expression> ;
-		function keyValuePair() {
-			let key = match();
+		function keyValuePair(owner) {
+			let key = matchType(constants.TYPE.IDENTIFIER);
 			matchValue(constants.OPERATOR.COLON);
-			let expr = expression();
+			let expr = expression(owner);
 			matchValue(constants.OPERATOR.SEMICOLON);
 			
-			return { key: key.value, value: expr };
+			return { key: key.value, expr: expr };
 		}
 		
 		// Loaded all functions into the closure, parse the given input as a file

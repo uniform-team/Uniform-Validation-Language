@@ -481,7 +481,7 @@ describe("The evaluator module", function () {
 		};
 		
 		it("which performs the DOT operation for objects on the two inputs", function () {
-			expect(dotObjectOp({ "test": () => new Token(1, constants.TYPE.NUMBER) }, constants.TYPE.OBJECT, "test", constants.TYPE.IDENTIFIER)()).toEqualToken({
+			expect(dotObjectOp({ "test": new Token(1, constants.TYPE.NUMBER) }, constants.TYPE.OBJECT, "test", constants.TYPE.IDENTIFIER)()).toEqualToken({
 				value: 1,
 				type: constants.TYPE.NUMBER
 			});

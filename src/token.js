@@ -19,6 +19,26 @@ export default class Token {
 	clone({ value = this.value, type = this.type, line = this.line, col = this.col } = {}) {
 		return new Token(value, type, line, col);
 	}
+	
+	// Take an object containing Tokens and return an object with the raw values extracted from the Token objects
+	static flatten(param) {
+        if (param instanceof Token) { // Extract the value out of the Token and flatten it recursively
+            return Token.flatten(param.value);
+        } else if (typeof param === "object") { // Flatten each component of the object
+            let result = {};
+    
+            // Recursively flatten each key-value pair
+            for (let key in param) {
+                if (!param.hasOwnProperty(key)) continue;
+                
+                result[key] = Token.flatten(param[key]);
+            }
+            
+            return result;
+        } else { // Raw value, nothing to flatten
+            return param;
+        }
+	}
     
 	// Return the jQuery selector for this Token
 	getSelector() {

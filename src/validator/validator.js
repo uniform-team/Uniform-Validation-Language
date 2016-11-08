@@ -31,7 +31,11 @@ module.exports = function (path) {
             
             // Stop Express with an error if invalid
             if (!ufm.root.valid.value) throw new Error("Data is invalid!");
-        }).then(function () {
+            
+            // Return the result of the validation
+            return ufm.root.result && ufm.root.result.value;
+        }).then(function (result) {
+            req.ufmResult = result;
             next();
         }, function (err) {
             next(err);

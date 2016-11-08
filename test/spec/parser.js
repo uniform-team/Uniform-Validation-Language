@@ -394,8 +394,7 @@ describe("The parser module", function () {
 					let { value, type } = token;
 					expect(type).toBe(constants.TYPE.OBJECT);
 					
-					let expr = value.test;
-					expect(expr()).toEqualToken({
+					expect(value.test).toEqualToken({
 						value: true,
 						type: constants.TYPE.BOOL
 					});
@@ -406,14 +405,12 @@ describe("The parser module", function () {
 					let { value, type } = token;
 					expect(type).toBe(constants.TYPE.OBJECT);
 					
-					let expr1 = value.test;
-					expect(expr1()).toEqualToken({
+					expect(value.test).toEqualToken({
 						value: true,
 						type: constants.TYPE.BOOL
 					});
 					
-					let expr2 = value.test2;
-					expect(expr2()).toEqualToken({
+					expect(value.test2).toEqualToken({
 						value: false,
 						type: constants.TYPE.BOOL
 					});
@@ -422,14 +419,12 @@ describe("The parser module", function () {
 				it("with nested objects", function () {
 					let token = parser.parse("{ test: { foo: \"bar\"; }; }")();
 					let { value, type } = token;
+                    
 					expect(type).toBe(constants.TYPE.OBJECT);
+					expect(value.test.type).toBe(constants.TYPE.OBJECT);
 					
-					let expr = value.test;
-					let innerObjToken = expr();
-					expect(innerObjToken.type).toBe(constants.TYPE.OBJECT);
-					
-					let innerExpr = innerObjToken.value.foo;
-					expect(innerExpr()).toEqualToken({
+					let innerObj = value.test.value;
+					expect(innerObj.foo).toEqualToken({
 						value: "bar",
 						type: constants.TYPE.STRING
 					});
@@ -521,6 +516,28 @@ describe("The parser module", function () {
             setValue("inner2", "foo");
             expect(root().valid).toEqualToken({
                 value: false,
+                type: constants.TYPE.BOOL
+            });
+        });
+        
+        it("such as an identifier dependency embedded in an object", function () {
+            setValue("test", "foo");
+            
+            parser.parse(
+                "string: test;\n"
+                + "valid: {\n"
+                + "    test: test;\n"
+                + "}.test equals \"bar\";"
+            );
+            
+            expect(root().valid).toEqualToken({
+                value: false,
+                type: constants.TYPE.BOOL
+            });
+            
+            setValue("test", "bar");
+            expect(root().valid).toEqualToken({
+                value: true,
                 type: constants.TYPE.BOOL
             });
         });

@@ -25,10 +25,10 @@ describe("The validator module", function () {
         uniform = null;
     });
     
-    it("curries a function which calls back after successfully validating request data based on a Uniform script", function (done) {
+    it("curries a function which calls back after successfully validating request data based on a Uniform script returning the result in req.ufmResult", function (done) {
         let req = { body: { } }, $ = () => null;
         let parse = jasmine.createSpy("parse");
-        let content = "valid: true;";
+        let content = "valid: true; result: \"test\";";
         
         fs.readFile = jasmine.createSpy("readFile").and.returnValue(jasmineUtil.KeptPromise(content));
         bodyParser = jasmine.createSpy("bodyParser");
@@ -40,12 +40,17 @@ describe("The validator module", function () {
             root: {
                 valid: {
                     value: true
+                },
+                result: {
+                    value: "test"
                 }
             }
         });
         
         validator("script.ufm")(req, null, function (err) {
             expect(err).toBeFalsy();
+            
+            expect(req.ufmResult).toBe("test");
             
             expect(fs.readFile).toHaveBeenCalledWith("script.ufm", { encoding: "utf8" });
             expect(bodyParser).not.toHaveBeenCalled();

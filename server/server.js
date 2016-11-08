@@ -9,6 +9,7 @@ app.use(express.static("build"));
 // On car submission, validate and return whether or not it is valid
 app.post("/examples/car/submit", validator("build/examples/car/car.ufm"), function (req, res) {
     res.status(200).end("Valid data!");
+    console.log(req.ufmResult);
 }, function (err, req, res, next) {
     res.status(400).end("Invalid data!");
     console.error(err);

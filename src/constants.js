@@ -52,7 +52,7 @@ export default {
 		VALID: "valid",
 		ENABLED: "enabled",
 		VISIBLE: "visible",
-		RETURN: "return",
+		RESULT: "result",
 		SELECTOR: "selector"
 	},
 	VALUE: {

@@ -179,8 +179,7 @@ export function dotObject(leftExpr, rightVal) {
 		let left = coerce.toObject(leftExpr());
 		let right = coerce.toIdentifier(rightVal);
 		
-		let expr = left.value[right.value];
-		let result = expr();
+		let result = left.value[right.value];
 		
 		return left.clone({ value: result.value, type: result.type });
 	};
