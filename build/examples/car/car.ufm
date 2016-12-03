@@ -14,7 +14,7 @@ result: {
 
 @carForm {
     valid: make.valid and model.valid and year.valid;
-    selector: 10;
+    selector: "#subForm";
     enabled: hasCar;
     result: {
         make: make;
