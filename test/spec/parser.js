@@ -7,12 +7,64 @@ import root from "../../src.es5/root.js";
 import { ExpressionVariable } from "../../src.es5/variable.js";
 import Identifier from "../../src.es5/identifier.js";
 import Tag from "../../src.es5/tag.js";
-import { ParsingError, TypeError } from "../../src.es5/errors.js";
+import { ParsingError, TypeError, UndeclaredError } from "../../src.es5/errors.js";
 
 describe("The parser module", function () {
+    beforeEach(function () {
+        // Reset identifiers and scope to avoid bleeding state
+        Identifier.init();
+        Scope.reset();
+    });
+    
+    let callbacks = [];
+    let data = {};
+    
+    // Spy on jQuery functions to provide helper functions
+    beforeEach(function () {
+        spyOn($.prototype, "on").and.callFake(function (evt, sel, cb) {
+            callbacks.push({ sel, cb });
+        });
+        
+        spyOn($.prototype, "find").and.callFake(function (sel) {
+            this.sel += " " + sel; // Append child selector to parent
+            return this;
+        });
+        
+        spyOn($.prototype, "val").and.callFake(function () {
+            // Read the string value of this selector from the data table
+            return data[this.sel];
+        });
+        
+        spyOn($.prototype, "is").and.callFake(function (attribute) {
+            // Read the boolean value of this selector from the data table
+            if (attribute === ":checked") return data[this.sel];
+            else if (attribute === ":input") return data[this.sel];
+            else throw new Error(`Cannot mock call to $("${this.sel}").is("${attribute}").`);
+        });
+    });
+    
+    afterEach(function () {
+        callbacks = [];
+        data = {};
+    });
+    
+    // Set a virtual <input /> tag with the given name as having the given value and trigger necessary jQuery events
+    const setInputValue = function (name, value) {
+        setValue("[name=\"" + name + "\"]", value);
+    };
+    
+    // Set a virtual element with the given name as having the given value and trigger necessary jQuery events
+    const setValue = function (selector, value) {
+        // Set the data table with the value for its selector
+        data[selector] = value;
+    
+        // Trigger all functions which listened to $.on(...)
+        for (let { sel, cb } of callbacks) {
+            if (selector === sel) cb();
+        }
+    };
+    
 	describe("parses valid inputs such as", function () {
-		beforeEach(() => Scope.reset());
-		
 		it("identifier blocks", function () {
 			expect(() => parser.parse(
 				"string: test;\n"
@@ -52,7 +104,6 @@ describe("The parser module", function () {
 	describe("parses valid expressions", function () {
 		beforeAll(function () {
 			parser._testExpr = true;
-            Identifier.init();
 		});
 		
 		afterAll(function () {
@@ -297,16 +348,20 @@ describe("The parser module", function () {
 		
 		describe("with operands such as", function () {
 			it("identifiers", function () {
-				spyOn($.prototype, "val").and.returnValue("data");
+			    setInputValue("test", "data");
+			    
 				spyOn(Identifier.prototype, "addDependent");
                 
-				let owner = {
+				const owner = {
 				    addDependee: jasmine.createSpy("addDependee")
                 };
-				expect(parser.parse(
+				
+				const token = parser.parse(
 				    "string: test;\n"
                     + "test",
-                owner)()).toEqualToken({
+                owner)();
+                
+                expect(token).toEqualToken({
 					value: "data",
 					type: constants.TYPE.STRING
 				});
@@ -434,46 +489,8 @@ describe("The parser module", function () {
 	});
 	
 	describe("parses valid inputs while setting up dependencies", function () {
-		let callbacks = [];
-		let data = {};
-		
-		// Spy on jQuery functions to provide helper functions
-		beforeEach(function () {
-			spyOn($.prototype, "on").and.callFake(function (evt, sel, cb) {
-				callbacks.push({ sel, cb });
-			});
-			
-			spyOn($.prototype, "val").and.callFake(function () {
-				// Read the value of this selector from the data table
-				return data[this.sel];
-			});
-            
-            // Clear identifier mapping to ensure state does not bleed through tests
-            Identifier._map = { };
-            
-            // Clear scopes to prevent redeclaration errors
-            Scope.reset();
-		});
-		
-		afterEach(function () {
-			callbacks = [];
-			data = {};
-		});
-		
-		// Set a virtual <input /> tag with the given name as having the given value and trigger necessary jQuery events
-		let setValue = function (name, value) {
-			// Se the data table with the value for its selector
-			let selector = "[name=\"" + name + "\"]";
-			data[selector] = value;
-			
-			// Trigger all functions which listened to $.on(...)
-			for (let { sel, cb } of callbacks) {
-				if (selector === sel) cb();
-			}
-		};
-		
         it("such as a single identifier dependency", function () {
-            setValue("inner", "foo");
+            setInputValue("inner", "foo");
             
             parser.parse(
                 "string: inner;\n"
@@ -485,7 +502,7 @@ describe("The parser module", function () {
                 type: constants.TYPE.BOOL
             });
             
-            setValue("inner", "bar");
+            setInputValue("inner", "bar");
             expect(root().valid).toEqualToken({
                 value: true,
                 type: constants.TYPE.BOOL
@@ -493,8 +510,8 @@ describe("The parser module", function () {
         });
         
         it("such as multiple identifier dependencies", function () {
-            setValue("inner1", "bar");
-            setValue("inner2", "bar");
+            setInputValue("inner1", "bar");
+            setInputValue("inner2", "bar");
             
             parser.parse(
                 "string: inner1;\n"
@@ -507,13 +524,13 @@ describe("The parser module", function () {
                 type: constants.TYPE.BOOL
             });
             
-            setValue("inner1", "foo");
+            setInputValue("inner1", "foo");
             expect(root().valid).toEqualToken({
                 value: true,
                 type: constants.TYPE.BOOL
             });
             
-            setValue("inner2", "foo");
+            setInputValue("inner2", "foo");
             expect(root().valid).toEqualToken({
                 value: false,
                 type: constants.TYPE.BOOL
@@ -521,7 +538,7 @@ describe("The parser module", function () {
         });
         
         it("such as an identifier dependency embedded in an object", function () {
-            setValue("test", "foo");
+            setInputValue("test", "foo");
             
             parser.parse(
                 "string: test;\n"
@@ -535,7 +552,7 @@ describe("The parser module", function () {
                 type: constants.TYPE.BOOL
             });
             
-            setValue("test", "bar");
+            setInputValue("test", "bar");
             expect(root().valid).toEqualToken({
                 value: true,
                 type: constants.TYPE.BOOL
@@ -556,7 +573,7 @@ describe("The parser module", function () {
         });
         
         it("such as a single tag dependency on top an identifier dependency", function () {
-            setValue("test", "foo");
+            setInputValue("test", "foo");
             
         	parser.parse(
         	    "string: inner;\n"
@@ -570,7 +587,7 @@ describe("The parser module", function () {
                 type: constants.TYPE.BOOL
             });
             
-            setValue("test", "bar");
+            setInputValue("test", "bar");
             expect(root().valid).toEqualToken({
                 value: true,
                 type: constants.TYPE.BOOL
@@ -578,8 +595,8 @@ describe("The parser module", function () {
         });
         
         it("such as multiple tag dependencies on top of identifier dependencies", function () {
-            setValue("inner1", "bar");
-            setValue("inner2", "bar");
+            setInputValue("inner1", "bar");
+            setInputValue("inner2", "bar");
             
             parser.parse(
                 "string: outer1;\n"
@@ -596,13 +613,13 @@ describe("The parser module", function () {
                 type: constants.TYPE.BOOL
             });
     
-            setValue("inner1", "foo");
+            setInputValue("inner1", "foo");
             expect(root().valid).toEqualToken({
                 value: true,
                 type: constants.TYPE.BOOL
             });
             
-            setValue("inner2", "foo");
+            setInputValue("inner2", "foo");
             expect(root().valid).toEqualToken({
                 value: false,
                 type: constants.TYPE.BOOL
@@ -610,7 +627,7 @@ describe("The parser module", function () {
         });
         
         it("such as a nested tag dependency", function () {
-        	setValue("test", "foo");
+        	setInputValue("test", "foo");
             
             parser.parse(
                 "string: outer;\n"
@@ -626,7 +643,7 @@ describe("The parser module", function () {
                 type: constants.TYPE.BOOL
             });
             
-            setValue("test", "bar");
+            setInputValue("test", "bar");
             expect(root().valid).toEqualToken({
                 value: true,
                 type: constants.TYPE.BOOL
@@ -634,7 +651,7 @@ describe("The parser module", function () {
         });
         
         it("such as a tag dependency declared later in the file", function () {
-            setValue("inner", "foo");
+            setInputValue("inner", "foo");
     
             parser.parse(
                 "string: inner;\n"
@@ -661,7 +678,7 @@ describe("The parser module", function () {
         });
         
         it("such as a single expression variable dependency on top of an identifier dependency", function () {
-            setValue("inner", "foo");
+            setInputValue("inner", "foo");
             
         	parser.parse(
         	    "string: inner;\n"
@@ -674,7 +691,7 @@ describe("The parser module", function () {
                 type: constants.TYPE.BOOL
             });
             
-            setValue("inner", "bar");
+            setInputValue("inner", "bar");
             expect(root().valid).toEqualToken({
                 value: true,
                 type: constants.TYPE.BOOL
@@ -682,8 +699,8 @@ describe("The parser module", function () {
         });
         
         it("such as multiple expression variable dependencies on top of identifier dependencies", function () {
-            setValue("inner1", "foo");
-            setValue("inner2", "foo");
+            setInputValue("inner1", "foo");
+            setInputValue("inner2", "foo");
             
             parser.parse(
                 "string: inner1;\n"
@@ -698,13 +715,13 @@ describe("The parser module", function () {
                 type: constants.TYPE.BOOL
             });
     
-            setValue("inner1", "bar");
+            setInputValue("inner1", "bar");
             expect(root().valid).toEqualToken({
                 value: true,
                 type: constants.TYPE.BOOL
             });
     
-            setValue("inner2", "bar");
+            setInputValue("inner2", "bar");
             expect(root().valid).toEqualToken({
                 value: false,
                 type: constants.TYPE.BOOL
@@ -712,7 +729,7 @@ describe("The parser module", function () {
         });
         
         it("such as a nested expression variable dependency", function () {
-            setValue("test", "foo");
+            setInputValue("test", "foo");
             
         	parser.parse(
         	    "string: test;\n"
@@ -726,7 +743,7 @@ describe("The parser module", function () {
                 type: constants.TYPE.BOOL
             });
             
-            setValue("test", "bar");
+            setInputValue("test", "bar");
             expect(root().valid).toEqualToken({
                 value: true,
                 type: constants.TYPE.BOOL
@@ -758,7 +775,7 @@ describe("The parser module", function () {
 		});
         
         it("such as a single block variable dependency on top of an identifier dependency", function () {
-            setValue("inner", "bar");
+            setInputValue("inner", "bar");
             
         	parser.parse(
         	    "string: inner;\n"
@@ -771,7 +788,7 @@ describe("The parser module", function () {
                 type: constants.TYPE.BOOL
             });
             
-            setValue("inner", "foo");
+            setInputValue("inner", "foo");
             expect(root().valid).toEqualToken({
                 value: true,
                 type: constants.TYPE.BOOL
@@ -779,8 +796,8 @@ describe("The parser module", function () {
         });
         
         it("such as multiple block variable dependencies on top of identifier dependencies", function () {
-            setValue("inner1", "foo");
-            setValue("inner2", "foo");
+            setInputValue("inner1", "foo");
+            setInputValue("inner2", "foo");
     
             parser.parse(
                 "string: inner1;\n"
@@ -795,13 +812,13 @@ describe("The parser module", function () {
                 type: constants.TYPE.BOOL
             });
     
-            setValue("inner1", "bar");
+            setInputValue("inner1", "bar");
             expect(root().valid).toEqualToken({
                 value: true,
                 type: constants.TYPE.BOOL
             });
             
-            setValue("inner2", "bar");
+            setInputValue("inner2", "bar");
             expect(root().valid).toEqualToken({
                 value: false,
                 type: constants.TYPE.BOOL
@@ -809,7 +826,7 @@ describe("The parser module", function () {
         });
         
         it("such as a nested block variable dependency", function () {
-        	setValue("test", "foo");
+        	setInputValue("test", "foo");
             
             parser.parse(
                 "string: test;\n"
@@ -823,7 +840,7 @@ describe("The parser module", function () {
                 type: constants.TYPE.BOOL
             });
             
-            setValue("test", "bar");
+            setInputValue("test", "bar");
             expect(root().valid).toEqualToken({
                 value: true,
                 type: constants.TYPE.BOOL
@@ -840,6 +857,213 @@ describe("The parser module", function () {
                 value: true,
                 type: constants.TYPE.BOOL
             });
+        });
+	});
+	
+	describe("manipulates the document to reflect changes in form state", function () {
+	    it("such as disabling a form input", function () {
+            setValue("#selector", true); // $("#selector").is(":input") = true
+            setInputValue("isEnabled", true); // $("[name='isEnabled']").is(":checked") = true
+            
+            spyOn($.prototype, "prop").and.callFake(function () {
+                expect(this.sel).toBe("#selector"); // Run twice
+            });
+            
+            parser.parse(
+                "string: make;\n"
+                + "boolean: isEnabled;\n"
+                + "make {\n"
+                    + "selector: \"#selector\";\n"
+                    + "enabled: isEnabled;\n"
+                + "}"
+            );
+            
+            expect($.prototype.prop).toHaveBeenCalledWith("disabled", false);
+            
+            $.prototype.prop.calls.reset();
+            setInputValue("isEnabled", false); // $("[name='isEnabled']").is(":checked") = false
+            expect($.prototype.prop).toHaveBeenCalledWith("disabled", true);
+            
+            expect(jasmineUtil.expectationCount).toBe(4);
+        });
+        
+        it("such as enabling a form input", function () {
+            setValue("#selector", true); // $("#selector").is(":input") = true
+            setInputValue("isEnabled", false); // $("[name='isEnabled']").is(":checked") = false
+            
+            spyOn($.prototype, "prop").and.callFake(function () {
+                expect(this.sel).toBe("#selector"); // Run twice
+            });
+            
+            parser.parse(
+                "string: make;\n"
+                + "boolean: isEnabled;\n"
+                + "make {\n"
+                    + "selector: \"#selector\";\n"
+                    + "enabled: isEnabled;\n"
+                + "}"
+            );
+            
+            expect($.prototype.prop).toHaveBeenCalledWith("disabled", true);
+            
+            $.prototype.prop.calls.reset();
+            setInputValue("isEnabled", true); // $("[name='isEnabled']").is(":checked") = true
+            expect($.prototype.prop).toHaveBeenCalledWith("disabled", false);
+            
+            expect(jasmineUtil.expectationCount).toBe(4);
+        });
+        
+        it("such as disabling a form section", function () {
+            setValue("#selector", false); // $("#selector").is(":input") = false
+            setInputValue("isEnabled", true); // $("[name='isEnabled']").is(":checked") = true
+            
+            spyOn($.prototype, "prop").and.callFake(function () {
+                expect(this.sel).toBe("#selector :input"); // Run twice
+            });
+            
+            parser.parse(
+                "string: make;\n"
+                + "boolean: isEnabled;\n"
+                + "make {\n"
+                    + "selector: \"#selector\";\n"
+                    + "enabled: isEnabled;\n"
+                + "}"
+            );
+            
+            expect($.prototype.prop).toHaveBeenCalledWith("disabled", false);
+            
+            $.prototype.prop.calls.reset();
+            setInputValue("isEnabled", false); // $("[name='isEnabled']").is(":checked") = false
+            expect($.prototype.prop).toHaveBeenCalledWith("disabled", true);
+            
+            expect(jasmineUtil.expectationCount).toBe(4);
+        });
+        
+        it("such as enabling a form section", function () {
+            setValue("#selector", false); // $("#selector").is(":input") = false
+            setInputValue("isEnabled", false); // $("[name='isEnabled']").is(":checked") = false
+            
+            spyOn($.prototype, "prop").and.callFake(function () {
+                expect(this.sel).toBe("#selector :input"); // Run twice
+            });
+            
+            parser.parse(
+                "string: make;\n"
+                + "boolean: isEnabled;\n"
+                + "make {\n"
+                    + "selector: \"#selector\";\n"
+                    + "enabled: isEnabled;\n"
+                + "}"
+            );
+            
+            expect($.prototype.prop).toHaveBeenCalledWith("disabled", true);
+            
+            $.prototype.prop.calls.reset();
+            setInputValue("isEnabled", true); // $("[name='isEnabled']").is(":checked") = true
+            expect($.prototype.prop).toHaveBeenCalledWith("disabled", false);
+            
+            expect(jasmineUtil.expectationCount).toBe(4);
+        });
+        
+        it("such as hiding a form element", function () {
+            setValue("#selector", true); // $("#selector").is(":input") = true
+            setInputValue("isVisible", true); // $("[name='isVisible']").is(":checked") = true
+            
+            parser.parse(
+                "string: make;\n"
+                + "boolean: isVisible;\n"
+                + "make {\n"
+                    + "selector: \"#selector\";\n"
+                    + "visible: isVisible;\n"
+                + "}"
+            );
+    
+            spyOn($.prototype, "hide").and.callFake(function () {
+                expect(this.sel).toBe("#selector");
+            });
+            
+            setInputValue("isVisible", false); // $("[name='isVisible']").is(":checked") = false
+            expect($.prototype.hide).toHaveBeenCalled();
+            
+            expect(jasmineUtil.expectationCount).toBe(2);
+        });
+        
+        it("such as showing a form element", function () {
+            setValue("#selector", true); // $("#selector").is(":input") = true
+            setInputValue("isVisible", false); // $("[name='isVisible']").is(":checked") = false
+            
+            parser.parse(
+                "string: make;\n"
+                + "boolean: isVisible;\n"
+                + "make {\n"
+                    + "selector: \"#selector\";\n"
+                    + "visible: isVisible;\n"
+                + "}"
+            );
+            
+            spyOn($.prototype, "show").and.callFake(function () {
+                expect(this.sel).toBe("#selector");
+            });
+            
+            setInputValue("isVisible", true); // $("[name='isVisible']").is(":checked") = true
+            expect($.prototype.show).toHaveBeenCalled();
+            
+            expect(jasmineUtil.expectationCount).toBe(2);
+        });
+        
+        it("such as inferring the selector for an identifier", function () {
+            setInputValue("isVisible", false); // $("[name='isVisible']").is(":checked") = false
+            
+            parser.parse(
+                "string: make;\n"
+                + "boolean: isVisible;\n"
+                + "make {\n"
+                    + "visible: isVisible;\n"
+                + "}"
+            );
+            
+            spyOn($.prototype, "show").and.callFake(function () {
+                expect(this.sel).toBe("[name=\"make\"]");
+            });
+            
+            setInputValue("isVisible", true); // $("[name='isVisible']").is(":checked") = true
+            expect($.prototype.show).toHaveBeenCalled();
+            
+            expect(jasmineUtil.expectationCount).toBe(2);
+        });
+        
+        it("such as throwing an error when using enabled or visible without a selector which cannot be inferred", function () {
+            setInputValue("isVisible", false); // $("[name='isVisible']").is(":checked") = false
+            
+            expect(() => parser.parse(
+                "boolean: isVisible;\n"
+                + "@carForm {\n"
+                    + "visible: isVisible;\n"
+                + "}"
+            )).toThrowUfmError(UndeclaredError);
+        });
+        
+        // Must defer initialization until after parsing for this to work
+        xit("such as using the enabled / visible and selector tags out of order", function () {
+            setValue("#selector", true); // $("#selector").is(":input") = true
+            setInputValue("isVisible", false); // $("[name='isVisible']").is(":checked") = false
+            
+            parser.parse(
+                "boolean: isVisible;\n"
+                + "@carForm {\n"
+                    + "visible: isVisible;\n"
+                    + "selector: \"#selector\";\n"
+                + "}"
+            );
+            
+            spyOn($.prototype, "show").and.callFake(function () {
+                expect(this.sel).toBe("#selector");
+            });
+    
+            setInputValue("isVisible", true); // $("[name='isVisible']").is(":checked") = true
+            expect($.prototype.show).toHaveBeenCalled();
+    
+            expect(jasmineUtil.expectationCount).toBe(2);
         });
 	});
 	

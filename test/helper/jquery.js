@@ -7,12 +7,17 @@ globalObj.$ = jasmine.createSpy("jQuery").and.callFake(function (sel) {
 });
 
 // jQuery member functions
+const chainable = function() { return this; }; // Can't use () => this (syntax overrides `this` meaning)
 globalObj.$.prototype = {
-	attr: () => { },
-	val: () => { },
+	attr: chainable,
+	prop: chainable,
+	val: chainable,
+	on: chainable,
+    find: chainable,
+    trigger: chainable,
     is: () => { },
-	on: () => { },
-    trigger: () => { },
+    show: () => { },
+    hide: () => { },
 	ready: (onReady) => onReady()
 };
 

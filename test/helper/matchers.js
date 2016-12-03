@@ -21,7 +21,7 @@ beforeEach(function () {
 					
 					return result;
 				}
-			}
+			};
 		},
 		
 		// Tests if a function throws a UfmError or one of its subtypes
@@ -65,7 +65,7 @@ beforeEach(function () {
 						message: "Expected function to throw " + expected.prototype.constructor.name + ", but it did not throw any Error."
 					};
 				}
-			}
+			};
 		},
 		
 		// Test whether or not a class extends another
@@ -87,7 +87,51 @@ beforeEach(function () {
 					
 					return result;
 				}
-			}
-		}
+			};
+		},
+		
+        // Test whether the given owning object contains a getter method on the specified property
+		toHaveGetter: function () {
+			return {
+			    compare: function (owner, prop) {
+			        const getter = Object.getOwnPropertyDescriptor(owner, prop).get;
+                    const result = {
+                        pass: getter instanceof Function
+                    };
+                    
+                    if (result.pass) {
+                        // Error message when .not.toHaveGetter() fails
+                        result.message = `Expected ${owner}["${prop}"] not to be a getter function.`;
+                    } else {
+                        // Error message when .toHaveGetter() fails
+                        result.message = `Expected ${owner}["${prop}"] to be a getter function.`;
+                    }
+                    
+                    return result;
+                }
+            };
+		},
+        
+        // Test whether the given owning object contains a getter method on the specified property
+        toHaveSetter: function () {
+		    return {
+		        compare: function (owner, prop) {
+		            const setter = Object.getOwnPropertyDescriptor(owner, prop).set;
+		            const result = {
+		                pass: setter instanceof Function
+                    };
+            
+                    if (result.pass) {
+                        // Error message when .not.toHaveGetter() fails
+                        result.message = `Expected ${owner}["${prop}"] not to be a setter function.`;
+                    } else {
+                        // Error message when .toHaveGetter() fails
+                        result.message = `Expected ${owner}["${prop}"] to be a setter function.`;
+                    }
+                    
+                    return result;
+                }
+            };
+        }
 	});
 });

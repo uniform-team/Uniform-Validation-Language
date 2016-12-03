@@ -8,10 +8,15 @@ import Identifier from "../../src.es5/identifier.js";
 import { DuplicateDeclarationError } from "../../src.es5/errors.js";
 
 describe("The Scope class", function () {
-    it("constructs while setting the parent scope to the current scope", function () {
+    it("constructs with the given owner while setting the parent scope to the current scope", function () {
     	Scope._currentScope = {};
         
-        expect(new Scope().parentScope).toBe(Scope._currentScope);
+    	const owner = {};
+    	
+    	const scope = new Scope(owner);
+    	
+    	expect(scope.owner).toBe(owner);
+        expect(scope.parentScope).toBe(Scope._currentScope);
     });
     
     beforeEach(function () {
@@ -21,7 +26,7 @@ describe("The Scope class", function () {
     describe("exposes the static \"thisScope\" property", function () {
     	describe("with a getter", function () {
             it("defined as a function", function () {
-                expect(Object.getOwnPropertyDescriptor(Scope, "thisScope").get).toEqual(jasmine.any(Function));
+                expect(Scope).toHaveGetter("thisScope");
             });
         
             it("which returns the current scope", function () {
@@ -33,14 +38,14 @@ describe("The Scope class", function () {
     	});
         
         it("withOUT a setter", function () {
-        	expect(Object.getOwnPropertyDescriptor(Scope, "thisScope").set).toBeUndefined();
+        	expect(Scope).not.toHaveSetter("thisScope");
         });
     });
     
     describe("exposes the static \"rootScope\" property", function () {
     	describe("with a getter", function () {
     		it("defined as a function", function () {
-    			expect(Object.getOwnPropertyDescriptor(Scope, "rootScope").get).toEqual(jasmine.any(Function));
+    			expect(Scope).toHaveGetter("rootScope");
     		});
             
             it("which returns the root scope", function () {
@@ -52,7 +57,7 @@ describe("The Scope class", function () {
     	});
         
         it("withOUT a setter", function () {
-        	expect(Object.getOwnPropertyDescriptor(Scope, "rootScope").set).toBeUndefined();
+        	expect(Scope).not.toHaveSetter("rootScope");
         });
     });
     
