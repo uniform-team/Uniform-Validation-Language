@@ -21,9 +21,9 @@ export class Variable {
  * }
  */
 export class BlockVariable extends Variable {
-    constructor(token, cb) {
+    constructor(token) {
         super(token);
-        this.scope = new Scope(cb);
+        this.scope = new Scope(this);
     }
     
     // Get the tag with the given name under this BlockVariable's scope

@@ -20,7 +20,7 @@ export default class Identifier extends Dependable() {
 		this.name = token.value;
         this.type = type;
         this.token = token;
-        this.scope = new Scope();
+        this.scope = new Scope(this);
         
         // Initialize the dependable with an expression which pulls the identifier's value from the DOM tree
         let self = this;

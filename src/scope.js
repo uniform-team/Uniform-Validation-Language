@@ -39,7 +39,8 @@ let currentScope = null;
  */
 export default class Scope {
     // Construct a new Scope setting its parent as the current scope
-    constructor() {
+    constructor(owner) {
+        this.owner = owner;
         this.variables = {};
         this.tags = {};
         this.identifiers = {};

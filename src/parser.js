@@ -222,7 +222,7 @@ export default {
 				variable.initDependable(expression(variable));
                 defer(() => variable.update()); // Don't update until file is parsed and everything is declared
 			} else if (token.isTag()) {
-				let tag = new Tag(token);
+				let tag = new Tag(token, Scope.thisScope);
 				
 				Scope.thisScope.insert(tag);
 				tag.initDependable(expression(tag));
