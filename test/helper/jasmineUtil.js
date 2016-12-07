@@ -9,6 +9,10 @@ beforeEach(function () {
     spyOn(globalObj, "expect").and.callThrough();
 });
 
+afterEach(function () {
+    jQueryMap.reset();
+});
+
 globalObj.jasmineUtil = {
     // Return the number of expectations that were done in the current test
     get expectationCount() {

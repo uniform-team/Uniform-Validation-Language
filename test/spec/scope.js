@@ -2,10 +2,10 @@ import Scope from "../../src.es5/scope.js";
 
 import constants from "../../src.es5/constants.js";
 import Token from "../../src.es5/token.js";
-import { ExpressionVariable } from "../../src.es5/variable.js";
+import { BlockVariable, ExpressionVariable } from "../../src.es5/variable.js";
 import Tag from "../../src.es5/tag.js";
 import Identifier from "../../src.es5/identifier.js";
-import { DuplicateDeclarationError } from "../../src.es5/errors.js";
+import { UndeclaredError, DuplicateDeclarationError } from "../../src.es5/errors.js";
 
 describe("The Scope class", function () {
     it("constructs with the given owner while setting the parent scope to the current scope", function () {
@@ -258,13 +258,57 @@ describe("The Scope class", function () {
                 expect(new Scope().lookupTag("valid")).toBe(tag);
             });
         });
-        
+
         it("returns null if not found in this scope or parent scopes", function () {
             let scope = new Scope();
             
             scope.push(function () {
                 expect(new Scope().lookupTag("valid")).toBeNull();
             });
+        });
+    });
+
+    describe("exposes the \"getOrInferSelector\" member", function () {
+        it("as a function", function () {
+            expect(Scope.prototype.getOrInferSelector).toEqual(jasmine.any(Function));
+        });
+
+        it("which returns the token result on a well-defined selector tag", function () {
+            const selectorToken = new Token("#selector", constants.TYPE.STRING);
+            const selectorTag = { value: selectorToken };
+
+            spyOn(Scope.prototype, "findTag").and.returnValue(selectorTag);
+
+            expect(new Scope().getOrInferSelector()).toBe(selectorToken);
+        });
+
+        it("which throws a TypeError on an explicitly defined selector tag with an invalid type", function () {
+            const selectorToken = new Token(true, constants.TYPE.BOOL);
+            const selectorTag = { value: selectorToken };
+
+            spyOn(Scope.prototype, "findTag").and.returnValue(selectorTag);
+
+            expect(() => new Scope().getOrInferSelector()).toThrowUfmError(TypeError);
+        });
+
+        it("which infers a selector from this Scope's owner when not explicitly defined", function () {
+            const name = "myIdentifier";
+            const identifier = new Identifier(new Token(name, constants.TYPE.IDENTIFIER), constants.TYPE.STRING);
+
+            spyOn(Scope.prototype, "findTag").and.returnValue(null);
+
+            expect(new Scope(identifier).getOrInferSelector()).toEqualToken({
+                value: `[name="${name}"]`,
+                type: constants.TYPE.STRING
+            });
+        });
+
+        it("which throws an UndeclaredError when trying to infer from a BlockVariable", function () {
+            const variable = new BlockVariable(new Token("myVariable", constants.TYPE.VARIABLE));
+
+            spyOn(Scope.prototype, "findTag").and.returnValue(null);
+
+            expect(() => new Scope(variable).getOrInferSelector()).toThrowUfmError(UndeclaredError);
         });
     });
 });

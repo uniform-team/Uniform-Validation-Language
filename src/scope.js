@@ -1,5 +1,7 @@
-import { Variable } from "./variable.js";
-import { DuplicateDeclarationError, AssertionError } from "./errors.js"
+import constants from "./constants.js";
+import Token from "./token.js";
+import { Variable, BlockVariable } from "./variable.js";
+import { DuplicateDeclarationError, AssertionError, UndeclaredError } from "./errors.js"
 import Tag from "./tag.js";
 import Identifier from "./identifier.js";
 
@@ -163,4 +165,32 @@ export default class Scope {
 		if (identifier) return identifier; // Return it if found
 		else return this.parentScope && this.parentScope.lookupIdentifier(name); // Not found, check parent recursively
 	}
+
+    // Get the current value of the selector tag if it exists or infer it otherwise
+    getOrInferSelector() {
+        // Get the selector tag within the same scope
+        const selectorTag = this.findTag(constants.TAG.SELECTOR);
+
+        if (selectorTag) { // Selector tag explicitly defined
+            const selectorToken = selectorTag.value;
+
+            // Verify type
+            if (selectorToken.type !== constants.TYPE.STRING) {
+                throw new TypeError(`Expected selector tag to be of type string,`
+                    + ` but it was actually of type ${selectorToken.type}`, selectorTag.line, selectorTag.col);
+            }
+
+            return selectorToken;
+        } else { // Try to infer selector
+            if (this.owner instanceof Identifier) { // Infer corresponding <input /> element as selector tag
+                return new Token(`[name="${this.owner.name}"]`, constants.TYPE.STRING);
+            } else if (this.owner instanceof BlockVariable) { // Cannot infer BlockVariable selector
+                throw new UndeclaredError(`The variable @${this.owner.name} requires a selector tag in order to use`
+                    + ` a(n) ${this.name} tag.`, this.line, this.col);
+            } else {
+                throw new AssertionError(`Expected block to belong to an Identifier or BlockVariable,`
+                    + ` but it belonged to ${this.owner}.`, this.line, this.col);
+            }
+        }
+    }
 }

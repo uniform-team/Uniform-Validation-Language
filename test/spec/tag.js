@@ -39,214 +39,36 @@ describe("The Tag class", function () {
     	    
     	    expect(() => tag.update()).toThrowUfmError(TypeError);
     	});
-    
-        describe("for an enabled tag", function () {
-            it("correctly sets the element's enabled state if it has a sibling selector tag", function () {
-                const enabledTag = new Tag(new Token(constants.TAG.ENABLED, constants.TYPE.KEYWORD), new Scope());
-                const enabled = true;
-                enabledTag.initDependable(() => new Token(enabled, constants.TYPE.BOOL));
-                
-                const selector = "#selector";
-                const selectorTag = new Tag(new Token(constants.TAG.SELECTOR, constants.TYPE.KEYWORD));
-                selectorTag.initDependable(() => new Token(selector, constants.TYPE.STRING));
-                selectorTag.update(); // Initialize value
-                spyOn(Scope.prototype, "findTag").and.returnValue(selectorTag);
-                
-                spyOn($.prototype, "is").and.callFake(function () {
-                    expect(this.sel).toBe(selector);
-                    return true; // Is an <input /> element
-                });
-                spyOn($.prototype, "prop").and.callFake(function () {
-                    expect(this.sel).toBe(selector);
-                });
-                
-                enabledTag.update();
-                
-                expect($.prototype.is).toHaveBeenCalledWith(":input");
-                expect($.prototype.prop).toHaveBeenCalledWith("disabled", !enabled);
-                
-                expect(jasmineUtil.expectationCount).toBe(4);
-            });
-    
-            it("correctly sets the element's enabled state by inferring the selector tag if a sibling tag does not exist", function () {
-                const identifier = "make";
-                const scope = new Scope(new Identifier(new Token(identifier, constants.TYPE.IDENTIFIER), constants.TYPE.STRING));
-                const enabledTag = new Tag(new Token(constants.TAG.ENABLED, constants.TYPE.KEYWORD), scope);
-                const enabled = true;
-                enabledTag.initDependable(() => new Token(enabled, constants.TYPE.BOOL));
-        
-                spyOn(Scope.prototype, "findTag").and.returnValue(null);
-        
-                const selector = `[name="${identifier}"]`;
-                spyOn($.prototype, "is").and.callFake(function () {
-                    expect(this.sel).toBe(selector);
-                    return true; // Is an <input /> element
-                });
-                spyOn($.prototype, "prop");
-        
-                enabledTag.update();
-        
-                expect($.prototype.is).toHaveBeenCalledWith(":input");
-                expect($.prototype.prop).toHaveBeenCalledWith("disabled", !enabled);
-        
-                expect(jasmineUtil.expectationCount).toBe(3);
-            });
-            
-            it("correctly sets the element's enabled state if it is an <input /> tag", function () {
-                const enabledTag = new Tag(new Token(constants.TAG.ENABLED, constants.TYPE.KEYWORD), new Scope());
-                const enabled = true;
-                enabledTag.initDependable(() => new Token(enabled, constants.TYPE.BOOL));
-        
-                const selector = "#selector";
-                const selectorTag = new Tag(new Token(constants.TAG.SELECTOR, constants.TYPE.KEYWORD));
-                selectorTag.initDependable(() => new Token(selector, constants.TYPE.STRING));
-                selectorTag.update(); // Initialize value
-                spyOn(Scope.prototype, "findTag").and.returnValue(selectorTag);
-        
-                spyOn($.prototype, "is").and.callFake(function () {
-                    expect(this.sel).toBe(selector);
-                    return true; // Is an <input /> element
-                });
-                spyOn($.prototype, "prop").and.callFake(function () {
-                    expect(this.sel).toBe(selector);
-                });
-        
-                enabledTag.update();
-        
-                expect($.prototype.is).toHaveBeenCalledWith(":input");
-                expect($.prototype.prop).toHaveBeenCalledWith("disabled", !enabled);
-        
-                expect(jasmineUtil.expectationCount).toBe(4);
-            });
-            
-            it("correctly sets the element's <input /> descendants' enabled state", function () {
-                const identifier = "make";
-                const scope = new Scope(new Identifier(new Token(identifier, constants.TYPE.IDENTIFIER), constants.TYPE.STRING));
-                const enabledTag = new Tag(new Token(constants.TAG.ENABLED, constants.TYPE.KEYWORD), scope);
-                const enabled = true;
-                enabledTag.initDependable(() => new Token(enabled, constants.TYPE.BOOL));
-                
-                const selector = "#selector";
-                const selectorTag = new Tag(new Token(constants.TAG.SELECTOR, constants.TYPE.KEYWORD));
-                selectorTag.initDependable(() => new Token(selector, constants.TYPE.STRING));
-                selectorTag.update(); // Initialize
-                spyOn(Scope.prototype, "findTag").and.returnValue(selectorTag);
-                
-                spyOn($.prototype, "is").and.callFake(function () {
-                    expect(this.sel).toBe(selector);
-                    return false; // Not an <input /> element
-                });
-                spyOn($.prototype, "find").and.callFake(function () {
-                    expect(this.sel).toBe(selector);
-                    return this; // Chain
-                });
-                spyOn($.prototype, "prop");
-        
-                enabledTag.update();
-        
-                expect($.prototype.is).toHaveBeenCalledWith(":input");
-                expect($.prototype.find).toHaveBeenCalledWith(":input");
-                expect($.prototype.prop).toHaveBeenCalledWith("disabled", !enabled);
-        
-                expect(jasmineUtil.expectationCount).toBe(5);
-            });
-        });
-    	
-        describe("for a visible tag", function () {
-            it("correctly sets the element's visible state if it has a sibling selector tag", function () {
-                const visibleTag = new Tag(new Token(constants.TAG.VISIBLE, constants.TYPE.KEYWORD), new Scope());
-                visibleTag.initDependable(() => new Token(true, constants.TYPE.BOOL));
-        
-                const selector = "#selector";
-                const selectorTag = new Tag(new Token(constants.TAG.SELECTOR, constants.TYPE.KEYWORD));
-                selectorTag.initDependable(() => new Token(selector, constants.TYPE.STRING));
-                selectorTag.update(); // Initialize value
-                spyOn(Scope.prototype, "findTag").and.returnValue(selectorTag);
-        
-                spyOn($.prototype, "show").and.callFake(function () {
-                    expect(this.sel).toBe(selector);
-                });
-        
-                visibleTag.update();
-        
-                expect($.prototype.show).toHaveBeenCalledWith();
-        
-                expect(jasmineUtil.expectationCount).toBe(2);
-            });
-    
-            it("correctly sets the element's visible state by inferring the selector tag a sibling tag does not exist", function () {
-                const identifier = "make";
-                const scope = new Scope(new Identifier(new Token(identifier, constants.TYPE.IDENTIFIER), constants.TYPE.STRING));
-                const visibleTag = new Tag(new Token(constants.TAG.VISIBLE, constants.TYPE.KEYWORD), scope);
-                visibleTag.initDependable(() => new Token(true, constants.TYPE.BOOL));
-        
-                spyOn(Scope.prototype, "findTag").and.returnValue(null);
-        
-                const selector = `[name="${identifier}"]`;
-                spyOn($.prototype, "show").and.callFake(function () {
-                    expect(this.sel).toBe(selector);
-                });
-        
-                visibleTag.update();
-        
-                expect($.prototype.show).toHaveBeenCalledWith();
-        
-                expect(jasmineUtil.expectationCount).toBe(2);
-            });
-    
-            it("correctly shows the element", function () {
-                const visibleTag = new Tag(new Token(constants.TAG.VISIBLE, constants.TYPE.KEYWORD), new Scope());
-                visibleTag.initDependable(() => new Token(true, constants.TYPE.BOOL));
-        
-                const selector = "#selector";
-                const selectorTag = new Tag(new Token(constants.TAG.SELECTOR, constants.TYPE.KEYWORD));
-                selectorTag.initDependable(() => new Token(selector, constants.TYPE.STRING));
-                selectorTag.update(); // Initialize value
-                spyOn(Scope.prototype, "findTag").and.returnValue(selectorTag);
-                
-                spyOn($.prototype, "show").and.callFake(function () {
-                    expect(this.sel).toBe(selector);
-                });
-        
-                visibleTag.update();
-        
-                expect($.prototype.show).toHaveBeenCalledWith();
-        
-                expect(jasmineUtil.expectationCount).toBe(2);
-            });
-            
-            it("correctly hides the element", function () {
-                const visibleTag = new Tag(new Token(constants.TAG.VISIBLE, constants.TYPE.KEYWORD), new Scope());
-                visibleTag.initDependable(() => new Token(false, constants.TYPE.BOOL));
-        
-                const selector = "#selector";
-                const selectorTag = new Tag(new Token(constants.TAG.SELECTOR, constants.TYPE.KEYWORD));
-                selectorTag.initDependable(() => new Token(selector, constants.TYPE.STRING));
-                selectorTag.update(); // Initialize value
-                spyOn(Scope.prototype, "findTag").and.returnValue(selectorTag);
-        
-                spyOn($.prototype, "hide").and.callFake(function () {
-                    expect(this.sel).toBe(selector);
-                });
-        
-                visibleTag.update();
-        
-                expect($.prototype.hide).toHaveBeenCalledWith();
-        
-                expect(jasmineUtil.expectationCount).toBe(2);
-            });
-        });
-        
-        it("which throws an UndeclaredError on an enabled or visible tag when unable to infer the selector", function () {
-            const variable = new BlockVariable(new Token("test", constants.TYPE.VARIABLE));
-            
-            const enabledTag = new Tag(new Token(constants.TAG.ENABLED, constants.TYPE.KEYWORD), new Scope(variable));
-            enabledTag.initDependable(() => new Token(true, constants.TYPE.BOOL));
-            
-            spyOn(Scope.prototype, "findTag").and.returnValue(null);
-            
-            expect(() => enabledTag.update()).toThrowUfmError(UndeclaredError);
-        });
+
+    	it("which triggers an update on the DOM for an enabled tag", function () {
+    	    const scope = new Scope();
+    	    const enabled = true;
+            const tag = new Tag(new Token(constants.TAG.ENABLED, constants.TYPE.KEYWORD), scope);
+            tag.initDependable(() => new Token(enabled, constants.TYPE.BOOL));
+
+            const selector = "#selector";
+            spyOn(Scope.prototype, "getOrInferSelector").and.returnValue(new Token(selector, constants.TYPE.STRING));
+            spyOn(Tag, "updateEnabled");
+
+            tag.update();
+
+            expect(Tag.updateEnabled).toHaveBeenCalledWith(selector, enabled);
+    	});
+
+    	it("which triggers an update on the DOM for a visible tag", function () {
+            const scope = new Scope();
+            const visible = true;
+            const tag = new Tag(new Token(constants.TAG.VISIBLE, constants.TYPE.KEYWORD), scope);
+            tag.initDependable(() => new Token(visible, constants.TYPE.BOOL));
+
+            const selector = "#selector";
+            spyOn(Scope.prototype, "getOrInferSelector").and.returnValue(new Token(selector, constants.TYPE.STRING));
+            spyOn(Tag, "updateVisible");
+
+            tag.update();
+
+            expect(Tag.updateVisible).toHaveBeenCalledWith(selector, visible);
+    	});
     	
         it("which does not trigger jQuery if it is not a root-level tag", function () {
             let tag = new Tag(new Token(constants.TAG.VALID, constants.TYPE.KEYWORD));
@@ -283,6 +105,201 @@ describe("The Tag class", function () {
                 
                 expect($.prototype.trigger).toHaveBeenCalledWith("ufm:update", [ "valid", token ]);
             });
+        });
+    });
+
+    describe("exposes the \"updateEnabled\" member", function () {
+        it("as a static function", function () {
+            expect(Tag.updateEnabled).toEqual(jasmine.any(Function));
+        });
+
+        it("which sets the element's enabled state if it is an <input /> tag", function () {
+            const selector = "#selector";
+            const enabled = true;
+
+            spyOn($.prototype, "is").and.callFake(function () {
+                expect(this.sel).toBe(selector);
+                return true; // Is an <input /> element
+            });
+            spyOn($.prototype, "prop").and.callFake(function () {
+                expect(this.sel).toBe(selector);
+                return this; // Chain
+            });
+            spyOn($.prototype, "attr").and.callFake(function () {
+                expect(this.sel).toBe(selector);
+            });
+
+            Tag.updateEnabled(selector, enabled);
+
+            expect($.prototype.is).toHaveBeenCalledWith(":input");
+            expect($.prototype.prop).toHaveBeenCalledWith("disabled", !enabled);
+            expect($.prototype.attr).toHaveBeenCalledWith("ufm-enabled", enabled);
+
+            expect(jasmineUtil.expectationCount).toBe(6);
+        });
+
+        it("which sets the element's <input /> descendants' enabled state", function () {
+            const parentSel = "div#parent";
+            const parent = new DomElem();
+            const childSel = "input#child";
+            const child = new DomElem();
+            const enabled = true;
+
+            jQueryMap.put(parentSel, [ parent ]);
+            jQueryMap.put(childSel, [ child ]);
+
+            spyOn($.prototype, "is").and.callFake(function (query) {
+                if (query === ":input") {
+                    return false; // Not an <input /> element
+                } else if (query === `[ufm-enabled="${!enabled}"]`) {
+                    return false; // No element overrides the one being set
+                } else {
+                    throw new Error(`Unknown query "${query}".`);
+                }
+            });
+            spyOn($.prototype, "find").and.callFake(function () {
+                expect(this.sel).toBe(parentSel);
+                return $(child);
+            });
+            spyOn($.prototype, "each").and.callFake(function (cb) {
+                expect(this[0]).toBe(child);
+                cb(0, this[0]);
+            });
+            spyOn($.prototype, "parent").and.callFake(function () {
+                expect(this[0]).toBe(child);
+                return $(parent);
+            });
+            spyOn($.prototype, "prop").and.callFake(function () {
+                expect(this[0]).toBe(child);
+            });
+
+            Tag.updateEnabled(parentSel, enabled);
+
+            expect($.prototype.is).toHaveBeenCalledWith(":input");
+            expect($.prototype.find).toHaveBeenCalledWith(":input");
+            expect($.prototype.prop).toHaveBeenCalledWith("disabled", !enabled);
+
+            expect(jasmineUtil.expectationCount).toBe(7);
+        });
+
+        it("which ignores any descendant <input /> elements, if that child is directly overridden by another enabled tag", function () {
+            const parentSel = "div#parent";
+            const parent = new DomElem();
+            const childSel = "input#child";
+            const child = new DomElem();
+            const enabled = true;
+
+            jQueryMap.put(parentSel, [ parent ]);
+            jQueryMap.put(childSel, [ child ]);
+
+            spyOn($.prototype, "is").and.callFake(function (query) {
+                if (query === ":input") {
+                    return false; // Not an <input /> element
+                } else if (query === `[ufm-enabled="${!enabled}"]`) {
+                    return true; // Child element overrides the one being set
+                } else {
+                    throw new Error(`Unknown query "${query}".`);
+                }
+            });
+            spyOn($.prototype, "find").and.callFake(function () {
+                expect(this.sel).toBe(parentSel);
+                return $(child);
+            });
+            spyOn($.prototype, "each").and.callFake(function (cb) {
+                expect(this[0]).toBe(child);
+                cb(0, this[0]);
+            });
+            spyOn($.prototype, "prop");
+
+            Tag.updateEnabled(parentSel, enabled);
+
+            expect($.prototype.is).toHaveBeenCalledWith(":input");
+            expect($.prototype.find).toHaveBeenCalledWith(":input");
+            expect($.prototype.prop).not.toHaveBeenCalledWith();
+
+            expect(jasmineUtil.expectationCount).toBe(5);
+        });
+
+        it("which ignores any descendant <input /> elements, if that child is indirectly overridden by another enabled tag", function () {
+            const parentSel = "div#parent";
+            const parent = new DomElem();
+            const middleSel = "div#middle";
+            const middle = new DomElem();
+            const childSel = "input#child";
+            const child = new DomElem();
+            const enabled = true;
+
+            jQueryMap.put(parentSel, [ parent ]);
+            jQueryMap.put(middleSel, [ middle ]);
+            jQueryMap.put(childSel, [ child ]);
+
+            spyOn($.prototype, "is").and.callFake(function (query) {
+                if (query === ":input") {
+                    return false; // Not an <input /> element
+                } else if (query === `[ufm-enabled="${!enabled}"]`) {
+                    if (this[0] === child) return false; // Child is NOT overridden
+                    else if (this[0] === middle) return true; // Middle element IS overridden
+                    else throw new Error("Unknown jQuery object: " + this);
+                } else {
+                    throw new Error(`Unknown query "${query}".`);
+                }
+            });
+            spyOn($.prototype, "find").and.callFake(function () {
+                expect(this.sel).toBe(parentSel);
+                return $(child);
+            });
+            spyOn($.prototype, "each").and.callFake(function (cb) {
+                expect(this[0]).toBe(child);
+                cb(0, this[0]);
+            });
+            spyOn($.prototype, "parent").and.callFake(function () {
+                if (this[0] === child) return $(middle);
+                else if (this[0] === middle) return $(parent);
+                else throw new Error("Unknown jQuery object: " + this);
+            });
+            spyOn($.prototype, "prop");
+
+            Tag.updateEnabled(parentSel, enabled);
+
+            expect($.prototype.is).toHaveBeenCalledWith(":input");
+            expect($.prototype.find).toHaveBeenCalledWith(":input");
+            expect($.prototype.prop).not.toHaveBeenCalledWith();
+
+            expect(jasmineUtil.expectationCount).toBe(5);
+        });
+    });
+
+    describe("exposes the \"updateVisible\" member", function () {
+        it("as a static function", function () {
+            expect(Tag.updateVisible).toEqual(jasmine.any(Function));
+        });
+
+        it("which shows the given selector", function () {
+            const selector = "#selector";
+
+            spyOn($.prototype, "show").and.callFake(function () {
+                expect(this.sel).toBe(selector);
+            });
+
+            Tag.updateVisible(selector, true);
+
+            expect($.prototype.show).toHaveBeenCalled();
+
+            expect(jasmineUtil.expectationCount).toBe(2);
+        });
+
+        it("which hides the given selector", function () {
+            const selector = "#selector";
+
+            spyOn($.prototype, "hide").and.callFake(function () {
+                expect(this.sel).toBe(selector);
+            });
+
+            Tag.updateVisible(selector, false);
+
+            expect($.prototype.hide).toHaveBeenCalled();
+
+            expect(jasmineUtil.expectationCount).toBe(2);
         });
     });
     

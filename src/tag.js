@@ -1,10 +1,8 @@
 import { document, $ } from "./env.js";
 import constants from "./constants.js";
 import Dependable from "./dependable.js";
-import Identifier from "./identifier.js";
-import { BlockVariable } from "./variable.js";
 import Scope from "./scope.js";
-import { TypeError, UndeclaredError, AssertionError } from "./errors.js";
+import { TypeError } from "./errors.js";
 
 // Mapping of tags to the expected types
 const EXPECTED_TYPE = {
@@ -36,67 +34,22 @@ export default class Tag extends Dependable() {
 	update() {
 	    super.update();
         
-        const currentToken = this.value;
+        const newToken = this.value;
         if (!this.value) {
             return; // Wait for dependees to initialize
         }
 	    
 	    // Check that the actual type matches the one expected for this tag
-        if (this.expectedType && currentToken.type !== this.expectedType) {
+        if (this.expectedType && newToken.type !== this.expectedType) {
             throw new TypeError(`Tag "${this.name}" should be of type "${this.expectedType}"`
-                + ` but was actually of type "${currentToken.type}".`, this.line, this.col);
+                + ` but was actually of type "${newToken.type}".`, this.line, this.col);
         }
-	    
-	    // Update DOM element's visible or enabled state if necessary
-	    if (this.name === constants.TAG.ENABLED || this.name === constants.TAG.VISIBLE) {
-	        // Get the selector tag within the same scope
-            const selectorTag = this.containingScope.findTag(constants.TAG.SELECTOR);
-            
-            // Extract selector string from the tag, or infer the selector
-            let selector;
-            if (selectorTag) { // Selector tag explicitly defined, use it
-                const selectorToken = selectorTag.value;
-                
-                if (selectorToken.type !== constants.TYPE.STRING) {
-                    throw new AssertionError(`Expected selector tag to be of type string,`
-                            + `but it was actually of type ${selectorToken.type}`, this.line, this.col);
-                }
-                
-                selector = selectorToken.value;
-            } else { // Try to infer selector
-                const owner = this.containingScope.owner;
-                if (owner instanceof Identifier) { // Infer corresponding <input /> element as selector tag
-                    selector = `[name="${owner.name}"]`;
-                } else if (owner instanceof BlockVariable) { // Cannot infer BlockVariable selector
-                    throw new UndeclaredError(`The variable @${owner.name} requires a selector tag in order to use`
-                            + ` a(n) ${this.name} tag.`, this.line, this.col);
-                } else {
-                    throw new AssertionError(`Expected owner of tag "${this.name} " to be of type Identifier,`
-                            + ` but it was of type ${typeof owner}.`, this.line, this.col);
-                }
-            }
-            
-            // Retrieve the boolean value to set
-            const currentValue = currentToken.value;
-            
-            // Set the DOM UI state to match the UFM state
-            const $selector = $(selector);
-            if (this.name === constants.TAG.ENABLED) {
-                if ($selector.is(":input")) {
-                    // Element is an <input /> tag, update it directly
-                    $selector.prop("disabled", !currentValue);
-                } else {
-                    // Selector is not an <input />, update all <input /> elements underneath it
-                    $selector.find(":input").prop("disabled", !currentValue);
-                }
-            } else if (this.name === constants.TAG.VISIBLE) {
-                // Show or hide the element
-                if (currentValue) $selector.show();
-                else $selector.hide();
-            } else {
-                throw new AssertionError(`Expected tag name to be "${constants.TAG.ENABLED}" or `
-                        + `"${constants.TAG.VISIBLE}", but was actually "${this.name}".`);
-            }
+
+        // Set the DOM UI state to match the UFM state
+        if (this.name === constants.TAG.ENABLED) {
+            Tag.updateEnabled(this.containingScope.getOrInferSelector().value, newToken.value);
+        } else if (this.name === constants.TAG.VISIBLE) {
+            Tag.updateVisible(this.containingScope.getOrInferSelector().value, newToken.value);
         }
         
         if (Scope.rootScope.tags[this.name] === this) {
@@ -104,7 +57,43 @@ export default class Tag extends Dependable() {
             $(document).trigger("ufm:update", [ this.name, this.value ]);
         }
     }
-    
+
+    // Enable or disable the element if it is not overridden by a lower node in the DOM tree
+    static updateEnabled(selector, newValue) {
+        const $selector = $(selector);
+
+        if ($selector.is(":input")) { // Element is an <input /> tag, update it directly
+            $selector.prop("disabled", !newValue).attr("ufm-enabled", newValue);
+        } else { // Selector is not an <input />, update all <input /> elements underneath it
+            const updatedElement = $selector[0]; // Extract DOM element from jQuery for equality testing
+
+            // Check each element for an overriding enabled expression
+            $selector.find(":input").each(function (index, el) {
+                const $input = $(el);
+
+                // Walk up DOM tree from leaf to starting selector looking for any element which overrides the new value
+                while (el !== updatedElement) {
+                    const $el = $(el);
+                    if ($el.is(`[ufm-enabled="${!newValue}"]`)) {
+                        return; // Value is overridden by lower element, ignore it
+                    }
+
+                    // Move to parent element
+                    el = $el.parent()[0];
+                }
+
+                // Value is not overridden by lower element, set to new value
+                $input.prop("disabled", !newValue);
+            });
+        }
+    }
+
+    // Show or hide the element
+    static updateVisible(selector, newValue) {
+        if (newValue) $(selector).show();
+        else $(selector).hide();
+    }
+
     // Return the type which this tag's value SHOULD be
     get expectedType() {
         return EXPECTED_TYPE[this.name];
