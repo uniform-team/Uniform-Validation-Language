@@ -32,12 +32,15 @@ export default function jQueryEnv(data) {
             // Returns whether or not this selector is checked
             // See GitHub #36 for bitching about "on"
             is: function (query) {
-                if (query !== ":checked") throw new Error("Called the jQuery $(...).is(\"" + query + "\")."
-                        + " Only $(...).is(\":checked\") is supported.");
-                
-                // Lookup name, and return true if it is the value "on", false if missing or any other value
-                let name = getName(this.sel);
-                return data[name] === "on";
+                if (query === ":checked") {
+                    // Lookup name, and return true if it is the value "on", false if missing or any other value
+                    let name = getName(this.sel);
+                    return data[name] === "on";
+                } else if (query === ":input") {
+                    return true; // Assume all server side values are inputs
+                } else {
+                    throw new Error(`Called $(...).is("${query}"). Only $(...).is(":checked") or $(...).is(":input") is supported.`);
+                }
             },
             
             on: () => null,

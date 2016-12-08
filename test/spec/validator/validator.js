@@ -123,4 +123,31 @@ describe("The validator module", function () {
             done();
         });
     });
+    
+    describe("exposes the \"getClientLib\" member", function () {
+        it("as a function", function () {
+            expect(validator.getClientLib).toEqual(jasmine.any(Function));
+        });
+
+        it("which promises to return a cached instance of the client library", function (done) {
+            let library = "// Some JavaScript code";
+
+            fs.readFile = jasmine.createSpy("readFile").and.returnValue(jasmineUtil.KeptPromise(library));
+
+            validator.getClientLib().then(function (lib) {
+                expect(lib).toBe(library);
+
+                expect(fs.readFile).toHaveBeenCalled();
+
+                fs.readFile.calls.reset();
+                return validator.getClientLib(); // Get library again
+            }).then(function (lib) {
+                expect(lib).toBe(library);
+
+                expect(fs.readFile).not.toHaveBeenCalled(); // Should have been cached
+
+                done();
+            });
+        });
+    });
 });

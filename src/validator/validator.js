@@ -9,7 +9,7 @@ import uniform from "../main.js";
 let bodyParser = bodyParserModule.urlencoded({ extended: false });
 
 // Export function which takes a path to a Uniform script and returns a middleware function which validates against it
-module.exports = function (path) {
+let validator = function (path) {
     let readFile = denodeify(fs.readFile); // Denodeify after invocation so fs.readFile can be mocked
     
     // Read the file given
@@ -53,3 +53,23 @@ module.exports = function (path) {
         }
     };
 };
+
+// Load the client version of the Uniform library and promise to return it
+let clientLib;
+validator.getClientLib = function () {
+    const root = `${__dirname}/../../`;
+    const readFile = denodeify(fs.readFile);
+
+    // Return cached copy if possible
+    if (clientLib) {
+        return new Promise(resolve => resolve(clientLib));
+    }
+
+    // Read client source code from dist/
+    return readFile(`${root}/dist/uniform.js`, { encoding: "utf8" }).then(function (lib) {
+        clientLib = lib; // Cache client library
+        return lib;
+    });
+};
+
+module.exports = validator;

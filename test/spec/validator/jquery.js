@@ -28,23 +28,29 @@ describe("The jQuery module", function () {
         	});
     
             // See GitHub #36 for bitching
-            it("which returns true if it has the value \"on\" in the request body", function () {
+            it("which returns true on \":checked\" if it has the value \"on\" in the request body", function () {
             	let $ = jQueryEnv({ foo: "on" });
                 
                 expect($("[name=\"foo\"]").is(":checked")).toBe(true);
             });
     
             // See GitHub #36 for bitching
-            it("which returns false if this selector does not exist in the request body", function () {
+            it("which returns false on \":checked\" if this selector does not exist in the request body", function () {
             	let $ = jQueryEnv({ });
                 
                 expect($("[name=\"foo\"]").is(":checked")).toBe(false);
             });
+
+            it("which returns true on \":input\"", function () {
+                let $ = jQueryEnv({ });
+
+                expect($("[name=\"foo\"]").is(":input")).toBe(true);
+            });
             
-            it("which throws an error if not given the input specifier of \":checked\"", function () {
+            it("which throws an error if not given the input specifier of \":checked\" or \":input\"", function () {
             	let $ = jQueryEnv();
                 
-                expect(() => $("[name=\"foo\"]").is("input")).toThrowError();
+                expect(() => $("[name=\"foo\"]").is("something else")).toThrowError();
             });
         });
         
