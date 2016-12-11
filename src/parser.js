@@ -29,6 +29,7 @@ export default {
             return getToken();
         };
         tokenize.hadNewlineBeforeLastToken = getToken.hadNewlineBeforeLastToken;
+        tokenize._setExpectRegex = getToken._setExpectRegex;
 		
 		// Return the next token without altering the currentToken
 		function lookahead() {
@@ -37,6 +38,7 @@ export default {
 			return nextToken;
 		}
 		
+		if (this._testExpr) tokenize._setExpectRegex(true); // If testing an expression, assume regex for first token
 		let currentToken = tokenize();
 		
 		// Wrap the error classes to automatically insert the current line number and column

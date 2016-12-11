@@ -1,5 +1,5 @@
-@filled: /"."/;
-@year: /"^[0-9]{4}$"/;
+@filled: /./;
+@year: /[0-9]{4}/x;
 
 boolean: hasCar;
 string: make;

@@ -4,12 +4,12 @@ import constants from "../../src.es5/constants.js";
 import { SyntaxError } from "../../src.es5/errors.js";
 
 describe("The lexer module", function () {
-	let assertToken = function (input, value, type) {
-		let tokenize = tokenizer(input);
-		let token = tokenize();
+	const assertToken = function (input, value, type, isRegex = false) {
+		const tokenize = tokenizer(input);
+        tokenize._setExpectRegex(isRegex);
+		const token = tokenize();
 
-		expect(token.value).toEqual(value);
-		expect(token.type).toBe(type);
+		expect(token).toEqualToken({ value, type });
 	};
 	
 	describe("tokenizes inputs such as", function () {
@@ -21,20 +21,89 @@ describe("The lexer module", function () {
 			assertToken("@test", "test", constants.TYPE.VARIABLE);
 		});
 		
-		it("selectors", function () {
-			assertToken("$(\"#test\")", "#test", constants.TYPE.SELECTOR);
-		});
-		
 		it("numbers", function () {
 			assertToken("123", 123, constants.TYPE.NUMBER);
 		});
-		
-		it("regular expressions", function () {
-			assertToken("/\"test\"/", /test/, constants.TYPE.REGEX);
+
+		describe("regular expressions", function () {
+		    const assertRegex = function (input, value) {
+		        assertToken(input, value, constants.TYPE.REGEX, true); // Assume isRegex
+            };
+
+		    it("with only normal characters", function () {
+                assertRegex("/test/", /test/);
+		    });
+
+		    it("with escaped characters", function () {
+                assertRegex(`/hello\\nworld\\/test/`, /hello\nworld\/test/);
+		    });
+
+		    it("with ending backslashes", function () {
+                assertRegex(`/test\\\\/`, /test\\/);
+		    });
+		    
+		    describe("with flags", function () {
+		        it("such as ignore-case (i)", function () {
+		            assertRegex(`/test/i`, /test/i);
+		        });
+		        
+		        it("such as multi-line (m)", function () {
+		            assertRegex(`/test/m`, /test/m);
+		        });
+		        
+		        it("such as match-line (x)", function () {
+		            assertRegex(`/test/x`, /^test$/);
+		        });
+		        
+		        it("such as ignore-case and multi-line (order-independent)", function () {
+		            assertRegex(`/test/im`, /test/im);
+		            assertRegex(`/test/mi`, /test/mi);
+		        });
+		        
+		        it("such as ignore-case and match-line (order-independent)", function () {
+		            assertRegex(`/test/ix`, /^test$/i);
+		            assertRegex(`/test/xi`, /^test$/i);
+		        });
+		        
+		        it("such as multi-line and match-line (order-independent)", function () {
+		            assertRegex(`/test/mx`, /^test$/m);
+		            assertRegex(`/test/xm`, /^test$/m);
+		        });
+		        
+		        it("such as all the flags (order-independent)", function () {
+		            assertRegex(`/test/mxi`, /^test$/mi);
+                    assertRegex(`/chex/mix`, /^chex$/mi);
+                    assertRegex(`/test/xmi`, /^test$/mi);
+                    assertRegex(`/test/xim`, /^test$/mi);
+                    assertRegex(`/test/imx`, /^test$/mi);
+                    assertRegex(`/test/ixm`, /^test$/mi);
+		        });
+		    });
+		    
+		    it("treating unknown flags as following identifiers", function () {
+		        const tokenize = tokenizer(`/test/a`);
+		        tokenize._setExpectRegex(true);
+		        
+		        expect(tokenize()).toEqualToken({
+		            value: /test/,
+                    type: constants.TYPE.REGEX
+                });
+		        
+		        expect(tokenize()).toEqualToken({
+		            value: "a",
+                    type: constants.TYPE.IDENTIFIER
+                });
+		    });
 		});
-		
-		it("strings", function () {
-			assertToken("\"test\"", "test", constants.TYPE.STRING);
+
+		describe("strings", function () {
+            it("with only normal characters", function () {
+                assertToken(`"test"`, "test", constants.TYPE.STRING);
+            });
+
+            it("with escaped characters", function () {
+                assertToken(`"hello\\nworld\\"test"`, `hello\nworld"test`, constants.TYPE.STRING);
+            });
 		});
 		
 		it("true literal", function () {
@@ -139,10 +208,6 @@ describe("The lexer module", function () {
 				assertToken("number", constants.TYPE.NUMBER, constants.TYPE.KEYWORD);
 			});
 			
-			it("this", function () {
-				assertToken("this", constants.THIS, constants.TYPE.SELECTOR);
-			});
-			
 			it("all", function () {
 				assertToken("all", constants.OPERATOR.ALL, constants.TYPE.KEYWORD);
 			});
@@ -209,10 +274,6 @@ describe("The lexer module", function () {
 				assertToken(">=", constants.OPERATOR.GTE, constants.TYPE.KEYWORD);
 			});
 			
-			it("comma", function () {
-				assertToken(",", constants.OPERATOR.COMMA, constants.TYPE.KEYWORD);
-			});
-			
 			it("colon", function () {
 				assertToken(":", constants.OPERATOR.COLON, constants.TYPE.KEYWORD);
 			});
@@ -244,41 +305,42 @@ describe("The lexer module", function () {
 	});
 	
 	describe("throws errors on bad inputs such as", function () {
-		let assertSyntaxError = function (input) {
-			let tokenize = tokenizer(input);
-			expect(tokenize).toThrowUfmError(SyntaxError);
-		};
+        const assertUfmError = function (input, ErrorType, isRegex = true) {
+            const tokenize = tokenizer(input);
+            tokenize._setExpectRegex(isRegex);
+            expect(tokenize).toThrowUfmError(ErrorType);
+        };
+        
+		describe("malformed strings", function () {
+		    it("containing raw newline characters", function () {
+                assertUfmError(`"test\n"`, SyntaxError);
+		    });
+		    
+		    it("containing escaped raw newline characters", function () {
+		        assertUfmError(`"test\\\n"`, SyntaxError);
+		    });
+            
+		    it("which do not end", function () {
+                assertUfmError(`"test`, SyntaxError);
+		    });
+        });
 		
-		describe("malformed selector", function () {
-			it("from a missing open parenthesis", function () {
-				assertSyntaxError("$test");
-			});
-			
-			it("from a missing open quote", function () {
-				assertSyntaxError("$(test)");
-			});
-			
-			it("from a missing close quote", function () {
-				assertSyntaxError("$(\"test)");
-			});
-			
-			it("from a missing close parenthesis", function () {
-				assertSyntaxError("$(\"test\"");
-			});
-		});
-		
-		it("malformed string", function () {
-			assertSyntaxError("\"test");
-		});
-		
-		describe("malformed regular expression", function () {
-			it("from a missing close quote", function () {
-				assertSyntaxError("/\"test");
-			});
-			
-			it("from a missing close slash", function () {
-				assertSyntaxError("/\"test\"");
-			});
+		describe("malformed regular expressions", function () {
+		    const assertRegexUfmError = function (input, ErrorType) {
+		        assertUfmError(input, ErrorType, true);
+            };
+		    
+		    it("containing raw newline characters", function () {
+                assertRegexUfmError(`/test\n/`, SyntaxError);
+		    });
+            
+		    it("containing escaped raw newline characters", function () {
+		        assertRegexUfmError(`/test\\\n/`, SyntaxError);
+		    });
+		    
+		    it("which do not end", function () {
+                assertRegexUfmError(`/test`, SyntaxError);
+		    });
 		});
 	});
     

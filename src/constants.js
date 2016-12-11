@@ -5,7 +5,6 @@ export default {
 		NUMBER: "number",
 		STRING: "string",
 		IDENTIFIER: "identifier",
-		SELECTOR: "selector",
 		KEYWORD: "keyword",
 		REGEX: "regex",
 		STATE: "state",
@@ -32,13 +31,12 @@ export default {
 		RBRACE: "}",
 		LPAREN: "(",
 		RPAREN: ")",
-		COMMA: ",",
 		SEMICOLON: ";",
 		LT: "<",
 		GT: ">",
 		LTE: "<=",
 		GTE: ">=",
-		REGEX: "/",
+		REGEX: "regex",
 		DOT: ".",
 		ALL: "all",
 		ANY: "any",
@@ -59,6 +57,10 @@ export default {
 		TRUE: "true",
 		FALSE: "false"
 	},
-	THIS: "this",
+    REGEX_FLAGS: {
+        IGNORE_CASE: "i",
+		MULTI_LINE: "m",
+		MATCH_LINE: "x"
+    },
 	ENDOFFILE: "EOF"
 };

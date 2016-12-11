@@ -149,7 +149,7 @@ describe("The parser module", function () {
 			});
 			
 			it("matches", function () {
-				expect(parser.parse("\"test\" matches /\"test\"/")()).toEqualToken({
+				expect(parser.parse(`"test" matches /test/`)()).toEqualToken({
 					value: true,
 					type: constants.TYPE.BOOL
 				});
@@ -396,7 +396,7 @@ describe("The parser module", function () {
 			});
 			
 			it("regular expressions", function () {
-				expect(parser.parse("/\"test\"/")()).toEqualToken({
+				expect(parser.parse("/test/")()).toEqualToken({
 					value: /test/,
 					type: constants.TYPE.REGEX
 				});
@@ -420,20 +420,6 @@ describe("The parser module", function () {
                 
                 expect(ExpressionVariable.prototype.addDependent).toHaveBeenCalledWith(owner);
                 expect(owner.addDependee).toHaveBeenCalledWith(variable);
-			});
-			
-			it("selectors", function () {
-				expect(parser.parse("$(\"test\")")()).toEqualToken({
-					value: "test",
-					type: constants.TYPE.SELECTOR
-				});
-			});
-			
-			it("this keyword", function () {
-				expect(parser.parse("this")()).toEqualToken({
-					value: "this",
-					type: constants.TYPE.SELECTOR
-				});
 			});
 			
 			describe("objects", function () {

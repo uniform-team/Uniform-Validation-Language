@@ -1,11 +1,7 @@
 import constants from "./constants.js";
 import TokenClass from "./token.js";
 import { SyntaxError as SyntaxErrorClass } from "./errors.js";
-
-//Regular expressions
-let isWhitespace = /\s|\t/;
-let isAlpha = /[a-zA-Z]/;
-let isDigit = /[0-9]/;
+import { isWhitespace, isAlpha, isDigit, escape, canBeFollowedByRegex, isRegexFlag } from "./lexer-util.js";
 
 export default function (input) {
 	let lineNumber = 1;     //keeps track of current line number for error messages
@@ -16,6 +12,8 @@ export default function (input) {
 	let tokenBuffer = ""; //buffer that appends the lexbuffer until a token is built
     
     let hadNewlineBeforeLastToken = false;
+    let expectNextRegex = false;
+    let expectRegex = false;
 	
 	// Wrap the Token class with one which automatically inserts the current line number and index
 	class Token extends TokenClass {
@@ -44,7 +42,7 @@ export default function (input) {
 	//increments string index and updates lexbuffer to the next character
 	function nextChar() {
 		stringIndex++;
-		if (stringIndex > input.length) throw new Error("Out of bounds");
+		if (stringIndex > input.length) throw new SyntaxError("Unexpected end of file.");
 		lexbuffer = input.charAt(stringIndex);
 	}
 	
@@ -76,6 +74,8 @@ export default function (input) {
 		try {
 			tokenBuffer = "";
             hadNewlineBeforeLastToken = false;
+            expectRegex = expectNextRegex; // Check if the current token is expected to be a RegEx
+            expectNextRegex = false; // Assume next token is not a RegEx unless otherwise specified
 			
 			//When the end of the uniform file is reached, exit
 			if (stringIndex >= input.length) {
@@ -90,81 +90,76 @@ export default function (input) {
 			if (lexbuffer === "")
 				return new Token(constants.ENDOFFILE, constants.ENDOFFILE);
 			
-			//if a / is encountered, it may be a single line comment, multi line comment, division operation, or a regex
+			//if a / is encountered, it may be a single line comment, multi line comment, division operation, or a RegEx
 			while (lexbuffer === "/") {
-				skipChar();
+				skipChar(); // /
 				
 				//single line comment
 				if (lexbuffer === "/") {
 					while (lexbuffer !== "\n") {
 						skipChar();
 					}
-					skipChar();
+					skipChar(); // \n
 					ignoreWhiteSpace();
 				} else if (lexbuffer === "*") { // multi-line comment
-					skipChar();
+					skipChar(); // *
 					while (true) {
 						if (lexbuffer !== "*") {
 							skipChar();
 							continue;
 						}
 						
-						skipChar();
+						skipChar(); // *
 						if (lexbuffer === "/") {
-							skipChar();
+							skipChar(); // /
 							//end comment
 							ignoreWhiteSpace();
 							break;
 						}
 					}
-				} else if (lexbuffer === "\"") {
-					//regex
-					skipChar();
+				} else if (expectRegex) { // RegEx
 					while (true) {
-						if (lexbuffer !== "\"") {
-							readChar();
-							continue;
-						}
-						
-						skipChar();
-						if (lexbuffer === "/") {
-							skipChar();
-							return new Token(new RegExp(tokenBuffer), constants.TYPE.REGEX);
-						}
-						else tokenBuffer += "\"";
+                        if (lexbuffer === "\n") { // Found raw newline, syntax error
+                            throw new SyntaxError("Unterminated regular expression literal.");
+                        }
+
+                        // Handle escape sequence
+                        if (lexbuffer === "\\") {
+                            // Necessary to avoid detecting \/ as terminating the RegEx
+                            readChar(); // \
+                            if (lexbuffer === "\n") { // Found raw newline, syntax error
+                                throw new SyntaxError("Unterminated regular expression literal.");
+                            }
+                            readChar(); // Character following \
+                            continue;
+                        }
+
+                        // Not the end of the Regex, keep adding characters
+                        if (lexbuffer !== "/") {
+					        readChar();
+					        continue;
+                        }
+
+                        // Found end of Regex expression
+                        skipChar(); // /
+
+                        // Tokenize Regex flags
+                        let flags = "";
+                        while (isRegexFlag(lexbuffer)) {
+                            if (lexbuffer === constants.REGEX_FLAGS.MATCH_LINE) { // Require expression to match entire line
+                                // Convert x UFM flag to JavaScript RegEx format by wrapping with ^...$
+								if (!tokenBuffer.startsWith("^")) tokenBuffer = "^" + tokenBuffer;
+                                if (!tokenBuffer.endsWith("$")) tokenBuffer += "$";
+                            } else {
+                                flags += lexbuffer;
+                            }
+                            skipChar();
+                        }
+
+                        return new Token(new RegExp(tokenBuffer, flags), constants.TYPE.REGEX);
 					}
-				} else {
+				} else { // Must be a division operator
 					return new Token(constants.OPERATOR.DIV, constants.TYPE.KEYWORD);
-				}
-			}
-			
-			//check for dom element
-			if (lexbuffer === "$") { // Must be a selector, because it should be followed by a ("...")
-				skipChar();
-				
-				if (lexbuffer !== "(") {
-					throw new SyntaxError("Invalid token, Expected token of type: SELECTOR, received \"" + tokenBuffer + "\"");
-				}
-				skipChar();
-				
-				if (lexbuffer !== "\"") {
-					throw new SyntaxError("Invalid token, Expected token of type: SELECTOR, received \"" + tokenBuffer + "\"");
-				}
-				skipChar();
-				
-				while (true) {
-					if (lexbuffer !== "\"") {
-						readChar();
-						continue;
-					}
-					
-					skipChar();
-					if (lexbuffer === ")") {
-						skipChar();
-						return new Token(tokenBuffer, constants.TYPE.SELECTOR);
-					} else {
-						tokenBuffer += "\"";
-					}
 				}
 			}
 			
@@ -176,6 +171,7 @@ export default function (input) {
 				} while (isAlpha.test(lexbuffer) || isDigit.test(lexbuffer) || lexbuffer === "_");
 				
 				// Check for keywords
+                expectNextRegex = canBeFollowedByRegex(tokenBuffer);
 				switch (tokenBuffer) {
 					case constants.OPERATOR.AND:
 						return new Token(constants.OPERATOR.AND, constants.TYPE.KEYWORD);
@@ -203,8 +199,6 @@ export default function (input) {
                         return new Token(constants.TYPE.NUMBER, constants.TYPE.KEYWORD);
                     case constants.TYPE.BOOL:
                         return new Token(constants.TYPE.BOOL, constants.TYPE.KEYWORD);
-					case constants.THIS:
-						return new Token(constants.THIS, constants.TYPE.SELECTOR);
 					case constants.VALUE.TRUE:
 						return new Token(true, constants.TYPE.BOOL);
 					case constants.VALUE.FALSE:
@@ -248,9 +242,30 @@ export default function (input) {
 			
 			// Check for string
 			if (lexbuffer === "\"") {
-				skipChar();
-				while (lexbuffer !== "\"") readChar();
-				skipChar();
+				skipChar(); // "
+				while (true) {
+				    // Check for newline
+                    if (lexbuffer === "\n") {
+                        throw new SyntaxError("Unterminated string literal.");
+                    }
+
+				    // Escape sequences
+				    if (lexbuffer === "\\") {
+				        skipChar(); // \
+				        tokenBuffer += escape("\\" + lexbuffer);
+				        skipChar(); // Character following \
+                        continue;
+                    }
+
+                    // Check for terminating quote
+                    if (lexbuffer === "\"") {
+				        skipChar(); // "
+				        break;
+                    }
+
+                    // Normal character, add it to the buffer
+                    readChar();
+                }
 				
 				return new Token(tokenBuffer, constants.TYPE.STRING);
 			}
@@ -258,6 +273,7 @@ export default function (input) {
 			//check for non-alpha operators
 			let token = lexbuffer;
 			skipChar();
+			expectNextRegex = canBeFollowedByRegex(token);
 			switch (token) {
 				case constants.OPERATOR.ADD:
 					return new Token(constants.OPERATOR.ADD, constants.TYPE.KEYWORD);
@@ -283,8 +299,6 @@ export default function (input) {
 					}
 					else
 						return new Token(constants.OPERATOR.GT, constants.TYPE.KEYWORD);
-				case constants.OPERATOR.COMMA:
-					return new Token(constants.OPERATOR.COMMA, constants.TYPE.KEYWORD);
 				case constants.OPERATOR.COLON:
 					return new Token(constants.OPERATOR.COLON, constants.TYPE.KEYWORD);
 				case constants.OPERATOR.SEMICOLON:
@@ -312,6 +326,11 @@ export default function (input) {
 	// Expose function to check for newline
     tokenize.hadNewlineBeforeLastToken = function () {
         return hadNewlineBeforeLastToken;
+    };
+    
+    // Testing hook to set whether the next token can be a RegEx
+    tokenize._setExpectRegex = function (expect) {
+        expectNextRegex = expect;
     };
     
     // Curry function which will return the next token each time it is invoked

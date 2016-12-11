@@ -14,6 +14,7 @@ function getName(selector) {
 }
 
 // Expose a mock of the jQuery ($) function which looks up data from the request body given
+const chainable = function () { return this; };
 export default function jQueryEnv(data) {
     let $ = function (sel) {
         // Instance members
@@ -42,6 +43,14 @@ export default function jQueryEnv(data) {
                     throw new Error(`Called $(...).is("${query}"). Only $(...).is(":checked") or $(...).is(":input") is supported.`);
                 }
             },
+            
+            attr: chainable,
+            prop: chainable,
+            parent: chainable,
+            find: chainable,
+            
+            show: () => null,
+            hide: () => null,
             
             on: () => null,
             trigger: () => null,

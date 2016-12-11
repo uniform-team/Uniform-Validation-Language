@@ -178,14 +178,6 @@ describe("The Token class", function () {
 			it("variables", function () {
 				expect(assertOperand("test", constants.TYPE.VARIABLE)).toBe(true);
 			});
-			
-			it("selectors", function () {
-				expect(assertOperand("$(\"test\")", constants.TYPE.SELECTOR)).toBe(true);
-			});
-			
-			it("this keyword", function () {
-				expect(assertOperand("this", constants.THIS)).toBe(true);
-			});
 		});
 		
 		it("which returns false when this Token is not an operand", function () {
