@@ -24,7 +24,7 @@ describe("The lexer module", function () {
 		it("numbers", function () {
 			assertToken("123", 123, constants.TYPE.NUMBER);
 		});
-
+		
 		describe("regular expressions", function () {
 		    const assertRegex = function (input, value) {
 		        assertToken(input, value, constants.TYPE.REGEX, true); // Assume isRegex
@@ -37,8 +37,8 @@ describe("The lexer module", function () {
 		    it("with escaped characters", function () {
                 assertRegex(`/hello\\nworld\\/test/`, /hello\nworld\/test/);
 		    });
-
-		    it("with ending backslashes", function () {
+            
+		    it("with ending backslashes which do NOT escape the terminating slash", function () {
                 assertRegex(`/test\\\\/`, /test\\/);
 		    });
 		    
@@ -104,6 +104,10 @@ describe("The lexer module", function () {
             it("with escaped characters", function () {
                 assertToken(`"hello\\nworld\\"test"`, `hello\nworld"test`, constants.TYPE.STRING);
             });
+            
+            it("with ending backslashes which do NOT escape the end quote", function () {
+                assertToken(`"hello\\\\"`, `hello\\`, constants.TYPE.STRING);
+            });
 		});
 		
 		it("true literal", function () {
@@ -118,6 +122,10 @@ describe("The lexer module", function () {
 			it("single-line comments", function () {
 				assertToken("// comment\ntest", "test", constants.TYPE.IDENTIFIER);
 			});
+			
+			it("sequential single line comments", function () {
+			    assertToken("// comment\n// another comment\ntest", "test", constants.TYPE.IDENTIFIER);
+			});
 
 			it("multi-line comments", function () {
 				assertToken("/* comment */test", "test", constants.TYPE.IDENTIFIER);
@@ -130,176 +138,176 @@ describe("The lexer module", function () {
 			it("tricky multi-line comments", function () {
 				assertToken("/* ****** comment\n //should be comment still /*\n more comment \n */test", "test", constants.TYPE.IDENTIFIER);
 			});
+			
+			it("sequential multi-line comments", function () {
+			    assertToken("/* comment *//* another comment */test", "test", constants.TYPE.IDENTIFIER);
+			});
+			
+			it("interspersed single-line and multi-line comments", function () {
+			    assertToken("// comment\n/* comment 2 */\n// comment 3\n/* comment 4 */test", "test", constants.TYPE.IDENTIFIER);
+			});
 		});
-
 
 		describe("end-of-file on", function () {
 			it("empty files", function () {
 				assertToken("", constants.ENDOFFILE, constants.ENDOFFILE);
 			});
 
-			it("on full programs", function () {
-				let testStr = "@variable: \"test\";";
-				let tokenize = tokenizer(testStr);
-				let i = 0;
-				let token = tokenize();
-				while (token.value != constants.ENDOFFILE) {
-					token = tokenize();
-					i = i + 1;
-					if (i > 6)
-						break;
-				}
-				expect(token.value).toEqual(constants.ENDOFFILE);
-				expect(token.type).toBe(constants.ENDOFFILE);
-
+			it("non-empty files", function () {
+				const tokenize = tokenizer("test");
+				
+				expect(tokenize()).toEqualToken({
+				    value: "test",
+                    type: constants.TYPE.IDENTIFIER
+                });
+				expect(tokenize()).toEqualToken({
+				    value: constants.ENDOFFILE,
+                    type: constants.ENDOFFILE
+                });
 			});
 		});
 
 		describe("keywords like", function () {
+		    const assertKeyword = function (input, value) {
+		        assertToken(input, value, constants.TYPE.KEYWORD);
+            };
+		    
 			it("and", function () {
-				assertToken("and", constants.OPERATOR.AND, constants.TYPE.KEYWORD);
+                assertKeyword("and", constants.OPERATOR.AND);
 			});
 			
 			it("or", function () {
-				assertToken("or", constants.OPERATOR.OR, constants.TYPE.KEYWORD);
+                assertKeyword("or", constants.OPERATOR.OR);
 			});
 			
 			it("not", function () {
-				assertToken("not", constants.OPERATOR.NOT, constants.TYPE.KEYWORD);
+                assertKeyword("not", constants.OPERATOR.NOT);
 			});
 			
 			it("matches", function () {
-				assertToken("matches", constants.OPERATOR.MATCHES, constants.TYPE.KEYWORD);
+                assertKeyword("matches", constants.OPERATOR.MATCHES);
 			});
 			
 			it("equals", function () {
-				assertToken("equals", constants.OPERATOR.EQUALS, constants.TYPE.KEYWORD);
+                assertKeyword("equals", constants.OPERATOR.EQUALS);
 			});
 			
 			it("valid", function () {
-				assertToken("valid", constants.TAG.VALID, constants.TYPE.KEYWORD);
+                assertKeyword("valid", constants.TAG.VALID);
 			});
 			
 			it("enabled", function () {
-				assertToken("enabled", constants.TAG.ENABLED, constants.TYPE.KEYWORD);
+                assertKeyword("enabled", constants.TAG.ENABLED);
 			});
 			
 			it("visible", function () {
-				assertToken("visible", constants.TAG.VISIBLE, constants.TYPE.KEYWORD);
+                assertKeyword("visible", constants.TAG.VISIBLE);
 			});
 			
 			it("result", function () {
-				assertToken("result", constants.TAG.RESULT, constants.TYPE.KEYWORD);
+                assertKeyword("result", constants.TAG.RESULT);
 			});
 
 			it("selector", function () {
-				assertToken("selector", constants.TAG.SELECTOR, constants.TYPE.KEYWORD);
-			});
-
-			it("string", function () {
-				assertToken("string", constants.TYPE.STRING, constants.TYPE.KEYWORD);
-			});
-			
-			it("boolean", function () {
-			    assertToken("boolean", constants.TYPE.BOOL, constants.TYPE.KEYWORD);
-			});
-			
-			it("number", function () {
-				assertToken("number", constants.TYPE.NUMBER, constants.TYPE.KEYWORD);
+                assertKeyword("selector", constants.TAG.SELECTOR);
 			});
 			
 			it("all", function () {
-				assertToken("all", constants.OPERATOR.ALL, constants.TYPE.KEYWORD);
+                assertKeyword("all", constants.OPERATOR.ALL);
 			});
 			
 			it("any", function () {
-				assertToken("any", constants.OPERATOR.ANY, constants.TYPE.KEYWORD);
+                assertKeyword("any", constants.OPERATOR.ANY);
 			});
 
 			it("if", function () {
-				assertToken("if", constants.OPERATOR.IF, constants.TYPE.KEYWORD);
+                assertKeyword("if", constants.OPERATOR.IF);
 			});
 
 			it("then", function () {
-			    assertToken("then", constants.OPERATOR.THEN, constants.TYPE.KEYWORD);
+                assertKeyword("then", constants.OPERATOR.THEN);
 			});
 			
 			it("elif", function () {
-			    assertToken("elif", constants.OPERATOR.ELIF, constants.TYPE.KEYWORD);
+                assertKeyword("elif", constants.OPERATOR.ELIF);
 			});
 
 			it("else", function () {
-				assertToken("else", constants.OPERATOR.ELSE, constants.TYPE.KEYWORD);
+                assertKeyword("else", constants.OPERATOR.ELSE);
 			});
 
 			it("end", function () {
-				assertToken("end", constants.OPERATOR.END, constants.TYPE.KEYWORD);
+                assertKeyword("end", constants.OPERATOR.END);
 			});
 		});
 		
 		describe("operators like", function () {
+		    const assertOperator = function (input, value) {
+		        assertToken(input, value, constants.TYPE.KEYWORD);
+            };
+		    
 			it("addition", function () {
-				assertToken("+", constants.OPERATOR.ADD, constants.TYPE.KEYWORD);
+                assertOperator("+", constants.OPERATOR.ADD);
 			});
 			
 			it("subtraction", function () {
-				assertToken("-", constants.OPERATOR.SUB, constants.TYPE.KEYWORD);
+                assertOperator("-", constants.OPERATOR.SUB);
 			});
 			
 			it("multiplication", function () {
-				assertToken("*", constants.OPERATOR.MUL, constants.TYPE.KEYWORD);
+                assertOperator("*", constants.OPERATOR.MUL);
 			});
 			
 			it("division", function () {
-				assertToken("/", constants.OPERATOR.DIV, constants.TYPE.KEYWORD);
+                assertOperator("/", constants.OPERATOR.DIV);
 			});
 			
 			it("modulus", function () {
-				assertToken("%", constants.OPERATOR.MOD, constants.TYPE.KEYWORD);
+                assertOperator("%", constants.OPERATOR.MOD);
 			});
 			
 			it("less than", function () {
-				assertToken("<", constants.OPERATOR.LT, constants.TYPE.KEYWORD);
+                assertOperator("<", constants.OPERATOR.LT);
 			});
 			
 			it("greater than", function () {
-				assertToken(">", constants.OPERATOR.GT, constants.TYPE.KEYWORD);
+                assertOperator(">", constants.OPERATOR.GT);
 			});
 			
 			it("less than or equal to", function () {
-				assertToken("<=", constants.OPERATOR.LTE, constants.TYPE.KEYWORD);
+                assertOperator("<=", constants.OPERATOR.LTE);
 			});
 			
 			it("greater than or equal to", function () {
-				assertToken(">=", constants.OPERATOR.GTE, constants.TYPE.KEYWORD);
+                assertOperator(">=", constants.OPERATOR.GTE);
 			});
 			
 			it("colon", function () {
-				assertToken(":", constants.OPERATOR.COLON, constants.TYPE.KEYWORD);
+                assertOperator(":", constants.OPERATOR.COLON);
 			});
 			
 			it("semicolon", function () {
-				assertToken(";", constants.OPERATOR.SEMICOLON, constants.TYPE.KEYWORD);
+                assertOperator(";", constants.OPERATOR.SEMICOLON);
 			});
 			
 			it("left parenthesis", function () {
-				assertToken("(", constants.OPERATOR.LPAREN, constants.TYPE.KEYWORD);
+                assertOperator("(", constants.OPERATOR.LPAREN);
 			});
 			
 			it("right parenthesis", function () {
-				assertToken(")", constants.OPERATOR.RPAREN, constants.TYPE.KEYWORD);
+                assertOperator(")", constants.OPERATOR.RPAREN);
 			});
 			
 			it("left curly brace", function () {
-				assertToken("{", constants.OPERATOR.LBRACE, constants.TYPE.KEYWORD);
+                assertOperator("{", constants.OPERATOR.LBRACE);
 			});
 			
 			it("right curly brace", function () {
-				assertToken("}", constants.OPERATOR.RBRACE, constants.TYPE.KEYWORD);
+                assertOperator("}", constants.OPERATOR.RBRACE);
 			});
 			
 			it("dot", function () {
-				assertToken(".", constants.OPERATOR.DOT, constants.TYPE.KEYWORD);
+                assertOperator(".", constants.OPERATOR.DOT);
 			});
 		});
 	});
