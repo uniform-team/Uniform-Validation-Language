@@ -14,7 +14,7 @@ $ npm install uniform-validation --save
 Problem
 --------------
 
-Web form validation sucks. This can be shown through a versy simple example, consider the following form:
+Web form validation sucks. This can be shown through a very simple example, consider the following form:
 
 ![Car Form][car-form]
 
