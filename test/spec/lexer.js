@@ -152,16 +152,36 @@ describe("The lexer module", function () {
 			it("empty files", function () {
 				assertToken("", constants.ENDOFFILE, constants.ENDOFFILE);
 			});
+			
+			it("empty files with just whitespace", function () {
+			    assertToken("   ", constants.ENDOFFILE, constants.ENDOFFILE)
+			});
 
 			it("non-empty files", function () {
 				const tokenize = tokenizer("test");
 				
-				expect(tokenize()).toEqualToken({
-				    value: "test",
-                    type: constants.TYPE.IDENTIFIER
-                });
+				tokenize(); // test identifier
 				expect(tokenize()).toEqualToken({
 				    value: constants.ENDOFFILE,
+                    type: constants.ENDOFFILE
+                });
+			});
+			
+			it("non-empty files with trailing whitespace", function () {
+			    const tokenize = tokenizer("test   ");
+			    
+			    tokenize(); // test identifier
+                expect(tokenize()).toEqualToken({
+                    value: constants.ENDOFFILE,
+                    type: constants.ENDOFFILE
+                });
+			});
+			
+			it("files with arbitrary non-token input", function () {
+			    const tokenize = tokenizer("  // comment1 \n /* comment2 */  ");
+			    
+			    expect(tokenize()).toEqualToken({
+			        value: constants.ENDOFFILE,
                     type: constants.ENDOFFILE
                 });
 			});

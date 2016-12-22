@@ -77,9 +77,7 @@ class UfmStream extends Stream {
         this.hadNewlineBeforeLastToken = false;
         
         // Define Uniform lexical structure
-        return this.match(/^$/, // Empty string
-            () => this.returnToken(() => new Token(constants.ENDOFFILE, constants.ENDOFFILE))
-        ).repeat(/\/\/|\/\*|\n|\s/, // Single-line comment, multi-line comment, or whitespace
+        return this.repeat(/\/\/|\/\*|\n|\s/, // Single-line comment, multi-line comment, or whitespace
             // Ignore all non-token characters immediately
             () => this.match(/\/\//, // Single-line comment (// comment)
                 () => this.ignoreUntil(/\n/).ignore(/* newline */)
@@ -91,6 +89,8 @@ class UfmStream extends Stream {
             ).match(/\s/, // Whitespace
                 () => this.ignore(/* whitespace */)
             )
+        ).match(/^$/, // Empty string
+            () => this.returnToken(() => new Token(constants.ENDOFFILE, constants.ENDOFFILE))
         ).match(/[a-zA-Z_]/, // Identifiers or keywords
             () => this.consume(/* first char */).consumeUntil(/[^a-zA-Z0-9_]/).expectRegexToken(canBeFollowedByRegex)
                 .returnToken((value) => {
