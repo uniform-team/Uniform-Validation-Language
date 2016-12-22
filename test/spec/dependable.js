@@ -2,25 +2,25 @@ import Dependable from "../../src.es5/dependable.js";
 
 describe("The Dependable module", function () {
     it("exposes itself as a function", function () {
-    	expect(Dependable).toEqual(jasmine.any(Function));
+        expect(Dependable).toEqual(jasmine.any(Function));
     });
     
     describe("exposes the \"initDependable\" member", function () {
         it("as a function", function () {
             let clazz = Dependable();
             
-        	expect(clazz.prototype.initDependable).toEqual(jasmine.any(Function));
+            expect(clazz.prototype.initDependable).toEqual(jasmine.any(Function));
         });
         
-    	it("which initializes an object created by the Dependable mixin", function () {
-    	    let clazz = Dependable();
+        it("which initializes an object created by the Dependable mixin", function () {
+            let clazz = Dependable();
             let dep = new clazz();
             let expr = () => null;
             dep.initDependable(expr);
             
             expect(dep[Dependable._dependentsSymbol]).toEqual([]);
             expect(dep[Dependable._expressionSymbol]).toBe(expr);
-    	});
+        });
         
         it("which initializes an object created by the Dependable mixin while allowing overridden members without removing existing members", function () {
             let result = { }, parentResult = { };
@@ -47,16 +47,16 @@ describe("The Dependable module", function () {
     };
     
     describe("exposes the \"instanceof\" member", function () {
-    	it("as a static function", function () {
-    		expect(Dependable.instanceof).toEqual(jasmine.any(Function))
-    	});
+        it("as a static function", function () {
+            expect(Dependable.instanceof).toEqual(jasmine.any(Function))
+        });
         
         it("which returns true for objects which mix in Dependable", function () {
-        	expect(Dependable.instanceof(createDependable())).toBe(true);
+            expect(Dependable.instanceof(createDependable())).toBe(true);
         });
         
         it("which returns false for objects which do not mix in Dependable", function () {
-        	expect(Dependable.instanceof({ })).toBe(false);
+            expect(Dependable.instanceof({ })).toBe(false);
         });
     });
     
@@ -76,12 +76,12 @@ describe("The Dependable module", function () {
     });
     
     describe("exposes the \"addDependee\" member", function () {
-    	it("as a function", function () {
-    		expect(Dependable().prototype.addDependee).toEqual(jasmine.any(Function));
-    	});
+        it("as a function", function () {
+            expect(Dependable().prototype.addDependee).toEqual(jasmine.any(Function));
+        });
         
         it("which sets this object as dependent on the given Dependable", function () {
-        	let first = createDependable();
+            let first = createDependable();
             let second = createDependable();
             
             second.addDependee(first);
@@ -117,7 +117,7 @@ describe("The Dependable module", function () {
         });
         
         it("which updates this Dependable's value with its expression and triggers it when its dependees are initialized", function () {
-        	let dep = createDependable(() => "foo");
+            let dep = createDependable(() => "foo");
             let dependee1 = createDependable(() => null);
             let dependee2 = createDependable(() => null);
             

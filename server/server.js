@@ -27,5 +27,5 @@ app.post("/examples/car/submit", validator("build/examples/car/car.ufm"), functi
 // Listen on port given by environment
 var port = 8000 || process.env.PORT;
 app.listen(port, function () {
-	console.log("Listening on port: " + port);
+    console.log("Listening on port: " + port);
 });

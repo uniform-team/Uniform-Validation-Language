@@ -97,12 +97,12 @@ describe("The Identifier class", function () {
     });
     
     describe("exposes the \"find\" member", function () {
-    	it("as a static function", function () {
-    		expect(Identifier.find).toEqual(jasmine.any(Function));
-    	});
+        it("as a static function", function () {
+            expect(Identifier.find).toEqual(jasmine.any(Function));
+        });
         
         it("which finds an identifier in the global mapping with the given name and returns it", function () {
-        	let identifier = { name: "test" };
+            let identifier = { name: "test" };
             
             Identifier._map.test = identifier;
             
@@ -110,14 +110,14 @@ describe("The Identifier class", function () {
         });
         
         it("which returns null if no identifier with the given name exists in the global mapping", function () {
-        	expect(Identifier.find("test")).toBeNull();
+            expect(Identifier.find("test")).toBeNull();
         });
     });
     
     describe("exposes the \"getTag\" member", function () {
-    	it("as a function", function () {
-    		expect(Identifier.prototype.getTag).toEqual(jasmine.any(Function));
-    	});
+        it("as a function", function () {
+            expect(Identifier.prototype.getTag).toEqual(jasmine.any(Function));
+        });
         
         it("which finds the requested tag in its scope and returns it", function () {
             let tag = { };
@@ -131,14 +131,14 @@ describe("The Identifier class", function () {
         it("which returns null if the requested tag is not in its scope", function () {
             spyOn($.prototype, "val").and.returnValue("hello");
             
-        	expect(new Identifier(new Token("test", constants.TYPE.IDENTIFIER), constants.TYPE.STRING).getTag("valid")).toBeNull();
+            expect(new Identifier(new Token("test", constants.TYPE.IDENTIFIER), constants.TYPE.STRING).getTag("valid")).toBeNull();
         });
     });
     
     describe("exposes the \"getToken\" member", function () {
-    	it("as a function", function () {
-    		expect(Identifier.prototype.getToken).toEqual(jasmine.any(Function));
-    	});
+        it("as a function", function () {
+            expect(Identifier.prototype.getToken).toEqual(jasmine.any(Function));
+        });
     
         it("returns the identifier's $(...).is(\":checked\") if it is a boolean", function () {
             let identifier = {

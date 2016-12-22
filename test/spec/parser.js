@@ -64,179 +64,179 @@ describe("The parser module", function () {
         }
     };
     
-	describe("parses valid inputs such as", function () {
-		it("identifier blocks", function () {
-			expect(() => parser.parse(
-				"string: test;\n"
-			    + "test { }"
-			)).not.toThrow();
-		});
-		
-		it("variable blocks", function () {
-			expect(() => parser.parse("@test { }")).not.toThrow();
-		});
-		
-		it("nested blocks", function () {
-			expect(() => parser.parse(
-			    "string: test1;\n"
-                + "string: test2;\n"
-			    + "test1 { test2 { } }"
+    describe("parses valid inputs such as", function () {
+        it("identifier blocks", function () {
+            expect(() => parser.parse(
+                "string: test;\n"
+                + "test { }"
             )).not.toThrow();
-		});
-		
-		it("tag statements", function () {
-		    spyOn(Tag.prototype, "update");
+        });
+        
+        it("variable blocks", function () {
+            expect(() => parser.parse("@test { }")).not.toThrow();
+        });
+        
+        it("nested blocks", function () {
+            expect(() => parser.parse(
+                "string: test1;\n"
+                + "string: test2;\n"
+                + "test1 { test2 { } }"
+            )).not.toThrow();
+        });
+        
+        it("tag statements", function () {
+            spyOn(Tag.prototype, "update");
             
-			expect(() => parser.parse("valid: true;")).not.toThrow();
+            expect(() => parser.parse("valid: true;")).not.toThrow();
             
             expect(Tag.prototype.update).toHaveBeenCalled();
-		});
-		
-		it("variable statements", function () {
-			expect(() => parser.parse("@test: true;")).not.toThrow();
-		});
-		
-		it("empty file", function () {
-			expect(() => parser.parse("")).not.toThrow();
-		});
-	});
-	
-	describe("parses valid expressions", function () {
-		beforeAll(function () {
-			parser._testExpr = true;
-		});
-		
-		afterAll(function () {
-			parser._testExpr = false;
-		});
-		
-		describe("with boolean operators such as", function () {
-			it("and", function () {
-				expect(parser.parse("true and false")()).toEqualToken({
-					value: false,
-					type: constants.TYPE.BOOL
-				});
-			});
-			
-			it("or", function () {
-				expect(parser.parse("true or false")()).toEqualToken({
-					value: true,
-					type: constants.TYPE.BOOL
-				});
-			});
-			
-			it("not", function () {
-				expect(parser.parse("not true")()).toEqualToken({
-					value: false,
-					type: constants.TYPE.BOOL
-				});
-			});
-			
-			it("chained not", function () {
-				expect(parser.parse("not not not not true")()).toEqualToken({
-					value: true,
-					type: constants.TYPE.BOOL
-				});
-			});
-		});
-		
-		describe("with comparison operators such as", function () {
-			it("equals", function () {
-				expect(parser.parse("true equals true")()).toEqualToken({
-					value: true,
-					type: constants.TYPE.BOOL
-				});
-			});
-			
-			it("matches", function () {
-				expect(parser.parse(`"test" matches /test/`)()).toEqualToken({
-					value: true,
-					type: constants.TYPE.BOOL
-				});
-			});
-			
-			it("<", function () {
-				expect(parser.parse("1 < 1")()).toEqualToken({
-					value: false,
-					type: constants.TYPE.BOOL
-				});
-			});
-			
-			it(">", function () {
-				expect(parser.parse("1 > 1")()).toEqualToken({
-					value: false,
-					type: constants.TYPE.BOOL
-				});
-			});
-			
-			it("<=", function () {
-				expect(parser.parse("1 <= 1")()).toEqualToken({
-					value: true,
-					type: constants.TYPE.BOOL
-				});
-			});
-			
-			it(">=", function () {
-				expect(parser.parse("1 >= 1")()).toEqualToken({
-					value: true,
-					type: constants.TYPE.BOOL
-				});
-			});
-		});
-		
-		describe("with arithmetic operators such as", function () {
-			it("addition", function () {
-				expect(parser.parse("1 + 1")()).toEqualToken({
-					value: 2,
-					type: constants.TYPE.NUMBER
-				});
-			});
-			
-			it("subtraction", function () {
-				expect(parser.parse("1 - 1")()).toEqualToken({
-					value: 0,
-					type: constants.TYPE.NUMBER
-				});
-			});
-			
-			it("multiplication", function () {
-				expect(parser.parse("2 * 3")()).toEqualToken({
-					value: 6,
-					type: constants.TYPE.NUMBER
-				});
-			});
-			
-			it("division", function () {
-				expect(parser.parse("6 / 3")()).toEqualToken({
-					value: 2,
-					type: constants.TYPE.NUMBER
-				});
-			});
-			
-			it("modulo", function () {
-				expect(parser.parse("7 % 3")()).toEqualToken({
-					value: 1,
-					type: constants.TYPE.NUMBER
-				});
-			});
-			
-			it("negation", function () {
-				expect(parser.parse("- 1")()).toEqualToken({
-					value: -1,
-					type: constants.TYPE.NUMBER
-				});
-			});
-			
-			it("chained negation", function () {
-				expect(parser.parse("- - - - 1")()).toEqualToken({
-					value: 1,
-					type: constants.TYPE.NUMBER
-				});
-			});
-		});
-		
-		describe("with miscellaneous operators such as", function () {
-			describe("if statements", function () {
+        });
+        
+        it("variable statements", function () {
+            expect(() => parser.parse("@test: true;")).not.toThrow();
+        });
+        
+        it("empty file", function () {
+            expect(() => parser.parse("")).not.toThrow();
+        });
+    });
+    
+    describe("parses valid expressions", function () {
+        beforeAll(function () {
+            parser._testExpr = true;
+        });
+        
+        afterAll(function () {
+            parser._testExpr = false;
+        });
+        
+        describe("with boolean operators such as", function () {
+            it("and", function () {
+                expect(parser.parse("true and false")()).toEqualToken({
+                    value: false,
+                    type: constants.TYPE.BOOL
+                });
+            });
+            
+            it("or", function () {
+                expect(parser.parse("true or false")()).toEqualToken({
+                    value: true,
+                    type: constants.TYPE.BOOL
+                });
+            });
+            
+            it("not", function () {
+                expect(parser.parse("not true")()).toEqualToken({
+                    value: false,
+                    type: constants.TYPE.BOOL
+                });
+            });
+            
+            it("chained not", function () {
+                expect(parser.parse("not not not not true")()).toEqualToken({
+                    value: true,
+                    type: constants.TYPE.BOOL
+                });
+            });
+        });
+        
+        describe("with comparison operators such as", function () {
+            it("equals", function () {
+                expect(parser.parse("true equals true")()).toEqualToken({
+                    value: true,
+                    type: constants.TYPE.BOOL
+                });
+            });
+            
+            it("matches", function () {
+                expect(parser.parse(`"test" matches /test/`)()).toEqualToken({
+                    value: true,
+                    type: constants.TYPE.BOOL
+                });
+            });
+            
+            it("<", function () {
+                expect(parser.parse("1 < 1")()).toEqualToken({
+                    value: false,
+                    type: constants.TYPE.BOOL
+                });
+            });
+            
+            it(">", function () {
+                expect(parser.parse("1 > 1")()).toEqualToken({
+                    value: false,
+                    type: constants.TYPE.BOOL
+                });
+            });
+            
+            it("<=", function () {
+                expect(parser.parse("1 <= 1")()).toEqualToken({
+                    value: true,
+                    type: constants.TYPE.BOOL
+                });
+            });
+            
+            it(">=", function () {
+                expect(parser.parse("1 >= 1")()).toEqualToken({
+                    value: true,
+                    type: constants.TYPE.BOOL
+                });
+            });
+        });
+        
+        describe("with arithmetic operators such as", function () {
+            it("addition", function () {
+                expect(parser.parse("1 + 1")()).toEqualToken({
+                    value: 2,
+                    type: constants.TYPE.NUMBER
+                });
+            });
+            
+            it("subtraction", function () {
+                expect(parser.parse("1 - 1")()).toEqualToken({
+                    value: 0,
+                    type: constants.TYPE.NUMBER
+                });
+            });
+            
+            it("multiplication", function () {
+                expect(parser.parse("2 * 3")()).toEqualToken({
+                    value: 6,
+                    type: constants.TYPE.NUMBER
+                });
+            });
+            
+            it("division", function () {
+                expect(parser.parse("6 / 3")()).toEqualToken({
+                    value: 2,
+                    type: constants.TYPE.NUMBER
+                });
+            });
+            
+            it("modulo", function () {
+                expect(parser.parse("7 % 3")()).toEqualToken({
+                    value: 1,
+                    type: constants.TYPE.NUMBER
+                });
+            });
+            
+            it("negation", function () {
+                expect(parser.parse("- 1")()).toEqualToken({
+                    value: -1,
+                    type: constants.TYPE.NUMBER
+                });
+            });
+            
+            it("chained negation", function () {
+                expect(parser.parse("- - - - 1")()).toEqualToken({
+                    value: 1,
+                    type: constants.TYPE.NUMBER
+                });
+            });
+        });
+        
+        describe("with miscellaneous operators such as", function () {
+            describe("if statements", function () {
                 it("satisfying the if condition", function () {
                     expect(parser.parse(
                         "if 1 equals 1 then 1\n"
@@ -329,152 +329,152 @@ describe("The parser module", function () {
                         expect(console.warn).not.toHaveBeenCalled();
                     });
                 });
-			});
-			
-			it("dotObject", function () {
-				expect(parser.parse("{ foo: \"bar\"; }.foo")()).toEqualToken({
-					value: "bar",
-					type: constants.TYPE.STRING
-				});
-			});
-			
-			it("paren", function () {
-				expect(parser.parse("( true )")()).toEqualToken({
-					value: true,
-					type: constants.TYPE.BOOL
-				});
-			});
-		});
-		
-		describe("with operands such as", function () {
-			it("identifiers", function () {
-			    setInputValue("test", "data");
-			    
-				spyOn(Identifier.prototype, "addDependent");
+            });
+            
+            it("dotObject", function () {
+                expect(parser.parse("{ foo: \"bar\"; }.foo")()).toEqualToken({
+                    value: "bar",
+                    type: constants.TYPE.STRING
+                });
+            });
+            
+            it("paren", function () {
+                expect(parser.parse("( true )")()).toEqualToken({
+                    value: true,
+                    type: constants.TYPE.BOOL
+                });
+            });
+        });
+        
+        describe("with operands such as", function () {
+            it("identifiers", function () {
+                setInputValue("test", "data");
                 
-				const owner = {
-				    addDependee: jasmine.createSpy("addDependee")
+                spyOn(Identifier.prototype, "addDependent");
+                
+                const owner = {
+                    addDependee: jasmine.createSpy("addDependee")
                 };
-				
-				const token = parser.parse(
-				    "string: test;\n"
+                
+                const token = parser.parse(
+                    "string: test;\n"
                     + "test",
                 owner)();
                 
                 expect(token).toEqualToken({
-					value: "data",
-					type: constants.TYPE.STRING
-				});
+                    value: "data",
+                    type: constants.TYPE.STRING
+                });
                 expect(Identifier.prototype.addDependent).toHaveBeenCalledWith(owner);
                 expect(owner.addDependee).toHaveBeenCalledWith(jasmine.any(Identifier));
-			});
-			
-			it("booleans", function () {
-				expect(parser.parse("true")()).toEqualToken({
-					value: true,
-					type: constants.TYPE.BOOL
-				});
-				
-				expect(parser.parse("false")()).toEqualToken({
-					value: false,
-					type: constants.TYPE.BOOL
-				});
-			});
-			
-			it("numbers", function () {
-				expect(parser.parse("1")()).toEqualToken({
-					value: 1,
-						type: constants.TYPE.NUMBER
-				});
-			});
-			
-			it("strings", function () {
-				expect(parser.parse("\"test\"")()).toEqualToken({
-					value: "test",
-					type: constants.TYPE.STRING
-				});
-			});
-			
-			it("regular expressions", function () {
-				expect(parser.parse("/test/")()).toEqualToken({
-					value: /test/,
-					type: constants.TYPE.REGEX
-				});
-			});
-			
-			it("variables", function () {
-			    let variable = new ExpressionVariable(new Token("test", constants.TYPE.VARIABLE));
+            });
+            
+            it("booleans", function () {
+                expect(parser.parse("true")()).toEqualToken({
+                    value: true,
+                    type: constants.TYPE.BOOL
+                });
+                
+                expect(parser.parse("false")()).toEqualToken({
+                    value: false,
+                    type: constants.TYPE.BOOL
+                });
+            });
+            
+            it("numbers", function () {
+                expect(parser.parse("1")()).toEqualToken({
+                    value: 1,
+                        type: constants.TYPE.NUMBER
+                });
+            });
+            
+            it("strings", function () {
+                expect(parser.parse("\"test\"")()).toEqualToken({
+                    value: "test",
+                    type: constants.TYPE.STRING
+                });
+            });
+            
+            it("regular expressions", function () {
+                expect(parser.parse("/test/")()).toEqualToken({
+                    value: /test/,
+                    type: constants.TYPE.REGEX
+                });
+            });
+            
+            it("variables", function () {
+                let variable = new ExpressionVariable(new Token("test", constants.TYPE.VARIABLE));
                 variable.initDependable(() => new Token(true, constants.TYPE.BOOL));
                 variable.update();
                 
-			    spyOn(Scope.prototype, "lookupVar").and.returnValue(variable);
+                spyOn(Scope.prototype, "lookupVar").and.returnValue(variable);
                 spyOn(ExpressionVariable.prototype, "addDependent");
-			    
+                
                 let owner = {
                     addDependee: jasmine.createSpy("addDependee")
                 };
-				expect(parser.parse("@test", owner)()).toEqualToken({
-					value: true,
-					type: constants.TYPE.BOOL
-				});
+                expect(parser.parse("@test", owner)()).toEqualToken({
+                    value: true,
+                    type: constants.TYPE.BOOL
+                });
                 
                 expect(ExpressionVariable.prototype.addDependent).toHaveBeenCalledWith(owner);
                 expect(owner.addDependee).toHaveBeenCalledWith(variable);
-			});
-			
-			describe("objects", function () {
-				it("with no key-value pairs", function () {
-					expect(parser.parse("{ }")()).toEqualToken({
-						value: { },
-						type: constants.TYPE.OBJECT
-					});
-				});
-				
-				it("with a single key-value pair", function () {
-					let token = parser.parse("{ test: true; }")();
-					let { value, type } = token;
-					expect(type).toBe(constants.TYPE.OBJECT);
-					
-					expect(value.test).toEqualToken({
-						value: true,
-						type: constants.TYPE.BOOL
-					});
-				});
-				
-				it("with multiple key-value pairs", function () {
-					let token = parser.parse("{ test: true; test2: false; }")();
-					let { value, type } = token;
-					expect(type).toBe(constants.TYPE.OBJECT);
-					
-					expect(value.test).toEqualToken({
-						value: true,
-						type: constants.TYPE.BOOL
-					});
-					
-					expect(value.test2).toEqualToken({
-						value: false,
-						type: constants.TYPE.BOOL
-					});
-				});
-				
-				it("with nested objects", function () {
-					let token = parser.parse("{ test: { foo: \"bar\"; }; }")();
-					let { value, type } = token;
+            });
+            
+            describe("objects", function () {
+                it("with no key-value pairs", function () {
+                    expect(parser.parse("{ }")()).toEqualToken({
+                        value: { },
+                        type: constants.TYPE.OBJECT
+                    });
+                });
+                
+                it("with a single key-value pair", function () {
+                    let token = parser.parse("{ test: true; }")();
+                    let { value, type } = token;
+                    expect(type).toBe(constants.TYPE.OBJECT);
                     
-					expect(type).toBe(constants.TYPE.OBJECT);
-					expect(value.test.type).toBe(constants.TYPE.OBJECT);
-					
-					let innerObj = value.test.value;
-					expect(innerObj.foo).toEqualToken({
-						value: "bar",
-						type: constants.TYPE.STRING
-					});
-				});
-			});
-		});
-	});
-	
-	describe("parses valid inputs while setting up dependencies", function () {
+                    expect(value.test).toEqualToken({
+                        value: true,
+                        type: constants.TYPE.BOOL
+                    });
+                });
+                
+                it("with multiple key-value pairs", function () {
+                    let token = parser.parse("{ test: true; test2: false; }")();
+                    let { value, type } = token;
+                    expect(type).toBe(constants.TYPE.OBJECT);
+                    
+                    expect(value.test).toEqualToken({
+                        value: true,
+                        type: constants.TYPE.BOOL
+                    });
+                    
+                    expect(value.test2).toEqualToken({
+                        value: false,
+                        type: constants.TYPE.BOOL
+                    });
+                });
+                
+                it("with nested objects", function () {
+                    let token = parser.parse("{ test: { foo: \"bar\"; }; }")();
+                    let { value, type } = token;
+                    
+                    expect(type).toBe(constants.TYPE.OBJECT);
+                    expect(value.test.type).toBe(constants.TYPE.OBJECT);
+                    
+                    let innerObj = value.test.value;
+                    expect(innerObj.foo).toEqualToken({
+                        value: "bar",
+                        type: constants.TYPE.STRING
+                    });
+                });
+            });
+        });
+    });
+    
+    describe("parses valid inputs while setting up dependencies", function () {
         it("such as a single identifier dependency", function () {
             setInputValue("inner", "foo");
             
@@ -546,9 +546,9 @@ describe("The parser module", function () {
         });
         
         it("such as a single tag dependency", function () {
-        	parser.parse(
-        	    "string: inner;\n"
-        	    + "inner { valid: true; }\n"
+            parser.parse(
+                "string: inner;\n"
+                + "inner { valid: true; }\n"
                 + "valid: inner.valid;"
             );
             
@@ -561,10 +561,10 @@ describe("The parser module", function () {
         it("such as a single tag dependency on top an identifier dependency", function () {
             setInputValue("test", "foo");
             
-        	parser.parse(
-        	    "string: inner;\n"
+            parser.parse(
+                "string: inner;\n"
                 + "string: test;\n"
-        	    + "inner { valid: test equals \"bar\"; }\n"
+                + "inner { valid: test equals \"bar\"; }\n"
                 + "valid: inner.valid;"
             );
             
@@ -613,13 +613,13 @@ describe("The parser module", function () {
         });
         
         it("such as a nested tag dependency", function () {
-        	setInputValue("test", "foo");
+            setInputValue("test", "foo");
             
             parser.parse(
                 "string: outer;\n"
                 + "string: inner;\n"
                 + "string: test;\n"
-        	    + "inner { valid: test equals \"bar\"; }\n"
+                + "inner { valid: test equals \"bar\"; }\n"
                 + "outer { valid: inner.valid; }\n"
                 + "valid: outer.valid;"
             );
@@ -652,8 +652,8 @@ describe("The parser module", function () {
         });
         
         it("such as a single expression variable dependency", function () {
-        	parser.parse(
-        	    "@test: true;\n"
+            parser.parse(
+                "@test: true;\n"
                 + "valid: @test;"
             );
             
@@ -666,9 +666,9 @@ describe("The parser module", function () {
         it("such as a single expression variable dependency on top of an identifier dependency", function () {
             setInputValue("inner", "foo");
             
-        	parser.parse(
-        	    "string: inner;\n"
-        	    + "@test: inner equals \"bar\";\n"
+            parser.parse(
+                "string: inner;\n"
+                + "@test: inner equals \"bar\";\n"
                 + "valid: @test;"
             );
             
@@ -717,9 +717,9 @@ describe("The parser module", function () {
         it("such as a nested expression variable dependency", function () {
             setInputValue("test", "foo");
             
-        	parser.parse(
-        	    "string: test;\n"
-        	    + "@inner: test equals \"bar\";\n"
+            parser.parse(
+                "string: test;\n"
+                + "@inner: test equals \"bar\";\n"
                 + "@outer: @inner;\n"
                 + "valid: @outer;"
             );
@@ -747,10 +747,10 @@ describe("The parser module", function () {
                 type: constants.TYPE.BOOL
             });
         });
-		
-		it("such as a single block variable dependency", function () {
-			parser.parse(
-			    "@test { valid: true; }\n"
+        
+        it("such as a single block variable dependency", function () {
+            parser.parse(
+                "@test { valid: true; }\n"
                 + "valid: @test.valid;"
             );
             
@@ -758,14 +758,14 @@ describe("The parser module", function () {
                 value: true,
                 type: constants.TYPE.BOOL
             });
-		});
+        });
         
         it("such as a single block variable dependency on top of an identifier dependency", function () {
             setInputValue("inner", "bar");
             
-        	parser.parse(
-        	    "string: inner;\n"
-        	    + "@outer { valid: inner equals \"foo\"; }\n"
+            parser.parse(
+                "string: inner;\n"
+                + "@outer { valid: inner equals \"foo\"; }\n"
                 + "valid: @outer.valid;"
             );
             
@@ -812,12 +812,12 @@ describe("The parser module", function () {
         });
         
         it("such as a nested block variable dependency", function () {
-        	setInputValue("test", "foo");
+            setInputValue("test", "foo");
             
             parser.parse(
                 "string: test;\n"
-        	    + "@inner { valid: test equals \"bar\"; }\n"
-        	    + "@outer { valid: @inner.valid; }\n"
+                + "@inner { valid: test equals \"bar\"; }\n"
+                + "@outer { valid: @inner.valid; }\n"
                 + "valid: @outer.valid;"
             );
             
@@ -844,32 +844,32 @@ describe("The parser module", function () {
                 type: constants.TYPE.BOOL
             });
         });
-	});
-	
-	describe("throws an error when given invalid expressions such as", function () {
-	    beforeEach(function () {
-	        Scope.reset();
+    });
+    
+    describe("throws an error when given invalid expressions such as", function () {
+        beforeEach(function () {
+            Scope.reset();
         });
-	    
-		it("following a block with a non-block and non-statement", function () {
-			expect(() => parser.parse(
-			    "string: test;\n"
-			    + "test { }\n"
+        
+        it("following a block with a non-block and non-statement", function () {
+            expect(() => parser.parse(
+                "string: test;\n"
+                + "test { }\n"
                 + "true"
             )).toThrowUfmError(ParsingError);
-		});
-		
-		it("using a non-block and non-statement as a block or statement", function () {
-			expect(() => parser.parse("true")).toThrowUfmError(ParsingError);
-		});
-		
-		it("following a variable (when in block) with a non-block and non-statement", function () {
-			expect(() => parser.parse("@test;")).toThrowUfmError(ParsingError);
-		});
-		
-		it("chaining and / all", function () {
-			expect(() => parser.parse("result: any all @array;")).toThrowUfmError(ParsingError);
-		});
+        });
+        
+        it("using a non-block and non-statement as a block or statement", function () {
+            expect(() => parser.parse("true")).toThrowUfmError(ParsingError);
+        });
+        
+        it("following a variable (when in block) with a non-block and non-statement", function () {
+            expect(() => parser.parse("@test;")).toThrowUfmError(ParsingError);
+        });
+        
+        it("chaining and / all", function () {
+            expect(() => parser.parse("result: any all @array;")).toThrowUfmError(ParsingError);
+        });
         
         it("using a non-boolean if condition", function () {
             expect(() => parser.parse("valid: if 1 then 1 else 2 end;")).toThrowUfmError(TypeError);
@@ -886,23 +886,23 @@ describe("The parser module", function () {
                 + "end"
             + ";")).toThrowUfmError(ParsingError);
         });
-		
-		it("using a non-operand as an operand", function () {
-			expect(() => parser.parse("result: any valid;")).toThrowUfmError(ParsingError);
-		});
+        
+        it("using a non-operand as an operand", function () {
+            expect(() => parser.parse("result: any valid;")).toThrowUfmError(ParsingError);
+        });
         
         it("using the DOT operator on an expression variable", function () {
-        	expect(() => parser.parse(
-        	    "@test: \"foo\";"
+            expect(() => parser.parse(
+                "@test: \"foo\";"
                 + "valid: @test.valid;"
             )).toThrowUfmError(TypeError);
         });
         
         it("using a block variable directly", function () {
-        	expect(() => parser.parse(
-        	    "@test { valid: true; }"
+            expect(() => parser.parse(
+                "@test { valid: true; }"
                 + "valid: @test;"
             )).toThrowUfmError(TypeError);
         });
-	});
+    });
 });

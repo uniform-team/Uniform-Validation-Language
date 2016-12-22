@@ -14,9 +14,9 @@ let validator = proxyquire.noCallThru().load("../../../src.es5/validator/validat
 });
 
 describe("The validator module", function () {
-	it("is defined as a function", function () {
-		expect(validator).toEqual(jasmine.any(Function));
-	});
+    it("is defined as a function", function () {
+        expect(validator).toEqual(jasmine.any(Function));
+    });
     
     beforeEach(function () {
         fs.readFile = null;

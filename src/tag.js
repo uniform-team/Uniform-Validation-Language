@@ -30,16 +30,16 @@ export default class Tag extends Dependable() {
         this.col = token.col;
         this.containingScope = containingScope;
     }
-	
-	update() {
-	    super.update();
+    
+    update() {
+        super.update();
         
         const newToken = this.value;
         if (!this.value) {
             return; // Wait for dependees to initialize
         }
-	    
-	    // Check that the actual type matches the one expected for this tag
+        
+        // Check that the actual type matches the one expected for this tag
         if (this.expectedType && newToken.type !== this.expectedType) {
             throw new TypeError(`Tag "${this.name}" should be of type "${this.expectedType}"`
                 + ` but was actually of type "${newToken.type}".`, this.line, this.col);

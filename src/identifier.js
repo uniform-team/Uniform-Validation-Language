@@ -14,10 +14,10 @@ let identifierMap;
  */
 export default class Identifier extends Dependable() {
     // Construct an Identifier by initializing its values from a token
-	constructor(token, type) {
+    constructor(token, type) {
         super();
         
-		this.name = token.value;
+        this.name = token.value;
         this.type = type;
         this.token = token;
         this.scope = new Scope(this);
@@ -29,11 +29,11 @@ export default class Identifier extends Dependable() {
         
         // When the DOM element changes, update this identifier
         $(document).on("change", token.getSelector(), () => this.update());
-	}
+    }
     
-	// Static getter for the global identifier map, used for testing / debugging
-	static get _map() {
-	    return identifierMap;
+    // Static getter for the global identifier map, used for testing / debugging
+    static get _map() {
+        return identifierMap;
     }
     
     // Static setter for the global identifier map, used for testing / debugging
@@ -50,13 +50,13 @@ export default class Identifier extends Dependable() {
     static declare(identifier) {
         if (identifierMap[identifier.name]) throw new RedeclaredError(identifier.name + " was already declared.",
                 identifier.token.line, identifier.token.col);
-		identifierMap[identifier.name] = identifier;
-	}
+        identifierMap[identifier.name] = identifier;
+    }
     
-	// Find an identifier with the given name in the global map or null
-	static find(name) {
-		return identifierMap[name] || null;
-	}
+    // Find an identifier with the given name in the global map or null
+    static find(name) {
+        return identifierMap[name] || null;
+    }
     
     // Get the tag with the given name under this BlockIdentifier's scope
     getTag(tagName) {

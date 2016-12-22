@@ -46,10 +46,10 @@ globalObj.$ = jasmine.createSpy("jQuery").and.callFake(function (selOrEl) {
 const chainable = function() { return this; }; // Can't use () => this (syntax overrides `this` meaning)
 const callback = (cb) => cb();
 globalObj.$.prototype = {
-	attr: chainable,
-	prop: chainable,
-	val: chainable,
-	on: chainable,
+    attr: chainable,
+    prop: chainable,
+    val: chainable,
+    on: chainable,
     find: chainable,
     parent: chainable,
     trigger: chainable,
@@ -57,7 +57,7 @@ globalObj.$.prototype = {
     show: () => { },
     hide: () => { },
     each: callback,
-	ready: callback
+    ready: callback
 };
 
 // jQuery static functions

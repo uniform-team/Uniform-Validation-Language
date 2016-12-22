@@ -5,17 +5,17 @@ import Token from "../../src.es5/token.js";
 import * as options from "../../src.es5/options.js";
 
 describe("The submit module", function () {
-	describe("exposes the \"init\" member", function () {
-		it("as a function", function () {
-			expect(submit.init).toEqual(jasmine.any(Function));
-		});
+    describe("exposes the \"init\" member", function () {
+        it("as a function", function () {
+            expect(submit.init).toEqual(jasmine.any(Function));
+        });
         
         afterEach(function () {
             options.validateClient = true;
         });
         
         it("which binds a callback to form submission which allows valid submissions", function () {
-        	let evt = { preventDefault: jasmine.createSpy("preventDefault") };
+            let evt = { preventDefault: jasmine.createSpy("preventDefault") };
             
             spyOn($.prototype, "on").and.callFake((event, selector, cb) => cb(evt));
             submit._root = jasmine.createSpy("root").and.returnValue({
@@ -54,7 +54,7 @@ describe("The submit module", function () {
         });
         
         it("which binds a callback to form submission which allows submissions with an invalid root-level when validateClient is false", function () {
-        	let evt = { preventDefault: jasmine.createSpy("preventDefault") };
+            let evt = { preventDefault: jasmine.createSpy("preventDefault") };
             
             spyOn($.prototype, "on").and.callFake((event, selector, cb) => cb(evt));
             submit._root = jasmine.createSpy("root").and.returnValue({
@@ -66,5 +66,5 @@ describe("The submit module", function () {
             
             expect(evt.preventDefault).not.toHaveBeenCalled();
         });
-	});
+    });
 });

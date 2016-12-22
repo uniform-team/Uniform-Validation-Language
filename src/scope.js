@@ -116,10 +116,10 @@ export default class Scope {
                 throw new DuplicateDeclarationError("Redeclared Tag \"" + item.name + "\" in same scope", item.line, item.col);
             this.tags[item.name] = item;
         } else if (item instanceof Identifier) { // Insert into Identifier map
-        	if (this.findIdentifier(item.name))
-        		throw new DuplicateDeclarationError("Redeclared Identifier \"" + item.name + "\" in same scope", item.line, item.col);
-			this.identifiers[item.name] = item;
-		} else {
+            if (this.findIdentifier(item.name))
+                throw new DuplicateDeclarationError("Redeclared Identifier \"" + item.name + "\" in same scope", item.line, item.col);
+            this.identifiers[item.name] = item;
+        } else {
             throw new AssertionError("Inserted an item of type \"" + typeof item + "\" expected Variable, Tag, or Identifier");
         }
     }
@@ -136,8 +136,8 @@ export default class Scope {
     
     // Looks for an identifier with the name given under this scope and returns it if it exists or null otherwise
     findIdentifier(name) {
-    	return this.identifiers[name] || null;
-	}
+        return this.identifiers[name] || null;
+    }
 
     // Looks for a variable with the name given under this scope and all ancestry scopes and returns it if it exists or null otherwise
     lookupVar(name) {
@@ -162,9 +162,9 @@ export default class Scope {
         // Check if the identifier exists in this scope
         let identifier = this.findIdentifier(name);
         
-		if (identifier) return identifier; // Return it if found
-		else return this.parentScope && this.parentScope.lookupIdentifier(name); // Not found, check parent recursively
-	}
+        if (identifier) return identifier; // Return it if found
+        else return this.parentScope && this.parentScope.lookupIdentifier(name); // Not found, check parent recursively
+    }
 
     // Get the current value of the selector tag if it exists or infer it otherwise
     getOrInferSelector() {

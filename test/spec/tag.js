@@ -9,40 +9,40 @@ import Dependable from "../../src.es5/dependable.js";
 import { TypeError, UndeclaredError } from "../../src.es5/errors.js";
 
 describe("The Tag class", function () {
-	it("constructs from a token", function () {
-		expect(() => new Tag(new Token("valid", constants.TYPE.KEYWORD))).not.toThrow();
-	});
+    it("constructs from a token", function () {
+        expect(() => new Tag(new Token("valid", constants.TYPE.KEYWORD))).not.toThrow();
+    });
     
     it("mixes in Dependable", function () {
         let tag = new Tag(new Token("valid", constants.TYPE.KEYWORD));
         tag.initDependable(() => null); // Initialize the tag because the constructor does not do this
         
-    	expect(Dependable.instanceof(tag)).toBe(true);
+        expect(Dependable.instanceof(tag)).toBe(true);
     });
     
     describe("overrides the Dependable \"update\" member", function () {
-    	it("as a function", function () {
-    		expect(Tag.prototype.update).toEqual(jasmine.any(Function));
-    	});
-    	
-    	it("which does nothing if not yet initialized", function () {
-    	    const tag = new Tag(new Token(constants.TAG.VALID, constants.TYPE.KEYWORD));
-    	    tag.initDependable(() => null);
-    	    tag.value = null; // Simulate uninitialized tag
-    	    
-    	    expect(() => tag.update()).not.toThrow();
-    	});
-    	
-    	it("which throws a TypeError if given an expression yielding an invalid type", function () {
-    	    const tag = new Tag(new Token(constants.TAG.VALID, constants.TYPE.KEYWORD));
-    	    tag.initDependable(() => new Token("test", constants.TYPE.STRING));
-    	    
-    	    expect(() => tag.update()).toThrowUfmError(TypeError);
-    	});
+        it("as a function", function () {
+            expect(Tag.prototype.update).toEqual(jasmine.any(Function));
+        });
+        
+        it("which does nothing if not yet initialized", function () {
+            const tag = new Tag(new Token(constants.TAG.VALID, constants.TYPE.KEYWORD));
+            tag.initDependable(() => null);
+            tag.value = null; // Simulate uninitialized tag
+            
+            expect(() => tag.update()).not.toThrow();
+        });
+        
+        it("which throws a TypeError if given an expression yielding an invalid type", function () {
+            const tag = new Tag(new Token(constants.TAG.VALID, constants.TYPE.KEYWORD));
+            tag.initDependable(() => new Token("test", constants.TYPE.STRING));
+            
+            expect(() => tag.update()).toThrowUfmError(TypeError);
+        });
 
-    	it("which triggers an update on the DOM for an enabled tag", function () {
-    	    const scope = new Scope();
-    	    const enabled = true;
+        it("which triggers an update on the DOM for an enabled tag", function () {
+            const scope = new Scope();
+            const enabled = true;
             const tag = new Tag(new Token(constants.TAG.ENABLED, constants.TYPE.KEYWORD), scope);
             tag.initDependable(() => new Token(enabled, constants.TYPE.BOOL));
 
@@ -53,9 +53,9 @@ describe("The Tag class", function () {
             tag.update();
 
             expect(Tag.updateEnabled).toHaveBeenCalledWith(selector, enabled);
-    	});
+        });
 
-    	it("which triggers an update on the DOM for a visible tag", function () {
+        it("which triggers an update on the DOM for a visible tag", function () {
             const scope = new Scope();
             const visible = true;
             const tag = new Tag(new Token(constants.TAG.VISIBLE, constants.TYPE.KEYWORD), scope);
@@ -68,8 +68,8 @@ describe("The Tag class", function () {
             tag.update();
 
             expect(Tag.updateVisible).toHaveBeenCalledWith(selector, visible);
-    	});
-    	
+        });
+        
         it("which does not trigger jQuery if it is not a root-level tag", function () {
             let tag = new Tag(new Token(constants.TAG.VALID, constants.TYPE.KEYWORD));
             tag.initDependable(() => null);

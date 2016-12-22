@@ -4,16 +4,16 @@ import parser from "../../src.es5/parser.js";
 
 describe("The options module", function () {
     describe("exposes the \"href\" member", function () {
-    	it("as a function", function () {
-    		expect(options.href).toEqual(jasmine.any(Function));
-    	});
+        it("as a function", function () {
+            expect(options.href).toEqual(jasmine.any(Function));
+        });
         
         it("which sends an AJAX request to the given URL and parses the result", function () {
-        	let path = "file.ufm";
+            let path = "file.ufm";
             let content = "test { }";
             
             spyOn($, "ajax").and.callFake(function ({ method, url, success }) {
-        	    expect(method).toBe("GET");
+                expect(method).toBe("GET");
                 expect(url).toBe(path);
                 success(content);
             });
@@ -27,8 +27,8 @@ describe("The options module", function () {
     });
     
     describe("exposes the \"validateClient\" member", function () {
-    	it("as a boolean defaulting to true", function () {
-    		expect(options.validateClient).toBe(true);
-    	});
+        it("as a boolean defaulting to true", function () {
+            expect(options.validateClient).toBe(true);
+        });
     });
 });

@@ -9,13 +9,13 @@ import { UndeclaredError, DuplicateDeclarationError } from "../../src.es5/errors
 
 describe("The Scope class", function () {
     it("constructs with the given owner while setting the parent scope to the current scope", function () {
-    	Scope._currentScope = {};
+        Scope._currentScope = {};
         
-    	const owner = {};
-    	
-    	const scope = new Scope(owner);
-    	
-    	expect(scope.owner).toBe(owner);
+        const owner = {};
+        
+        const scope = new Scope(owner);
+        
+        expect(scope.owner).toBe(owner);
         expect(scope.parentScope).toBe(Scope._currentScope);
     });
     
@@ -24,7 +24,7 @@ describe("The Scope class", function () {
     });
     
     describe("exposes the static \"thisScope\" property", function () {
-    	describe("with a getter", function () {
+        describe("with a getter", function () {
             it("defined as a function", function () {
                 expect(Scope).toHaveGetter("thisScope");
             });
@@ -35,39 +35,39 @@ describe("The Scope class", function () {
             
                 expect(Scope.thisScope).toBe(scope);
             });
-    	});
+        });
         
         it("withOUT a setter", function () {
-        	expect(Scope).not.toHaveSetter("thisScope");
+            expect(Scope).not.toHaveSetter("thisScope");
         });
     });
     
     describe("exposes the static \"rootScope\" property", function () {
-    	describe("with a getter", function () {
-    		it("defined as a function", function () {
-    			expect(Scope).toHaveGetter("rootScope");
-    		});
+        describe("with a getter", function () {
+            it("defined as a function", function () {
+                expect(Scope).toHaveGetter("rootScope");
+            });
             
             it("which returns the root scope", function () {
-            	let scope = { };
-            	Scope._rootScope = scope;
+                let scope = { };
+                Scope._rootScope = scope;
                 
                 expect(Scope.rootScope).toBe(scope);
             });
-    	});
+        });
         
         it("withOUT a setter", function () {
-        	expect(Scope).not.toHaveSetter("rootScope");
+            expect(Scope).not.toHaveSetter("rootScope");
         });
     });
     
     describe("exposes the \"init\" member", function () {
-    	it("as a static function", function () {
+        it("as a static function", function () {
             expect(Scope.init).toEqual(jasmine.any(Function));
-    	});
+        });
         
         it("which initializes the Scope class by resetting it", function () {
-        	spyOn(Scope, "reset");
+            spyOn(Scope, "reset");
             
             Scope.init();
             
@@ -76,9 +76,9 @@ describe("The Scope class", function () {
     });
     
     describe("exposes the \"reset\" member", function () {
-    	it("as a static function", function () {
-    		expect(Scope.reset).toEqual(jasmine.any(Function));
-    	});
+        it("as a static function", function () {
+            expect(Scope.reset).toEqual(jasmine.any(Function));
+        });
         
         it("which clears the scope hierarchy", function () {
             let scope = {};
@@ -90,8 +90,8 @@ describe("The Scope class", function () {
             
             Scope._rootScope = { };
             Scope._currentScope = { };
-        	
-        	Scope.reset.apply(ScopeClass);
+            
+            Scope.reset.apply(ScopeClass);
             
             expect(Scope._rootScope).toBe(scope);
             expect(Scope._currentScope).toBe(scope);
@@ -99,9 +99,9 @@ describe("The Scope class", function () {
     });
     
     describe("exposes the \"push\" member", function () {
-    	it("as a function", function () {
-    		expect(Scope.prototype.push).toEqual(jasmine.any(Function));
-    	});
+        it("as a function", function () {
+            expect(Scope.prototype.push).toEqual(jasmine.any(Function));
+        });
         
         it("which pushes the current scope onto the stack to set it as the current scope", function () {
             let baseScope = { };
@@ -109,7 +109,7 @@ describe("The Scope class", function () {
             
             let firstScope = new Scope();
             firstScope.push(function () {
-        	    expect(Scope._currentScope).toBe(firstScope);
+                expect(Scope._currentScope).toBe(firstScope);
                 
                 let secondScope = new Scope();
                 secondScope.push(function () {
@@ -127,7 +127,7 @@ describe("The Scope class", function () {
 
     describe("exposes the \"insert\" member", function () {
         it("as a function", function () {
-        	expect(Scope.prototype.insert).toEqual(jasmine.any(Function));
+            expect(Scope.prototype.insert).toEqual(jasmine.any(Function));
         });
         
         it("which inserts a variable", function () {
@@ -140,7 +140,7 @@ describe("The Scope class", function () {
         });
         
         it("which inserts a variable shadowing one belonging to a parent with the same name", function () {
-        	let testVar = new ExpressionVariable(new Token("test", constants.TYPE.VARIABLE, 1, 2));
+            let testVar = new ExpressionVariable(new Token("test", constants.TYPE.VARIABLE, 1, 2));
             let testVar2 = new ExpressionVariable(new Token("test", constants.TYPE.VARIABLE, 3, 4));
             
             let scope = new Scope();
@@ -166,7 +166,7 @@ describe("The Scope class", function () {
 
     describe("exposes the \"findVar\" member", function () {
         it("as a function", function () {
-        	expect(Scope.prototype.findVar).toEqual(jasmine.any(Function));
+            expect(Scope.prototype.findVar).toEqual(jasmine.any(Function));
         });
         
         it("which returns the variable if found", function () {

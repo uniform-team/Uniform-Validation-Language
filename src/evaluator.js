@@ -7,182 +7,182 @@ import { TypeError, UndeclaredError, AssertionError } from "./errors.js";
 
 // Export boolean AND operation
 export function and(leftExpr, rightExpr) {
-	return function () {
-		let left = coerce.toBool(leftExpr());
-		let right = coerce.toBool(rightExpr());
-		
-		return left.clone({ value: left.value && right.value, type: constants.TYPE.BOOL });
-	};
+    return function () {
+        let left = coerce.toBool(leftExpr());
+        let right = coerce.toBool(rightExpr());
+        
+        return left.clone({ value: left.value && right.value, type: constants.TYPE.BOOL });
+    };
 }
 
 // Export boolean OR operation
 export function or(leftExpr, rightExpr) {
-	return function () {
-		let left = coerce.toBool(leftExpr());
-		let right = coerce.toBool(rightExpr());
-		
-		return left.clone({ value: left.value || right.value, type: constants.TYPE.BOOL });
-	};
+    return function () {
+        let left = coerce.toBool(leftExpr());
+        let right = coerce.toBool(rightExpr());
+        
+        return left.clone({ value: left.value || right.value, type: constants.TYPE.BOOL });
+    };
 }
 
 // Export boolean NOT operation
 export function not(expr) {
-	return function () {
-		let result = coerce.toBool(expr());
-		
-		return result.clone({ value: !result.value, type: constants.TYPE.BOOL });
-	};
+    return function () {
+        let result = coerce.toBool(expr());
+        
+        return result.clone({ value: !result.value, type: constants.TYPE.BOOL });
+    };
 }
 
 // Export boolean EQUALS operation
 export function equals(leftExpr, rightExpr) {
-	return function () {
-		let left = leftExpr();
-		let right = rightExpr();
-		
-		if (left.type !== right.type) return left.clone({ value: false, type: constants.TYPE.BOOL });
-		else return left.clone({ value: left.value === right.value, type: constants.TYPE.BOOL });
-	};
+    return function () {
+        let left = leftExpr();
+        let right = rightExpr();
+        
+        if (left.type !== right.type) return left.clone({ value: false, type: constants.TYPE.BOOL });
+        else return left.clone({ value: left.value === right.value, type: constants.TYPE.BOOL });
+    };
 }
 
 // Export regular expression MATCHES operation
 export function matches(leftExpr, rightExpr) {
-	return function () {
-		let left = coerce.toString(leftExpr());
-		let right = coerce.toRegex(rightExpr());
-		
-		return left.clone({ value: right.value.test(left.value), type: constants.TYPE.BOOL });
-	};
+    return function () {
+        let left = coerce.toString(leftExpr());
+        let right = coerce.toRegex(rightExpr());
+        
+        return left.clone({ value: right.value.test(left.value), type: constants.TYPE.BOOL });
+    };
 }
 
 // Export boolean LESS THAN operation
 export function lt(leftExpr, rightExpr) {
-	return function () {
-		let left = coerce.toNumber(leftExpr());
-		let right = coerce.toNumber(rightExpr());
-		
-		return left.clone({ value: left.value < right.value, type: constants.TYPE.BOOL });
-	};
+    return function () {
+        let left = coerce.toNumber(leftExpr());
+        let right = coerce.toNumber(rightExpr());
+        
+        return left.clone({ value: left.value < right.value, type: constants.TYPE.BOOL });
+    };
 }
 
 // Export boolean GREATER THAN operation
 export function gt(leftExpr, rightExpr) {
-	return function () {
-		let left = coerce.toNumber(leftExpr());
-		let right = coerce.toNumber(rightExpr());
-		
-		return left.clone({ value: left.value > right.value, type: constants.TYPE.BOOL });
-	};
+    return function () {
+        let left = coerce.toNumber(leftExpr());
+        let right = coerce.toNumber(rightExpr());
+        
+        return left.clone({ value: left.value > right.value, type: constants.TYPE.BOOL });
+    };
 }
 
 // Export boolean LESS THAN OR EQUAL TO operation
 export function lte(leftExpr, rightExpr) {
-	return function () {
-		let left = coerce.toNumber(leftExpr());
-		let right = coerce.toNumber(rightExpr());
-		
-		return left.clone({ value: left.value <= right.value, type: constants.TYPE.BOOL });
-	};
+    return function () {
+        let left = coerce.toNumber(leftExpr());
+        let right = coerce.toNumber(rightExpr());
+        
+        return left.clone({ value: left.value <= right.value, type: constants.TYPE.BOOL });
+    };
 }
 
 // Export boolean GREATER THAN OR EQUAL TO operation
 export function gte(leftExpr, rightExpr) {
-	return function () {
-		let left = coerce.toNumber(leftExpr());
-		let right = coerce.toNumber(rightExpr());
-		
-		return left.clone({ value: left.value >= right.value, type: constants.TYPE.BOOL });
-	};
+    return function () {
+        let left = coerce.toNumber(leftExpr());
+        let right = coerce.toNumber(rightExpr());
+        
+        return left.clone({ value: left.value >= right.value, type: constants.TYPE.BOOL });
+    };
 }
 
 // Export numeric ADDITION operation
 export function add(leftExpr, rightExpr) {
-	return function () {
-		let left = coerce.toNumber(leftExpr());
-		let right = coerce.toNumber(rightExpr());
-		
-		return left.clone({ value: left.value + right.value, type: constants.TYPE.NUMBER });
-	};
+    return function () {
+        let left = coerce.toNumber(leftExpr());
+        let right = coerce.toNumber(rightExpr());
+        
+        return left.clone({ value: left.value + right.value, type: constants.TYPE.NUMBER });
+    };
 }
 
 // Export numeric SUBTRACTION operation
 export function sub(leftExpr, rightExpr) {
-	return function () {
-		let left = coerce.toNumber(leftExpr());
-		let right = coerce.toNumber(rightExpr());
-		
-		return left.clone({ value: left.value - right.value, type: constants.TYPE.NUMBER });
-	};
+    return function () {
+        let left = coerce.toNumber(leftExpr());
+        let right = coerce.toNumber(rightExpr());
+        
+        return left.clone({ value: left.value - right.value, type: constants.TYPE.NUMBER });
+    };
 }
 
 // Export numeric MULTIPLY operation
 export function mul(leftExpr, rightExpr) {
-	return function () {
-		let left = coerce.toNumber(leftExpr());
-		let right = coerce.toNumber(rightExpr());
-		
-		return left.clone({ value: left.value * right.value, type: constants.TYPE.NUMBER });
-	};
+    return function () {
+        let left = coerce.toNumber(leftExpr());
+        let right = coerce.toNumber(rightExpr());
+        
+        return left.clone({ value: left.value * right.value, type: constants.TYPE.NUMBER });
+    };
 }
 
 // Export numeric DIVISION operation
 export function div(leftExpr, rightExpr) {
-	return function () {
-		let left = coerce.toNumber(leftExpr());
-		let right = coerce.toNumber(rightExpr());
-		
-		return left.clone({ value: left.value / right.value, type: constants.TYPE.NUMBER });
-	};
+    return function () {
+        let left = coerce.toNumber(leftExpr());
+        let right = coerce.toNumber(rightExpr());
+        
+        return left.clone({ value: left.value / right.value, type: constants.TYPE.NUMBER });
+    };
 }
 
 // Export numeric MODULO operation
 export function mod(leftExpr, rightExpr) {
-	return function () {
-		let left = coerce.toNumber(leftExpr());
-		let right = coerce.toNumber(rightExpr());
-		
-		return left.clone({ value: left.value % right.value, type: constants.TYPE.NUMBER});
-	};
+    return function () {
+        let left = coerce.toNumber(leftExpr());
+        let right = coerce.toNumber(rightExpr());
+        
+        return left.clone({ value: left.value % right.value, type: constants.TYPE.NUMBER});
+    };
 }
 
 // Export numeric NEGATION operation
 export function neg(expr) {
-	return function () {
-		let result = coerce.toNumber(expr());
-		
-		return result.clone({ value: -result.value, type: constants.TYPE.NUMBER });
-	};
+    return function () {
+        let result = coerce.toNumber(expr());
+        
+        return result.clone({ value: -result.value, type: constants.TYPE.NUMBER });
+    };
 }
 
 // Export IF-ELSEIF-ELSE operation
 export function ifStmt(conditionExprs, resultExprs, elseResultExpr) {
-	return function () {
-		// Loop over each possibility
-		for (let i = 0; i < conditionExprs.length; ++i) {
-			// Evaluate the condition
-			let condition = coerce.toBool(conditionExprs[i]());
-			
-			// If the condition is true, return its associated result
-			if (condition.value === true) {
-				return resultExprs[i]();
-			}
-		}
+    return function () {
+        // Loop over each possibility
+        for (let i = 0; i < conditionExprs.length; ++i) {
+            // Evaluate the condition
+            let condition = coerce.toBool(conditionExprs[i]());
+            
+            // If the condition is true, return its associated result
+            if (condition.value === true) {
+                return resultExprs[i]();
+            }
+        }
 
-		// No condition was true, use the else result
-		return elseResultExpr();
-	};
+        // No condition was true, use the else result
+        return elseResultExpr();
+    };
 }
 
 // Export DOT operation for objects
 export function dotObject(leftExpr, rightVal) {
-	return function () {
-		let left = coerce.toObject(leftExpr());
-		let right = coerce.toIdentifier(rightVal);
-		
-		let result = left.value[right.value];
-		
-		return left.clone({ value: result.value, type: result.type });
-	};
+    return function () {
+        let left = coerce.toObject(leftExpr());
+        let right = coerce.toIdentifier(rightVal);
+        
+        let result = left.value[right.value];
+        
+        return left.clone({ value: result.value, type: result.type });
+    };
 }
 
 // DOT operation for identifier.tag
