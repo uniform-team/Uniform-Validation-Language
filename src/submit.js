@@ -1,5 +1,6 @@
 import { document, $ } from "./env.js";
 import { validateClient } from "./options.js";
+import parser from "./parser.js";
 import root from "./root.js";
 
 let getRoot = root;
@@ -14,6 +15,14 @@ export default {
     init: function () {
         // When any form is submitted on the page
         $(document).on("submit", "form", function (evt) {
+            // Check if a Uniform source file was provided for validation
+            if (!parser.providedFile) {
+                evt.preventDefault();
+                alert("No Uniform file was provided for validation. Did you remember to call uniform.parser.parse(...)"
+                    + " or uniform.options.href(...)?");
+                return;
+            }
+            
             // Check if there is a root-level valid tag
             let validToken = getRoot().valid;
             if (!validToken) {
@@ -30,6 +39,6 @@ export default {
             }
             
             // Form is valid, let browser continue with submission
-        })
+        });
     }
 };

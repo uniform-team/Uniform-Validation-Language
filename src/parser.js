@@ -11,8 +11,12 @@ import Scope from "./scope.js";
 export default {
     _testExpr: false,
     
+    providedFile: false,
+    
     parse: function (input, spy) {
         let self = this;
+        
+        this.providedFile = true;
         
         // Stack for holding tokens retrieved via lookahead()
         let tokenStack = [];
