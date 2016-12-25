@@ -259,6 +259,10 @@ describe("The lexer module", function () {
             it("end", function () {
                 assertKeyword("end", constants.OPERATOR.END);
             });
+            
+            it("this", function () {
+                assertKeyword("this", constants.THIS);
+            });
         });
         
         describe("operators like", function () {

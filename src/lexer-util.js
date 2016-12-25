@@ -76,7 +76,8 @@ export const createKeyword = (function () {
         [constants.OPERATOR.THEN]:    create,
         [constants.OPERATOR.ELIF]:    create,
         [constants.OPERATOR.ELSE]:    create,
-        [constants.OPERATOR.END]:     create
+        [constants.OPERATOR.END]:     create,
+        [constants.THIS]:             create
     };
     
     // Return actual function returning a new token for the given keyword, or null if it is not a keyword

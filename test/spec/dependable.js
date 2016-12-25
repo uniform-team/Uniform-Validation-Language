@@ -39,20 +39,13 @@ describe("The Dependable module", function () {
         });
     });
     
-    let createDependable = function (expr = () => null) {
-        let clazz = Dependable();
-        let dep = new clazz();
-        dep.initDependable(expr);
-        return dep;
-    };
-    
     describe("exposes the \"instanceof\" member", function () {
         it("as a static function", function () {
             expect(Dependable.instanceof).toEqual(jasmine.any(Function))
         });
         
         it("which returns true for objects which mix in Dependable", function () {
-            expect(Dependable.instanceof(createDependable())).toBe(true);
+            expect(Dependable.instanceof(jasmineUtil.createDependable())).toBe(true);
         });
         
         it("which returns false for objects which do not mix in Dependable", function () {
@@ -60,33 +53,19 @@ describe("The Dependable module", function () {
         });
     });
     
-    describe("exposes the \"addDependent\" member", function () {
+    describe("exposes the \"addDependency\" static member", function () {
         it("as a function", function () {
-            expect(Dependable().prototype.addDependent).toEqual(jasmine.any(Function));
+            expect(Dependable.addDependency).toEqual(jasmine.any(Function));
         });
         
-        it("which adds the given object as a dependent of this Dependable", function () {
-            let first = createDependable();
-            let second = createDependable();
-    
-            first.addDependent(second);
+        it("which sets up a dependency between the two arguments", function () {
+            const dependent = jasmineUtil.createDependable();
+            const dependee = jasmineUtil.createDependable();
             
-            expect(first[Dependable._dependentsSymbol]).toEqual([ second ]);
-        });
-    });
-    
-    describe("exposes the \"addDependee\" member", function () {
-        it("as a function", function () {
-            expect(Dependable().prototype.addDependee).toEqual(jasmine.any(Function));
-        });
-        
-        it("which sets this object as dependent on the given Dependable", function () {
-            let first = createDependable();
-            let second = createDependable();
+            Dependable.addDependency(dependent, dependee);
             
-            second.addDependee(first);
-            
-            expect(second[Dependable._dependeesSymbol]).toEqual([ first ]);
+            expect(dependent[Dependable._dependeesSymbol]).toEqual([ dependee ]);
+            expect(dependee[Dependable._dependentsSymbol]).toEqual([ dependent ]);
         });
     });
     
@@ -96,9 +75,9 @@ describe("The Dependable module", function () {
         });
         
         it("which triggers the \"update\" method on all this Dependable's dependents", function () {
-            let first = createDependable();
-            let second = createDependable();
-            let third = createDependable();
+            let first = jasmineUtil.createDependable();
+            let second = jasmineUtil.createDependable();
+            let third = jasmineUtil.createDependable();
             
             spyOn(second, "update");
             spyOn(third, "update");
@@ -117,15 +96,13 @@ describe("The Dependable module", function () {
         });
         
         it("which updates this Dependable's value with its expression and triggers it when its dependees are initialized", function () {
-            let dep = createDependable(() => "foo");
-            let dependee1 = createDependable(() => null);
-            let dependee2 = createDependable(() => null);
+            let dep = jasmineUtil.createDependable(() => "foo");
+            let dependee1 = jasmineUtil.createDependable(() => null);
+            let dependee2 = jasmineUtil.createDependable(() => null);
             
             // dep is dependent on dependee1 and dependee2
-            dep.addDependee(dependee1);
-            dependee1.addDependent(dep);
-            dep.addDependee(dependee2);
-            dependee2.addDependent(dep);
+            Dependable.addDependency(dep, dependee1);
+            Dependable.addDependency(dep, dependee2);
             
             spyOn(dep, "trigger");
     

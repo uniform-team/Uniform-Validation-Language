@@ -14,7 +14,9 @@ export default function () {
     }
     
     // Flatten the result
-    if (root.result) root.result.value = Token.flatten(root.result.value);
+    if (root.result) root.result = root.result.clone({
+        value: Token.flatten(root.result.value)
+    });
     
     return root;
 }

@@ -1,3 +1,5 @@
+import Dependable from "../../src.es5/dependable.js";
+
 beforeEach(function () {
     // Spy on global JavaScript APIs to prevent their default behavior
     if (globalObj.alert) spyOn(globalObj, "alert");
@@ -49,5 +51,13 @@ globalObj.jasmineUtil = {
     // Return a promise which is automatically rejected with the error given
     BrokenPromise: function (err) {
         return new Promise((resolve, reject) => reject(err));
+    },
+    
+    // Return a new dependable with the given expression
+    createDependable: function (expr = () => null) {
+        const clazz = new Dependable();
+        const dep = new clazz();
+        dep.initDependable(expr);
+        return dep;
     }
 };

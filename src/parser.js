@@ -5,6 +5,7 @@ import tokenizer from "./lexer.js";
 import Identifier from "./identifier.js";
 import { BlockVariable, ExpressionVariable } from "./variable.js";
 import Tag from "./tag.js";
+import Dependable from "./dependable.js";
 import * as evaluator from "./evaluator.js";
 import Scope from "./scope.js";
 
@@ -14,8 +15,6 @@ export default {
     providedFile: false,
     
     parse: function (input, spy) {
-        let self = this;
-        
         this.providedFile = true;
         
         // Stack for holding tokens retrieved via lookahead()
@@ -117,7 +116,7 @@ export default {
             let result;
             
             // If testing expressions, declare variables then directly invoke and return expression()
-            if (self._testExpr) {
+            if (this._testExpr) {
                 while (currentToken.isUfmType()) decl();
                 result = expression(spy);
             }
@@ -482,6 +481,8 @@ export default {
                 return identifier(owner);
             } else if (currentToken.type === constants.TYPE.VARIABLE) { // Check for variable usage
                 return variable(owner);
+            } else if (currentToken.value === constants.THIS) { // Check for this keyword
+                return self(owner);
             } else if (currentToken.isOperand()) { // Check for single-token operands
                 let operand = match();
                 
@@ -506,8 +507,7 @@ export default {
                 if (!identifierObj) throw new UndeclaredError("Identifier " + identifierToken.value + " was not declared");
                 
                 // Set the owner as dependent on the identifier
-                identifierObj.addDependent(owner);
-                owner.addDependee(identifierObj);
+                Dependable.addDependency(owner, identifierObj);
                 
                 // Return the value of the identifier as the result
                 return () => identifierObj.value;
@@ -533,8 +533,7 @@ export default {
                 if (!tagObj) throw new NotImplementedError();
                 
                 // Set the owner as dependent on the found tag
-                tagObj.addDependent(owner);
-                owner.addDependee(tagObj);
+                Dependable.addDependency(owner, tagObj);
             });
             
             return evaluator.dotTag(identifierToken, tag);
@@ -558,8 +557,7 @@ export default {
                     if (!(varObj instanceof ExpressionVariable)) throw new TypeError("Variable @" + varToken.value + " is a block, not an expression.");
         
                     // Set the owner as dependent on the variable
-                    varObj.addDependent(owner);
-                    owner.addDependee(varObj);
+                    Dependable.addDependency(owner, varObj);
                 });
     
                 // Return the value of the variable as the result
@@ -587,11 +585,42 @@ export default {
                 if (!tagObj) throw new UndeclaredError("Tag @" + varToken.value + "." + tag.value + " was not declared");
                 
                 // Set the owner as dependent on the found tag
-                tagObj.addDependent(owner);
-                owner.addDependee(tagObj);
+                Dependable.addDependency(owner, tagObj);
             });
             
             return evaluator.dotTag(varToken, tag);
+        }
+        
+        // this
+        // Would love to call the function `this`, but JavaScript frowns on using keywords like that
+        function self(owner) {
+            match(); // this
+    
+            // Owner must be Tag or ExpressionVariable
+            // Use owner of containing block and get its value
+            const context = owner.containingScope.owner;
+            
+            // Verify that a valid context was found to bind `this` to
+            // This can occur if the developer uses `this` in the root scope
+            if (!context) {
+                throw new ParsingError("Could not find a valid containing scope to bind `this` keyword to.");
+            }
+            
+            // Verify that context is not a BlockVariable, as `this` doesn't make sense there
+            if (context instanceof BlockVariable) {
+                throw new ParsingError("Can not bind `this` to a BlockVariable. It must be used under an Identifier block.");
+            }
+            
+            // Verify assumption that context is an Identifier
+            if (!(context instanceof Identifier)) {
+                throw new AssertionError("Expected `this` owner to be an Identifier but it was actually "
+                        + context.toString());
+            }
+            
+            // Set the owner as dependent on this value
+            Dependable.addDependency(owner, context);
+            
+            return () => context.value;
         }
         
         // <object> -> { <keyValuePairs> }
@@ -635,6 +664,6 @@ export default {
         }
         
         // Loaded all functions into the closure, parse the given input as a file
-        return file(spy); // Return for _testExpr === true case used in testing
+        return file.apply(this, [ spy ]); // Return for _testExpr === true case used in testing
     }
 };

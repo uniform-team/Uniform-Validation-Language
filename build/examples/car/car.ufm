@@ -23,14 +23,14 @@ result: {
     };
 
     make {
-        valid: make matches @filled;
+        valid: this matches @filled;
     }
 
     model {
-        valid: model matches @filled;
+        valid: this matches @filled;
     }
 
     year {
-        valid: year matches @year;
+        valid: this matches @year;
     }
 }

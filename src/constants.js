@@ -62,5 +62,6 @@ export default {
         MULTI_LINE: "m",
         MATCH_LINE: "x"
     },
-    ENDOFFILE: "EOF"
+    ENDOFFILE: "EOF",
+    THIS: "this"
 };

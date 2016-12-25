@@ -1,8 +1,10 @@
-let initialized = Symbol("initialized");
-let dependableSymbol = Symbol("dependable");
-let dependents = Symbol("dependents");
-let dependees = Symbol("dependees");
-let expression = Symbol("expression");
+const initialized = Symbol("initialized");
+const dependableSymbol = Symbol("dependable");
+const dependents = Symbol("dependents");
+const dependees = Symbol("dependees");
+const expression = Symbol("expression");
+const addDependent = Symbol("addDependent");
+const addDependee = Symbol("addDependee");
 
 // Factory which creates a new class that extends the one given with the Dependable functionality mixed in
 let Dependable = (Clazz = class { }) => class extends Clazz {
@@ -21,12 +23,12 @@ let Dependable = (Clazz = class { }) => class extends Clazz {
     }
     
     // Add the given object as dependent on this object
-    addDependent(dependent) {
+    [addDependent](dependent) {
         this[dependents].push(dependent);
     }
     
     // Make this object dependent on the one given
-    addDependee(dependee) {
+    [addDependee](dependee) {
         this[dependees].push(dependee);
     }
     
@@ -60,6 +62,13 @@ Dependable._expressionSymbol = expression;
 // Determine if the given object is Dependable
 Dependable.instanceof = function (obj) {
     return obj[dependableSymbol] === true;
+};
+
+// Create dependency relationship between the two Dependables
+// When the dependee changes, the dependent is updated
+Dependable.addDependency = function (dependent, dependee) {
+    dependee[addDependent](dependent);
+    dependent[addDependee](dependee);
 };
 
 export default Dependable;
