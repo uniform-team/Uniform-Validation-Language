@@ -178,7 +178,7 @@ Development
 Take a look at the Wiki for additional documentation and resources.
 
 1. Want to integrate Uniform into your project? See [Getting Started](https://github.com/uniform-team/Uniform-Validation-Language/wiki/Getting-Started). // TODO
-2. Want to build the car form yourself from scratch? See our interactive car tutorial Git repository. // TODO
+2. Want to build the car form yourself from scratch? See our [interactive car tutorial](https://github.com/uniform-team/Uniform-Car-Example) Git repository.
 3. Want to get involved? See [How to Contribute](https://github.com/uniform-team/Uniform-Validation-Language/wiki/How-to-Contribute). // TODO
 4. Curious about the language specification? See [Language Grammar](https://github.com/uniform-team/Uniform-Validation-Language/wiki/Language-Grammar). // TODO: Update
 
