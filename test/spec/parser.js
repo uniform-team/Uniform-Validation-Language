@@ -6,6 +6,7 @@ import Scope from "../../src.es5/scope.js";
 import root from "../../src.es5/root.js";
 import { ExpressionVariable } from "../../src.es5/variable.js";
 import Identifier from "../../src.es5/identifier.js";
+import Dependable from "../../src.es5/dependable.js";
 import Tag from "../../src.es5/tag.js";
 import { ParsingError, TypeError, UndeclaredError } from "../../src.es5/errors.js";
 
@@ -349,12 +350,10 @@ describe("The parser module", function () {
         describe("with operands such as", function () {
             it("identifiers", function () {
                 setInputValue("test", "data");
+    
+                spyOn(Dependable, "addDependency");
                 
-                spyOn(Identifier.prototype, "addDependent");
-                
-                const owner = {
-                    addDependee: jasmine.createSpy("addDependee")
-                };
+                const owner = jasmineUtil.createDependable(() => null);
                 
                 const token = parser.parse(
                     "string: test;\n"
@@ -365,8 +364,7 @@ describe("The parser module", function () {
                     value: "data",
                     type: constants.TYPE.STRING
                 });
-                expect(Identifier.prototype.addDependent).toHaveBeenCalledWith(owner);
-                expect(owner.addDependee).toHaveBeenCalledWith(jasmine.any(Identifier));
+                expect(Dependable.addDependency).toHaveBeenCalledWith(owner, jasmine.any(Identifier));
             });
             
             it("booleans", function () {
@@ -403,23 +401,20 @@ describe("The parser module", function () {
             });
             
             it("variables", function () {
-                let variable = new ExpressionVariable(new Token("test", constants.TYPE.VARIABLE));
+                const variable = new ExpressionVariable(new Token("test", constants.TYPE.VARIABLE));
                 variable.initDependable(() => new Token(true, constants.TYPE.BOOL));
                 variable.update();
                 
                 spyOn(Scope.prototype, "lookupVar").and.returnValue(variable);
-                spyOn(ExpressionVariable.prototype, "addDependent");
+                spyOn(Dependable, "addDependency");
                 
-                let owner = {
-                    addDependee: jasmine.createSpy("addDependee")
-                };
+                const owner = jasmineUtil.createDependable();
                 expect(parser.parse("@test", owner)()).toEqualToken({
                     value: true,
                     type: constants.TYPE.BOOL
                 });
                 
-                expect(ExpressionVariable.prototype.addDependent).toHaveBeenCalledWith(owner);
-                expect(owner.addDependee).toHaveBeenCalledWith(variable);
+                expect(Dependable.addDependency).toHaveBeenCalledWith(owner, variable);
             });
             
             describe("objects", function () {
@@ -844,6 +839,27 @@ describe("The parser module", function () {
                 type: constants.TYPE.BOOL
             });
         });
+        
+        it("such as a dependency using `this` keyword", function () {
+            setInputValue("foo", "foo");
+            
+            parser.parse(
+                "string: foo;\n"
+                + "valid: foo.valid;\n"
+                + "foo { valid: this equals \"bar\"; }"
+            );
+            
+            expect(root().valid).toEqualToken({
+                value: false,
+                type: constants.TYPE.BOOL
+            });
+            
+            setInputValue("foo", "bar");
+            expect(root().valid).toEqualToken({
+                value: true,
+                type: constants.TYPE.BOOL
+            });
+        });
     });
     
     describe("throws an error when given invalid expressions such as", function () {
@@ -880,10 +896,10 @@ describe("The parser module", function () {
         });
         
         it("using an if with else-ifs but no else", function () {
-            expect(() => parser.parse("valid:"
-                + " if 1 equals 1 then 1"
-                + " else if 2 equals 2 then 2"
-                + "end"
+            expect(() => parser.parse("valid:\n"
+                + " if 1 equals 1 then 1\n"
+                + " else if 2 equals 2 then 2\n"
+                + "end\n"
             + ";")).toThrowUfmError(ParsingError);
         });
         
@@ -893,16 +909,28 @@ describe("The parser module", function () {
         
         it("using the DOT operator on an expression variable", function () {
             expect(() => parser.parse(
-                "@test: \"foo\";"
+                "@test: \"foo\";\n"
                 + "valid: @test.valid;"
             )).toThrowUfmError(TypeError);
         });
         
         it("using a block variable directly", function () {
             expect(() => parser.parse(
-                "@test { valid: true; }"
+                "@test { valid: true; }\n"
                 + "valid: @test;"
             )).toThrowUfmError(TypeError);
+        });
+    
+        it("using `this` in the root scope", function () {
+            expect(() => parser.parse(
+                "valid: this equals \"foo\";"
+            )).toThrowUfmError(ParsingError);
+        });
+        
+        it("using `this` in a block variable", function () {
+            expect(() => parser.parse(
+                "@test { valid: this equals \"foo\"; }"
+            )).toThrowUfmError(ParsingError);
         });
     });
 });

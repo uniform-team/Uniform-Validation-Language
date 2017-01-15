@@ -9,10 +9,27 @@ export default class Token {
         if (value === undefined) throw new Error("Undefined Value in new Token");
         if (type === undefined) throw new Error("Undefined Type in new Token");
         
-        this.value = value;
-        this.type = type;
-        this.line = lineNumber;
-        this.col = lineIndex;
+        this._value = value;
+        this._type = type;
+        this._line = lineNumber;
+        this._col = lineIndex;
+    }
+    
+    // Expose only getters to make Token immutable
+    get value() {
+        return this._value;
+    }
+    
+    get type() {
+        return this._type;
+    }
+    
+    get line() {
+        return this._line;
+    }
+    
+    get col() {
+        return this._col;
     }
     
     // Clone this Token into a new Token, replacing the value or type as given

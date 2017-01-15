@@ -124,7 +124,10 @@ export default class Stream {
     
     // Save the given token to be returned by #extractResult().
     returnToken(createToken) {
-        this.result = createToken(this.token);
+        this.result = createToken(this.token).clone({
+            line: this.line,
+            col: this.col
+        });
     }
     
     // Return the token saved by #returnToken() and reset the Stream.

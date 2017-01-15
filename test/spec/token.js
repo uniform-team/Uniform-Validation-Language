@@ -3,6 +3,34 @@ import Token from "../../src.es5/token.js";
 import constants from "../../src.es5/constants.js";
 
 describe("The Token class", function () {
+    describe("exposes the \"value\" member", function () {
+        it("as a property with a getter but no setter", function () {
+            expect(Token.prototype).toHaveGetter("value");
+            expect(Token.prototype).not.toHaveSetter("value");
+        });
+    });
+    
+    describe("exposes the \"type\" member", function () {
+        it("as a property with a getter but no setter", function () {
+            expect(Token.prototype).toHaveGetter("type");
+            expect(Token.prototype).not.toHaveSetter("type");
+        });
+    });
+    
+    describe("exposes the \"line\" member", function () {
+        it("as a property with a getter but no setter", function () {
+            expect(Token.prototype).toHaveGetter("line");
+            expect(Token.prototype).not.toHaveSetter("line");
+        });
+    });
+    
+    describe("exposes the \"col\" member", function () {
+        it("as a property with a getter but no setter", function () {
+            expect(Token.prototype).toHaveGetter("col");
+            expect(Token.prototype).not.toHaveSetter("col");
+        });
+    });
+    
     describe("exposes the \"clone\" member", function () {
         it("as a function", function () {
             expect(Token.prototype.clone).toEqual(jasmine.any(Function));
