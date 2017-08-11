@@ -26,7 +26,7 @@
   "scripts": {
     "start": "node server/server.js",
     "prepublish": "npm run build",
-    "setup-dev": "bower install && cd server && npm install && cd ..",
+    "setup-dev": "bower install && cd server && npm install && cd .. && node scripts/hook.js",
     
     "build": "npm run build-src && npm run build-server-test && npm run build-server-helper && webpack",
     "build-src": "babel src --out-dir src.es5 --presets es2015 --source-maps inline",
