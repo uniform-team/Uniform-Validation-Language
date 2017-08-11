@@ -1,5 +1,5 @@
-export default {
-    TYPE: {
+export default Object.freeze({
+    TYPE: Object.freeze({
         BOOL: "boolean",
         VARIABLE: "variable",
         NUMBER: "number",
@@ -14,8 +14,8 @@ export default {
         ANY: "any_array",
         ALL: "all_array",
         OBJECT: "object"
-    },
-    OPERATOR: {
+    }),
+    OPERATOR: Object.freeze({
         ADD: "+",
         SUB: "-",
         MUL: "*",
@@ -45,23 +45,23 @@ export default {
         ELIF: "elif",
         ELSE: "else",
         END: "end"
-    },
-    TAG: {
+    }),
+    TAG: Object.freeze({
         VALID: "valid",
         ENABLED: "enabled",
         VISIBLE: "visible",
         RESULT: "result",
         SELECTOR: "selector"
-    },
-    VALUE: {
+    }),
+    VALUE: Object.freeze({
         TRUE: "true",
         FALSE: "false"
-    },
-    REGEX_FLAGS: {
+    }),
+    REGEX_FLAGS: Object.freeze({
         IGNORE_CASE: "i",
         MULTI_LINE: "m",
         MATCH_LINE: "x"
-    },
+    }),
     ENDOFFILE: "EOF",
     THIS: "this"
-};
+});
