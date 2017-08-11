@@ -19,6 +19,7 @@ coverage
 .idea/tasks.xml
 .idea/dictionaries
 .idea/jsLibraryMappings.xml
+.idea/watcherTasks.xml
 
 # Sensitive or high-churn IDEA files:
 .idea/dataSources.ids
