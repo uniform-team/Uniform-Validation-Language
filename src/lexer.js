@@ -92,7 +92,7 @@ class UfmStream extends Stream {
         ).match(/^$/, // Empty string
             () => this.returnToken(() => new Token(constants.ENDOFFILE, constants.ENDOFFILE))
         ).match(/[a-zA-Z_]/, // Identifiers or keywords
-            () => this.consume(/* first char */).consumeUntil(/[^a-zA-Z0-9_]/).expectRegexToken(canBeFollowedByRegex)
+            () => this.consume(/* first char */).consumeWhile(/[a-zA-Z0-9_]/).expectRegexToken(canBeFollowedByRegex)
                 .returnToken((value) => {
                     // Create keyword if possible, otherwise it must be an identifier
                     const keyword = createKeyword(value);
@@ -100,15 +100,15 @@ class UfmStream extends Stream {
                 }
             )
         ).match(/@/, // Variables
-            () => this.ignore(/* @ char */).consumeUntil(/[^a-zA-Z0-9_]/).returnToken(
+            () => this.ignore(/* @ char */).consumeWhile(/[a-zA-Z0-9_]/).returnToken(
                 (value) => new Token(value, constants.TYPE.VARIABLE)
             )
         ).match(/[0-9]/, // Number literals
-            () => this.consume(/* first digit */).consumeUntil(/[^0-9]/).returnToken(
+            () => this.consume(/* first digit */).consumeWhile(/[0-9]/).returnToken(
                 (value) => new Token(parseInt(value), constants.TYPE.NUMBER)
             )
         ).match(/"/, // String literals
-            () => this.ignore(/* open quote */).consumeUntil(/"|\n/, { // Closing quote or raw newline
+            () => this.ignore(/* open quote */).consumeUntil(/["\n]/, { // Closing quote or raw newline
                 getNumChars: () => this.input[0] === "\\" ? 2 : 1, // Consume two characters if it is escaped
                 getMap: () => this.input[0] === "\\" ? escape : identity, // Use escape() as map if necessary
                 onEOF: () => this.throwSyntaxError(`Unterminated string: ${this.token}`)
@@ -119,12 +119,12 @@ class UfmStream extends Stream {
             )
         ).match(/\//, // Slash character
             () => this.branch(() => this.expectRegex, // Decide either RegEx or division operator
-                /* RegEx */ () => this.ignore(/* slash */).consumeUntil(/\/|\n/, { // Slash or newline
+                /* RegEx */ () => this.ignore(/* slash */).consumeUntil(/[\/\n]/, { // Slash or newline
                         // Consume two characters if an escaped forward slash or backward slash, consume one character otherwise
                         getNumChars: () => this.input.startsWith("\\/") || this.input.startsWith("\\\\") ? 2 : 1,
                         onEOF: () => this.throwSyntaxError(`Unterminated regular expression: /${this.token}`)
                     }).match(/\//, // Terminating slash character
-                        () => this.ignore(/* terminating slash */).repeat(/i|m|x/,
+                        () => this.ignore(/* terminating slash */).repeat(/[imx]/,
                             () => this.consumeRegexFlag()
                         ).returnToken(
                             (value) => new Token(new UfmRegex(value, this.regexFlags), constants.TYPE.REGEX)
@@ -136,9 +136,9 @@ class UfmStream extends Stream {
                     (value) => new Token(constants.OPERATOR.DIV, constants.TYPE.KEYWORD)
                 )
             )
-        ).match(/\+|-|\*|%|:|;|\(|\)|\{|}|\./, // Single character operators
+        ).match(/[+\-*%:;(){}.]/, // Single character operators
             () => this.consume(/* operator */).expectRegexToken(canBeFollowedByRegex).returnToken(createOperator)
-        ).match(/<|>/, // Possibly multiple character operators
+        ).match(/[<>]/, // Possibly multiple character operators
             () => this.consume(/* first < or > character */).match(/=/, // Check for following = sign
                 () => this.consume(/* second = character */)
             ).expectRegexToken(canBeFollowedByRegex).returnToken(createOperator) // Create token for <, >, <=, >=

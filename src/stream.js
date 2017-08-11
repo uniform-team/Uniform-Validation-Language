@@ -66,7 +66,7 @@ export default class Stream {
         return this;
     }
     
-    // Consume each character until it reaches the given RegEx or the end of the Stream.
+    // Consume each character until it matches the given RegEx or reaches the end of the Stream.
     // getNumChars(): Returns how many characters to consume at a time based on the current Stream context.
     //                Useful for skipping characters so the RegEx doesn't match an escaped value.
     // getMap():      Returns a function to map the consume characters to the output values given to the token.
@@ -88,7 +88,33 @@ export default class Stream {
         // Check if the Stream ended
         if (this.input === "") {
             if (onEOF) onEOF();
-            return this;
+        }
+        
+        return this;
+    }
+    
+    // Consume each character while it matches the given RegEx or reaches the end of the Stream.
+    // getNumChars(): Returns how many characters to consume at a time based on the current Stream context.
+    //                Useful for skipping characters so the RegEx doesn't match an escaped value.
+    // getMap():      Returns a function to map the consume characters to the output values given to the token.
+    //                Useful for escaping characters.
+    // onEOF():       Callback to invoke if the end of the file is reached.
+    consumeWhile(regex, { getNumChars = () => 1, getMap = () => x => x, onEOF = null } = { }) {
+        const matchingRegex = Stream.correctRegex(regex);
+        while (this.input !== "" && matchingRegex.test(this.input)) {
+            // Determine how many characters to consume and how to map them
+            const numChars = getNumChars();
+            const map = getMap();
+            
+            // Consume characters, map them, and append them to the current token
+            this.token += map(this.input.slice(0, numChars));
+            
+            this.advance(numChars);
+        }
+        
+        // Check if the Stream ended
+        if (this.input === "") {
+            if (onEOF) onEOF();
         }
         
         return this;
