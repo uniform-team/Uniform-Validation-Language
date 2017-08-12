@@ -8,7 +8,8 @@ const rename = denodeify(fs.rename);
 const symlink = denodeify(fs.symlink);
 
 const ERROR_CODES = Object.freeze({
-    FILE_NOT_FOUND: "ENOENT"
+    FILE_NOT_FOUND: "ENOENT",
+    OP_NOT_PERMITTED: "EPERM",
 });
 const POST_MERGE = "post-merge";
 const POST_MERGE_BKUP = POST_MERGE + ".bkup";
@@ -35,6 +36,10 @@ rename(POST_MERGE, POST_MERGE_BKUP).then(function () {
     console.log(`Symlinked ${POST_MERGE} Git hook.`);
     process.exit(0 /* success */);
 }, function (err) {
+    if (err.code === ERROR_CODES.OP_NOT_PERMITTED) { // Check for permissions error
+        console.error("Invalid permissions. Try re-running this script as an administrator.");
+    }
+    
     // Log and exit with error
     console.error(`Failed to symlink ${POST_MERGE} Git hook.`, err);
     process.exit(1 /* error */);
