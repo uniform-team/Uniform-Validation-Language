@@ -1,5 +1,6 @@
 #!/usr/local/bin/node
 
+const path = require("path");
 const denodeify = require("denodeify");
 const fs = require("fs");
 
@@ -13,8 +14,8 @@ const ERROR_CODES = Object.freeze({
 });
 const POST_MERGE = "post-merge";
 const POST_MERGE_BKUP = POST_MERGE + ".bkup";
-const HOOKS_DIR = "scripts/hooks";
-const GIT_HOOKS_DIR = ".git/hooks";
+const HOOKS_DIR = path.join("scripts", "hooks");
+const GIT_HOOKS_DIR = path.join(".git", "hooks");
 
 // Move into destination directory to create symlink here
 process.chdir(GIT_HOOKS_DIR);
@@ -30,7 +31,7 @@ rename(POST_MERGE, POST_MERGE_BKUP).then(function () {
     throw err; // Rethrow error
 }).then(function () {
     // Symlink back up to the root directory and then down to the post-merge script
-    return symlink("../../" + HOOKS_DIR, POST_MERGE);
+    return symlink(path.join("../../", HOOKS_DIR, POST_MERGE), POST_MERGE);
 }).then(function () {
     // Log and exit successfully
     console.log(`Symlinked ${POST_MERGE} Git hook.`);
