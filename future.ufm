@@ -1,0 +1,159 @@
+# Proposed example syntax for a functional Uniform, based on Haskell
+
+# Uniform implementation details
+# Not necessarily actual syntax, but should provide a basic understanding of the mechanics
+# This would all be implicit within Uniform runtime / standard library
+
+type ValidResult = Valid | Invalid [ValidationError]
+type ValidationError = ValidationError [Input] String
+type EnabledResult = Enabled | Disabled
+type VisibleResult = Visible | Invisible
+
+type Input = InputBool | InputString | InputInt | ...
+type InputBool = Bool
+type InputString = String
+type InputInt = Int | ParseError String
+
+allValid list = ... # Valid if all inputs are valid, Invalid with combined ValidationErrors otherwise
+anyValid list = ... # Valid if any input is valid, Invalid with combined ValidationErrors otherwise
+isValid input = ... # Returns the result of the given input's associated valid function
+
+# Example isValid type declaration (implicit by Uniform)
+isValid :: a => ValidResult
+
+# Example allValid type declaration (may need to be overloaded (how does that work in a functional language?))
+allValid :: [ValidResult] => ValidResult
+allValid :: [a] => ValidResult
+allValid inputs = map isValid inputs
+
+# Possible all syntax
+all grades.valid
+
+# Car form
+
+input hasCar: InputBool {
+    # Optional core functions
+    valid => Valid;
+    enabled => Enabled;
+    visible => Visible;
+    default => False;
+}
+
+input car: Car {
+    input make: InputString {
+        valid "" => Invalid [ValidationError [make] "Make cannot be empty"];
+	    valid _ => Valid;
+
+        default => ""; # Optional
+    }
+    
+    input model: InputString {
+        valid "" => Invalid [ValidationError [model] "Model cannot be empty"];
+	    valid _ => Valid;
+
+        default => ""; # Optional
+    }
+    
+    input year: InputInt {
+        valid (ParseError msg) => Invalid [ValidationError [year] "Not a year: $year"];
+	    valid year => if year < 2000 || year > 2100
+	        then Invalid [ValidationError [year] "Year must be in this century"]
+	        else Valid
+	    ;
+
+        default => 2005; # Optional
+    }
+
+    # Optional core functions
+    valid car => allValid [car.make.valid, car.model.valid, car.year.valid]; # Scope only to stuff in Car?
+    enabled => hasCar; # Cannot be scoped to stuff only in Car
+    visible => hasCar; # Cannot be scoped to stuff only in Car
+}
+
+valid hasCar car = if hasCar
+    then car.valid
+    else Valid
+;
+
+# Multcar form
+
+# Defined on client in HTML with <... ufm-type="Car" ...> ... </...>
+# Defined on server in JSON with { cars: [{ make: ..., model: ..., year: ... }, ...] }
+
+input cars: [Car];
+type Car {
+    input make: InputString {
+        valid :: InputString -> ValidResult
+        valid "" => Invalid [ValidationError [make] "Make cannot be empty."];
+	    valid _ => Valid;
+    }
+    
+    input model: InputString {
+        valid "" => Invalid [ValidationError [model] "Model cannot be empty."];
+	    valid _ => Valid;
+    }
+    
+    input year: InputInt {
+        valid (ParseError msg) => Invalid [ValidationError [year] "Not a year: $year"];
+        valid year => if year < 2000 || year > 2100
+            then Invalid [ValidationError [year] "Year must be from this century."]
+            else Valid
+        ;
+    }
+
+    valid :: Car -> ValidResult
+    valid => allValid [this.make.valid, this.model.valid, this.year.valid];
+}
+
+valid cars = allValid cars;
+
+# Dates
+# NOW is a constant date / time within a single invocation
+
+valid = NOW > Date "Jan 2nd ..." and NOW > Date "Jan 2nd ..."
+
+# Grade check
+
+type GradeType = "A" | "B" | "C" | "D" | "F" # Algebraic types with literals (TypeScript thing)
+
+input grades: [Grade];
+type Grade {
+    input grade: InputString {
+        # instanceof is an operator to match the discriminated union and choose the correct value
+        # Uses _ as a "catch all" for any unlisted valid types
+        # Uses "otherwise" for invalid types
+        valid :: InputString -> ValidResult
+        valid grade => grade instanceof GradeType
+            "A" => ... # Do something on A
+            "B" => ... # Do something on B
+            _ => Valid # Catch all for any instance of GradeType
+            otherwise => Invalid [ValidationError [grade] "Not a grade, dumbass."]
+        ;
+
+        # Maybe we can pattern match grade instance of having an instanceof operator?
+    }
+
+    valid :: Grade -> ValidResult
+    valid => this.grade.valid; # this parameter?
+
+    isType :: GradeType => Grade => Bool;
+    isType type g => g.grade == type;
+}
+
+valid :: [Grade] => ValidResult
+valid grades => allValid [
+    allValid (map isValid grades), # Verify that all strings input are actually A-F grades
+    validGradeLimit "A" 3 grades, # Check no more than 3 A's
+    validGradeLimit "B" 3 grades, # Check no more than 3 B's
+    validGradeLimit "C" 3 grades, # Check no more than 3 C's
+];
+
+validGradeLimit :: GradeType => Int => [Grade] => ValidResult
+validGradeLimit type limit grades => let
+    # Example calling member function Grade.isType, not sure if this makes any real sense
+    gradesOfType = filter (Grade.isType type) grades
+in
+    if len gradesOfType <= limit
+        then Valid
+    else Invalid [ValidationError [gradesOfType] "Too many $type's, can only have up to $limit."]
+;
